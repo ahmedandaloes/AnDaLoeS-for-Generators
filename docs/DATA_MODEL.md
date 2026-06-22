@@ -66,12 +66,19 @@ A rentable unit listed by a company.
 | title | text | e.g. "Cummins 100 KVA" |
 | capacity_kva | numeric | generator capacity |
 | description | text | |
-| price_per_day | numeric | in EGP |
+| price_per_day | numeric | EGP — **1 day = 8 operating hours** |
+| price_per_week | numeric | EGP, optional (cheaper longer term) |
+| price_per_month | numeric | EGP, optional |
 | city | text | |
+| governorate | text | for nationwide filtering (all of Egypt) |
 | location | geography(point) | optional, for map/distance |
 | photos | text[] | Supabase Storage URLs |
 | status | enum (`available`, `unavailable`) | owner's own on/off switch |
 | created_at | timestamptz | |
+
+> **Pricing note:** a rental **day = 8 operating hours** (a working day, not
+> 24h). The app calculates totals from day/week/month rates and picks the
+> cheapest combination for the chosen duration.
 
 > **Visibility rule:** a generator is shown to customers only when **both** its
 > `status = available` **and** its company's `verification_status = approved`.
@@ -88,37 +95,60 @@ A rentable unit listed by a company.
 | company_id | uuid (FK → companies.id) | denormalized for quick owner-side queries |
 | start_date | date | |
 | end_date | date | |
-| total_days | int | computed |
-| price_total | numeric | total_days × price_per_day |
+| rate_basis | enum (`day`, `week`, `month`) | which rate(s) the total was built from |
+| total_days | int | computed (1 day = 8 operating hours) |
+| price_total | numeric | best price for the duration (day/week/month rates) |
+| payment_method | enum (`cash`, `paymob`, `fawry`) | **`cash`** at launch |
 | status | enum | `pending` → `accepted` → `active` → `completed` / `rejected` / `cancelled` |
 | note | text | optional customer note |
 | created_at | timestamptz | |
 
-### `payments` (phase 2)
+### `payments`
+At launch every rental is **cash on delivery** — the owner collects cash and
+the rental is recorded here as `cash` / `paid`. The table already supports
+Paymob/Fawry for the later online-payment phase, so no schema change is needed
+when you turn payments on.
 
 | column | type | notes |
 |---|---|---|
 | id | uuid (PK) | |
 | rental_request_id | uuid (FK) | |
 | amount | numeric | EGP |
-| gateway | enum (`paymob`, `fawry`, `cash`) | |
-| gateway_ref | text | transaction id from provider |
-| status | enum (`pending`, `paid`, `failed`, `refunded`) | |
+| gateway | enum (`cash`, `paymob`, `fawry`) | **`cash`** at launch |
+| gateway_ref | text | transaction id from provider (online phase) |
+| status | enum (`pending`, `paid`, `failed`, `refunded`) | cash rentals are marked `paid` on completion |
 | created_at | timestamptz | |
 
-### `commissions`  ← how the platform earns
+### `commission_config`  ← your adjustable commission rule
+One active rule controls how much the platform takes. Starts as a **fixed
+amount** (like your dad's current model) and can be changed any time; the
+schema also allows switching to a percentage later.
+
+| column | type | notes |
+|---|---|---|
+| id | uuid (PK) | |
+| company_id | uuid (FK → companies.id, nullable) | null = platform-wide default; set = override for one company |
+| type | enum (`fixed`, `percentage`) | **`fixed`** to start |
+| value | numeric | fixed EGP amount, or rate (e.g. 0.10) if `percentage` |
+| active | boolean | only one active rule applies per scope |
+| created_at | timestamptz | |
+
+### `commissions`  ← how the platform earns (one row per completed rental)
 
 | column | type | notes |
 |---|---|---|
 | id | uuid (PK) | |
 | rental_request_id | uuid (FK) | |
 | rental_amount | numeric | the rental's price_total |
-| commission_rate | numeric | e.g. 0.10 = 10% |
-| commission_amount | numeric | rental_amount × commission_rate |
+| type | enum (`fixed`, `percentage`) | snapshot of the rule applied |
+| value | numeric | snapshot of the amount/rate applied |
+| commission_amount | numeric | computed EGP the platform earns |
 | status | enum (`accrued`, `settled`) | |
 | created_at | timestamptz | |
 
-A `commission` row is created when a `rental_request` reaches `completed`.
+A `commission` row is created when a `rental_request` reaches `completed`,
+using whatever `commission_config` was active at that time (snapshotted, so
+later changes don't rewrite history).
 
 ---
 
@@ -133,6 +163,7 @@ companies 1──* rental_requests        (owner side)
 generators 1──* rental_requests
 rental_requests 1──1 commissions
 rental_requests 1──* payments
+commission_config 1──* commissions   (rule applied, snapshotted onto each row)
 ```
 
 ---

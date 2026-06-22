@@ -9,6 +9,8 @@ Paymob/Fawry payments · phone OTP auth · Arabic-first (RTL).
 
 ## Documentation
 
+- [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) — product decisions from the
+  founder interview (commission, pricing, payment, languages, coverage).
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — stack choices, Egypt-specific
   decisions, and the feature-first project structure.
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) — database schema, relationships,

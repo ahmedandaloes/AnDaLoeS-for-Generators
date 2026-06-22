@@ -2,13 +2,19 @@
 
 **Target: a complete generator-rental marketplace — not a minimal MVP.**
 
-The goal of v1 is the full product: phone-OTP auth, browsing, the rental loop,
-**online payments (Paymob + Fawry)**, owner onboarding & dashboard, automatic
-commissions, ratings, and search. We build it properly the first time.
+v1 is the full product: phone-OTP auth, browsing & search, the rental loop,
+owner onboarding & dashboard, company verification, automatic commissions,
+ratings, and an admin panel. Built properly the first time. See
+`REQUIREMENTS.md` for the founder decisions behind this.
+
+> **One deliberate exception:** **online payment is deferred.** At launch every
+> rental is **cash on delivery** (owner collects cash, app records it). The
+> schema already supports Paymob/Fawry, so turning payments on later needs no
+> rework. This is the only feature pulled out of v1 — by choice.
 
 > Building everything still needs an *order* — you can't write all features at
-> once. The order below is about dependencies (auth before payments, schema
-> before UI), **not** about cutting scope. Every item is in scope for v1.
+> once. The sequence below is about dependencies (auth before rentals, schema
+> before UI), **not** about cutting scope.
 
 ---
 
@@ -16,38 +22,46 @@ commissions, ratings, and search. We build it properly the first time.
 
 - [ ] Flutter project with feature-first structure (see `ARCHITECTURE.md`).
 - [ ] Riverpod, go_router, Supabase client, intl, Google Maps, FCM.
-- [ ] Arabic-first localization (ar + en, full RTL).
+- [ ] **Localization: Arabic + English** with a language switch (Arabic RTL).
 - [ ] Shared theme, design system, reusable widgets.
 - [ ] Supabase project; full schema from `DATA_MODEL.md` + RLS policies.
 - [ ] CI: format, analyze, test on every push.
 
 ## Workstream 1 — Identity & accounts
 
-- [ ] Phone number + OTP login/registration.
+- [ ] Phone number + OTP login/registration — **open signup, no customer
+      verification**.
 - [ ] Profile management; a user can be **customer and/or owner**.
 - [ ] Role-aware navigation (customer view vs owner view).
 
 ## Workstream 2 — Generators & discovery
 
 - [ ] Generator listings: list + detail with photos.
-- [ ] Search & filter by city, capacity (KVA), price, availability.
+- [ ] **Nationwide search & filter** by governorate/city, capacity (KVA),
+      price, availability.
 - [ ] Map view with location & distance (Google Maps).
 
-## Workstream 3 — Rental loop
+## Workstream 3 — Rental loop (cash on delivery)
 
-- [ ] Rental request: pick dates → price calculation → submit.
+- [ ] Rental request: pick dates → **price from day/week/month rates
+      (1 day = 8 operating hours)** → submit.
 - [ ] Status lifecycle: pending → accepted → active → completed / rejected /
       cancelled.
-- [ ] Owner accepts/rejects; customer tracks status.
+- [ ] Owner accepts/rejects; owner delivers & operates the unit; customer
+      tracks status.
+- [ ] Record **cash** payment on completion (`payments.gateway = cash`).
+- [ ] **Commissions:** auto-create a commission row when a rental is
+      `completed`, using the active `commission_config` (fixed amount to start).
 - [ ] Push notifications (FCM) on every status change.
 
-## Workstream 4 — Payments & money (in v1, not deferred)
+## Workstream 4 — Online payments (deferred — later phase)
+
+> Not in v1. Add when you're ready to move off cash-only.
 
 - [ ] Paymob integration (cards + mobile wallets).
 - [ ] Fawry integration (cash / kiosk).
 - [ ] `payments` rows written by Edge Functions (service role only).
-- [ ] **Commissions:** auto-create a commission record when a rental is
-      `completed`; track accrued vs settled.
+- [ ] Optional deposit / partial-payment handling.
 
 ## Workstream 5 — Owner platform & onboarding (with verification)
 
@@ -80,8 +94,8 @@ commissions, ratings, and search. We build it properly the first time.
 
 ## Suggested build sequence
 
-Foundations → Identity → Generators → Rental loop → Payments → Owner platform
-→ Trust → Scale.
+Foundations → Identity → Generators → Rental loop (cash) → Owner platform &
+verification → Trust & admin → (later) Online payments → Scale.
 
 This is dependency order, not a scope cut. Each workstream is demoable when
 done, so progress stays visible while we build toward the complete product.

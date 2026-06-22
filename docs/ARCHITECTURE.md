@@ -24,9 +24,9 @@ rental.
 
 | Concern | Decision | Reason |
 |---|---|---|
-| Payments | **Paymob** (primary), **Fawry** (cash/kiosk) | Stripe & PayPal are **not usable** for collecting money in Egypt. Paymob and Fawry are the real local gateways. |
-| Auth | **Phone number + OTP** | Egyptian users expect phone login, not email. |
-| Language | **Arabic-first**, English optional | Most users are Arabic speakers; design RTL from day one. |
+| Payments | **Cash on delivery at launch**; **Paymob** + **Fawry** later | No online payment in v1 by choice — owner collects cash. When you turn payments on, use Paymob/Fawry: Stripe & PayPal are **not usable** for collecting money in Egypt. |
+| Auth | **Phone number + OTP**, open signup | Egyptian users expect phone login, not email. No customer document check. |
+| Language | **Arabic + English** with a switch | Both at launch; Arabic is RTL — design RTL from day one. |
 | Maps | **Google Maps** | Location of generators and delivery distance. |
 
 ---
@@ -115,13 +115,16 @@ Customer                Platform (Supabase)            Owner
    |                          |---- notify (FCM) ------->|
    |                          |<--- accept / reject -----|
    |<------- notify ----------|                          |
-   |-- pay (Paymob/Fawry) --->| record payment           |
+   |   (owner delivers, sets up & operates the unit)     |
+   |-- pay owner in CASH ---->| record cash payment      |
    |                          | mark completed           |
    |                          | record commission        |
 ```
 
-Online payment (Paymob/Fawry) is part of v1. Cash/Fawry-kiosk is supported as
-a payment method, not as a workaround for missing payment integration.
+At launch payment is **cash on delivery** — the owner collects cash and the app
+records it. Online payment (Paymob/Fawry) is a later phase; the schema already
+supports it, so no rework is needed to switch it on. The owner handles delivery,
+setup, fuel, and operation — the platform does not manage logistics.
 
 ---
 
