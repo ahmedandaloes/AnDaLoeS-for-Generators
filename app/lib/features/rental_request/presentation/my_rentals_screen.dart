@@ -205,6 +205,20 @@ class _RentalCard extends StatelessWidget {
                 label: const Text('Rate this rental'),
               ),
             ],
+            if (status == 'completed' || status == 'active') ...[
+              const SizedBox(height: 8),
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: cs.onSurfaceVariant,
+                  minimumSize: const Size.fromHeight(36),
+                ),
+                onPressed: () => context.push(
+                  '/report?type=company&id=${rental['company_id']}&rental=${rental['id']}&name=Owner',
+                ),
+                icon: const Icon(Icons.flag_outlined, size: 15),
+                label: const Text('Report an issue', style: TextStyle(fontSize: 13)),
+              ),
+            ],
           ],
         ),
       ),

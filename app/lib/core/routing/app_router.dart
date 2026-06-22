@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase.dart';
 import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/auth/presentation/email_login_screen.dart';
+import '../../features/reports/presentation/report_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/company/presentation/company_onboarding_screen.dart';
 import '../../features/generators/presentation/generator_detail_screen.dart';
@@ -36,7 +37,8 @@ final appRouter = GoRouter(
     final needsAuth = protected.contains(loc) ||
         (loc.startsWith('/generators/') && loc.endsWith('/request')) ||
         loc.startsWith('/owner/') ||
-        loc.startsWith('/rate/');
+        loc.startsWith('/rate/') ||
+        loc.startsWith('/report');
 
     if (!loggedIn && needsAuth) return '/login';
     if (loggedIn && (loc == '/login' || loc == '/dev-login')) return '/';
@@ -88,6 +90,18 @@ final appRouter = GoRouter(
           rateeId: params['ratee'] ?? '',
           rateeName: params['name'] ?? 'User',
           isOwnerRating: params['owner'] == 'true',
+        );
+      },
+    ),
+    GoRoute(
+      path: '/report',
+      builder: (_, state) {
+        final p = state.uri.queryParameters;
+        return ReportScreen(
+          entityType: p['type'] ?? 'generator',
+          entityId: p['id'] ?? '',
+          rentalRequestId: p['rental'],
+          entityName: p['name'],
         );
       },
     ),

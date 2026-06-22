@@ -393,18 +393,38 @@ class GeneratorDetailWrapper extends ConsumerWidget {
 
     return Scaffold(
       body: GeneratorDetailScreen(id: id),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          if (!loggedIn) {
-            context.push('/login');
-            return;
-          }
-          context.push('/generators/$id/request');
-        },
-        icon: const Icon(Icons.calendar_month_outlined),
-        label: const Text('Rent Now'),
-        backgroundColor: cs.primary,
-        foregroundColor: cs.onPrimary,
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Report button
+          if (loggedIn)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: FloatingActionButton.small(
+                heroTag: 'report',
+                backgroundColor: cs.errorContainer,
+                foregroundColor: cs.onErrorContainer,
+                tooltip: 'Report',
+                onPressed: () => context.push(
+                    '/report?type=generator&id=$id&name=Generator'),
+                child: const Icon(Icons.flag_outlined, size: 18),
+              ),
+            ),
+          FloatingActionButton.extended(
+            heroTag: 'rent',
+            onPressed: () {
+              if (!loggedIn) {
+                context.push('/login');
+                return;
+              }
+              context.push('/generators/$id/request');
+            },
+            icon: const Icon(Icons.calendar_month_outlined),
+            label: const Text('Rent Now'),
+            backgroundColor: cs.primary,
+            foregroundColor: cs.onPrimary,
+          ),
+        ],
       ),
       floatingActionButtonLocation:
           FloatingActionButtonLocation.centerFloat,

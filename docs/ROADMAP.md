@@ -26,7 +26,7 @@ ratings, and an admin panel. Built properly the first time. See
 - [x] **Localization: Arabic + English** with a language switch (Arabic RTL).
 - [x] Shared theme, design system, reusable widgets (Material 3, polished UI).
 - [x] Supabase project; full schema from `DATA_MODEL.md` + RLS policies.
-- [ ] CI: format, analyze, test on every push.
+- [x] CI: format, analyze, test on every push (GitHub Actions, `.github/workflows/flutter.yml`).
 
 ## Workstream 1 — Identity & accounts
 
@@ -75,7 +75,7 @@ ratings, and an admin panel. Built properly the first time. See
 ## Workstream 6 — Trust & quality
 
 - [x] Ratings & reviews (customer ↔ owner): star rating + comment, unique per rental, RLS-protected.
-- [ ] Basic dispute / report flow.
+- [x] Basic dispute / report flow (ReportScreen with 6 reasons, admin Reviews tab, RLS-protected `reports` table).
 - [x] Admin panel for the platform (you): company approvals, users, generators, rentals, commission stats.
 
 ## Workstream 7 — Scale & operations
