@@ -4,7 +4,7 @@ This is the single source of truth for **business rules**. Technical choices
 live in `ARCHITECTURE.md`; schema in `DATA_MODEL.md`; build order in
 `ROADMAP.md`.
 
-> Status: decided in founder interview, 2026-06-22. Open item: **app name**.
+> Status: decided in founder interview, 2026-06-22. All items decided.
 
 ---
 
@@ -26,7 +26,7 @@ completed rentals. Open for any company to join, subject to platform approval.
 | **Coverage** | **All of Egypt** | Nationwide listings; customers filter by governorate / city. |
 | **Customer signup** | **Open — phone OTP only** | Anyone with a verified phone can rent immediately. No customer document check. |
 | **Company signup** | **Open, but verified & approved by platform** | Any company can apply; generators stay hidden until an admin approves (see `DATA_MODEL.md`). |
-| **App name** | **TBD** | Founder asked for naming help — options proposed separately. |
+| **App name** | **AnDaLoeS** ("AnDaLoeS for Generators") | Uses the founder's existing registered company (documents already held with his father) — simplifies legal entity, verification, and payouts. |
 
 ## 3. What this means for scope
 
@@ -38,7 +38,13 @@ completed rentals. Open for any company to join, subject to platform approval.
 - Price math must use an **8-hour day** and pick the best of day/week/month
   rates for the chosen duration.
 
-## 4. Open questions to revisit later
+## 4. Branding
+- **Name:** AnDaLoeS (full: "AnDaLoeS for Generators").
+- Backed by an existing registered company the founder holds with his father —
+  the platform operates the marketplace; AnDaLoeS's own generators are simply
+  the first verified company on it.
+
+## 5. Open questions to revisit later
 - Exact fixed commission amount (and when to switch to a %).
 - Required verification documents for companies.
 - Deposit / damage handling (currently none — cash, owner-operated).
