@@ -49,10 +49,16 @@ commissions, ratings, and search. We build it properly the first time.
 - [ ] **Commissions:** auto-create a commission record when a rental is
       `completed`; track accrued vs settled.
 
-## Workstream 5 — Owner platform & onboarding
+## Workstream 5 — Owner platform & onboarding (with verification)
 
-- [ ] Open onboarding so **any** owner can join (not only family).
-- [ ] Owner dashboard: manage generators, prices, availability.
+- [ ] Open onboarding so **any** company can apply to join (not only family).
+- [ ] Company sign-up: create company account, upload verification documents
+      (commercial register, tax card, national ID) to a private bucket.
+- [ ] **Verification gate:** new companies start `pending`; their generators
+      stay hidden from customers until an admin approves.
+- [ ] **Admin review:** you approve / reject companies (with a reason), from the
+      admin panel — see Workstream 6.
+- [ ] Owner dashboard: add/manage generators, prices, availability.
 - [ ] Owner earnings view (rentals, commissions taken, net payout).
 - [ ] Incoming-request management.
 
