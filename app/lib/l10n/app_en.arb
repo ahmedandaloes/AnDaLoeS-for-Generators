@@ -1,0 +1,17 @@
+{
+  "@@locale": "en",
+  "appTitle": "AnDaLoeS for Generators",
+  "navHome": "Home",
+  "navProfile": "Profile",
+  "welcomeTitle": "Rent a generator, anywhere in Egypt",
+  "welcomeSubtitle": "Browse generators, send a request, the owner delivers.",
+  "loginTitle": "Sign in",
+  "phoneLabel": "Phone number",
+  "phoneHint": "01XXXXXXXXX",
+  "sendCode": "Send code",
+  "browseGenerators": "Browse generators",
+  "noGeneratorsYet": "No generators to show yet.",
+  "language": "Language",
+  "english": "English",
+  "arabic": "العربية"
+}
