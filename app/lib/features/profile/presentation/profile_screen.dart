@@ -40,8 +40,8 @@ class ProfileScreen extends ConsumerWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      cs.primaryContainer.withOpacity(0.8),
-                      cs.secondaryContainer.withOpacity(0.5),
+                      cs.primaryContainer.withValues(alpha: 0.8),
+                      cs.secondaryContainer.withValues(alpha: 0.5),
                     ],
                   ),
                 ),
@@ -59,7 +59,7 @@ class ProfileScreen extends ConsumerWidget {
                           color: cs.primary,
                           boxShadow: [
                             BoxShadow(
-                              color: cs.primary.withOpacity(0.3),
+                              color: cs.primary.withValues(alpha: 0.3),
                               blurRadius: 16,
                               offset: const Offset(0, 6),
                             ),
@@ -219,8 +219,7 @@ class ProfileScreen extends ConsumerWidget {
                       Divider(
                           height: 1,
                           indent: 56,
-                          color:
-                              cs.outlineVariant.withOpacity(0.4)),
+                          color: cs.outlineVariant.withValues(alpha: 0.4)),
                       ListTile(
                         leading: Container(
                           padding: const EdgeInsets.all(8),
@@ -238,6 +237,32 @@ class ProfileScreen extends ConsumerWidget {
                         trailing: Icon(Icons.chevron_right,
                             color: cs.onSurfaceVariant),
                         onTap: () => context.push('/owner-dashboard'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Admin panel (shown for all; access controlled inside)
+                  _SectionLabel('Platform'),
+                  _Card(
+                    children: [
+                      ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: cs.errorContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(Icons.admin_panel_settings_outlined,
+                              size: 18, color: cs.error),
+                        ),
+                        title: const Text('Admin Panel',
+                            style: TextStyle(fontWeight: FontWeight.w500)),
+                        subtitle: const Text('Companies, stats, approvals',
+                            style: TextStyle(fontSize: 12)),
+                        trailing: Icon(Icons.chevron_right,
+                            color: cs.onSurfaceVariant),
+                        onTap: () => context.push('/admin'),
                       ),
                     ],
                   ),

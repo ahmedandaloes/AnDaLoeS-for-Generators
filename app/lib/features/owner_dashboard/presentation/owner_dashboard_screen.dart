@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../features/ratings/presentation/rate_rental_screen.dart';
 
 // ── Providers ──────────────────────────────────────────────────────────────────
 
@@ -199,8 +200,8 @@ class _Dashboard extends StatelessWidget {
       length: 2,
       child: Column(
         children: [
-          // Company chip
-          Container(
+          // Company chip + earnings button
+          Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Row(
               children: [
@@ -220,6 +221,26 @@ class _Dashboard extends StatelessWidget {
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: cs.onPrimaryContainer)),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                FilledButton.tonal(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                  ),
+                  onPressed: () => context.push(
+                      '/owner/earnings?company=${company['id']}'),
+                  child: Row(
+                    children: [
+                      Icon(Icons.account_balance_wallet_outlined,
+                          size: 14, color: cs.primary),
+                      const SizedBox(width: 4),
+                      const Text('Earnings',
+                          style: TextStyle(fontSize: 12)),
                     ],
                   ),
                 ),
@@ -383,7 +404,7 @@ class _OwnerRequestCard extends StatelessWidget {
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: cs.error,
-                        side: BorderSide(color: cs.error.withOpacity(0.4)),
+                        side: BorderSide(color: cs.error.withValues(alpha: 0.4)),
                         minimumSize: const Size.fromHeight(40),
                       ),
                       onPressed: () =>
@@ -437,6 +458,22 @@ class _OwnerRequestCard extends StatelessWidget {
           .from('rental_requests')
           .update({'status': newStatus}).eq('id', requestId);
       ref.invalidate(_ownerRequestsProvider(companyId));
+      // Prompt owner to rate the customer after completion
+      if (newStatus == 'completed' && context.mounted) {
+        final customerId = request['customer_id']?.toString() ?? '';
+        final customerName =
+            (request['profiles'] as Map<String, dynamic>?)?['full_name'] ??
+                (request['profiles'] as Map<String, dynamic>?)?['phone'] ??
+                'Customer';
+        await Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => RateRentalScreen(
+            rentalRequestId: requestId,
+            rateeId: customerId,
+            rateeName: customerName.toString(),
+            isOwnerRating: true,
+          ),
+        ));
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
@@ -600,7 +637,7 @@ class _StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

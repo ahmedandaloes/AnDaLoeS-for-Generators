@@ -195,11 +195,11 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                     decoration: BoxDecoration(
                       color: _range == null
                           ? cs.surfaceContainerLowest
-                          : cs.primaryContainer.withOpacity(0.4),
+                          : cs.primaryContainer.withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: _range == null
-                            ? cs.outlineVariant.withOpacity(0.4)
+                            ? cs.outlineVariant.withValues(alpha: 0.4)
                             : cs.primary,
                         width: _range == null ? 1 : 2,
                       ),

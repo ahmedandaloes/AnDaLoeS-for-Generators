@@ -64,7 +64,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          side: BorderSide(color: scheme.outline.withOpacity(0.4)),
+          side: BorderSide(color: scheme.outline.withValues(alpha: 0.4)),
           textStyle: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -100,7 +100,7 @@ class AppTheme {
         }),
       ),
       dividerTheme: DividerThemeData(
-        color: scheme.outlineVariant.withOpacity(0.5),
+        color: scheme.outlineVariant.withValues(alpha: 0.5),
         thickness: 1,
         space: 1,
       ),

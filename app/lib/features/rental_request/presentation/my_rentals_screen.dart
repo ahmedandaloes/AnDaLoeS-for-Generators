@@ -106,7 +106,7 @@ class _RentalCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.15),
+                    color: statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -165,7 +165,7 @@ class _RentalCard extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(40),
                   foregroundColor: cs.error,
-                  side: BorderSide(color: cs.error.withOpacity(0.4)),
+                  side: BorderSide(color: cs.error.withValues(alpha: 0.4)),
                 ),
                 onPressed: () => _cancel(context, rental['id']),
                 child: const Text('Cancel request'),
@@ -176,16 +176,33 @@ class _RentalCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.08),
+                  color: Colors.green.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(children: [
                   Icon(Icons.check_circle_outline,
                       size: 16, color: Colors.green),
                   SizedBox(width: 6),
-                  Text('The owner accepted your request. They will contact you soon.',
-                      style: TextStyle(fontSize: 12, color: Colors.green)),
+                  Expanded(
+                    child: Text(
+                      'Accepted — the owner will contact you soon.',
+                      style: TextStyle(fontSize: 12, color: Colors.green),
+                    ),
+                  ),
                 ]),
+              ),
+            ],
+            if (status == 'completed') ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(40),
+                ),
+                onPressed: () => context.push(
+                  '/rate/${rental['id']}?ratee=${rental['company_id']}&name=Owner',
+                ),
+                icon: const Icon(Icons.star_outline, size: 16),
+                label: const Text('Rate this rental'),
               ),
             ],
           ],

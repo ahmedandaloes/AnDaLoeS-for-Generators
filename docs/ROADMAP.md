@@ -48,8 +48,8 @@ ratings, and an admin panel. Built properly the first time. See
 - [x] Status lifecycle: pending → accepted → active → completed / rejected / cancelled.
 - [x] Customer: My Rentals screen — list, status chips, cancel pending requests.
 - [x] Owner: accept/reject/start/complete rental requests in Owner Dashboard.
-- [ ] Record cash payment row on completion (payments table).
-- [ ] **Commissions:** auto-create commission row when rental completed.
+- [x] Record cash payment row on completion (via Postgres trigger `on_rental_completed`).
+- [x] **Commissions:** auto-create commission row when rental completed (trigger + `commission_config` table).
 - [ ] Push notifications (FCM) on status change.
 
 ## Workstream 4 — Online payments (deferred — later phase)
@@ -70,14 +70,13 @@ ratings, and an admin panel. Built properly the first time. See
 - [ ] **Admin review UI** — see Workstream 6.
 - [x] Owner dashboard: add generators, set prices, toggle availability.
 - [x] Incoming-request management: accept, reject, start, complete.
-- [ ] Owner earnings view (rentals, commissions taken, net payout).
+- [x] Owner earnings view (rentals, commissions taken, net payout).
 
 ## Workstream 6 — Trust & quality
 
-- [ ] Ratings & reviews (customer ↔ owner).
+- [x] Ratings & reviews (customer ↔ owner): star rating + comment, unique per rental, RLS-protected.
 - [ ] Basic dispute / report flow.
-- [ ] Admin panel for the platform (you): users, generators, payouts,
-      analytics.
+- [x] Admin panel for the platform (you): company approvals, users, generators, rentals, commission stats.
 
 ## Workstream 7 — Scale & operations
 
