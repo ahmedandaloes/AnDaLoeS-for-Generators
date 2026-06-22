@@ -66,7 +66,7 @@ ratings, and an admin panel. Built properly the first time. See
 - [x] Open onboarding: any user can register a company via Company Onboarding screen.
 - [x] Company sign-up: name, contact phone, city/governorate → submitted as `pending`.
 - [x] **Verification gate:** pending companies shown a "under review" message; generators hidden until approved.
-- [ ] Document upload (commercial register, tax card, national ID) — needs Storage bucket.
+- [x] Document upload (commercial register, tax card, national ID) — 2-step onboarding, Supabase Storage `company-docs` bucket, RLS by user_id prefix.
 - [ ] **Admin review UI** — see Workstream 6.
 - [x] Owner dashboard: add generators, set prices, toggle availability.
 - [x] Incoming-request management: accept, reject, start, complete.

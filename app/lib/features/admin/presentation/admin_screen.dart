@@ -28,6 +28,7 @@ final _pendingCompaniesProvider =
   return (data as List).cast<Map<String, dynamic>>();
 });
 
+
 final _openReportsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final data = await supabase
@@ -341,6 +342,56 @@ class _CompanyCardState extends State<_CompanyCard> {
                         fontSize: 13, color: cs.onSurfaceVariant)),
               ]),
             ],
+            // Document links
+            Builder(builder: (_) {
+              final docs = (company['document_urls'] as List? ?? [])
+                  .cast<String>();
+              if (docs.isEmpty) return const SizedBox.shrink();
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: docs.map((path) {
+                      final filename = path.split('/').last;
+                      final docType = filename.split('_').first;
+                      final label = const {
+                        'commercial': 'Comm. Register',
+                        'tax': 'Tax Card',
+                        'national': 'National ID',
+                      }[docType] ?? filename;
+                      return ActionChip(
+                        avatar: const Icon(Icons.description_outlined, size: 14),
+                        label: Text(label, style: const TextStyle(fontSize: 11)),
+                        onPressed: () async {
+                          try {
+                            final res = await supabase.storage
+                                .from('company-docs')
+                                .createSignedUrl(path, 300);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Signed URL (copy to browser):\n$res',
+                                      style: const TextStyle(fontSize: 11)),
+                                  duration: const Duration(seconds: 10),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('$e')));
+                            }
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ],
+              );
+            }),
             if (_showReject) ...[
               const SizedBox(height: 12),
               TextField(
