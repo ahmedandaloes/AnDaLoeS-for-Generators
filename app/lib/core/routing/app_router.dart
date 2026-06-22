@@ -7,11 +7,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase.dart';
 import '../../features/auth/presentation/email_login_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/company/presentation/company_onboarding_screen.dart';
+import '../../features/generators/presentation/generator_detail_screen.dart';
 import '../../features/generators/presentation/home_screen.dart';
+import '../../features/owner_dashboard/presentation/add_generator_screen.dart';
+import '../../features/owner_dashboard/presentation/owner_dashboard_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/rental_request/presentation/my_rentals_screen.dart';
+import '../../features/rental_request/presentation/rental_request_screen.dart';
 
-/// App router. Redirects unauthenticated users to /login and refreshes
-/// whenever Supabase auth state changes.
 final appRouter = GoRouter(
   initialLocation: '/',
   refreshListenable: _GoRouterRefreshStream(supabase.auth.onAuthStateChange),
@@ -19,9 +23,15 @@ final appRouter = GoRouter(
     final loggedIn = supabase.auth.currentSession != null;
     final loc = state.matchedLocation;
 
-    // Browsing is public; only these routes require a session.
-    const protected = {'/profile'};
-    final needsAuth = protected.contains(loc);
+    const protected = {
+      '/profile',
+      '/my-rentals',
+      '/owner-dashboard',
+      '/company/onboard',
+    };
+    final needsAuth = protected.contains(loc) ||
+        loc.startsWith('/generators/') && loc.endsWith('/request') ||
+        loc.startsWith('/owner/');
 
     if (!loggedIn && needsAuth) return '/login';
     if (loggedIn && (loc == '/login' || loc == '/dev-login')) return '/';
@@ -32,10 +42,34 @@ final appRouter = GoRouter(
     GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
     GoRoute(path: '/dev-login', builder: (_, __) => const EmailLoginScreen()),
     GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+    GoRoute(path: '/my-rentals', builder: (_, __) => const MyRentalsScreen()),
+    GoRoute(
+      path: '/owner-dashboard',
+      builder: (_, __) => const OwnerDashboardScreen(),
+    ),
+    GoRoute(
+      path: '/company/onboard',
+      builder: (_, __) => const CompanyOnboardingScreen(),
+    ),
+    GoRoute(
+      path: '/generators/:id',
+      builder: (_, state) =>
+          GeneratorDetailWrapper(id: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/generators/:id/request',
+      builder: (_, state) =>
+          RentalRequestScreen(generatorId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/owner/generator/add',
+      builder: (_, state) => AddGeneratorScreen(
+        companyId: state.uri.queryParameters['company'] ?? '',
+      ),
+    ),
   ],
 );
 
-/// Bridges a Stream to a Listenable so GoRouter can re-evaluate redirects.
 class _GoRouterRefreshStream extends ChangeNotifier {
   _GoRouterRefreshStream(Stream<AuthState> stream) {
     notifyListeners();

@@ -20,39 +20,37 @@ ratings, and an admin panel. Built properly the first time. See
 
 ## Workstream 0 — Foundations
 
-- [ ] Flutter project with feature-first structure (see `ARCHITECTURE.md`).
-- [ ] Riverpod, go_router, Supabase client, intl, Google Maps, FCM.
-- [ ] **Localization: Arabic + English** with a language switch (Arabic RTL).
-- [ ] Shared theme, design system, reusable widgets.
-- [ ] Supabase project; full schema from `DATA_MODEL.md` + RLS policies.
+- [x] Flutter project with feature-first structure (see `ARCHITECTURE.md`).
+- [x] Riverpod, go_router, Supabase client, intl.
+- [ ] Google Maps, FCM — deferred to later phase.
+- [x] **Localization: Arabic + English** with a language switch (Arabic RTL).
+- [x] Shared theme, design system, reusable widgets (Material 3, polished UI).
+- [x] Supabase project; full schema from `DATA_MODEL.md` + RLS policies.
 - [ ] CI: format, analyze, test on every push.
 
 ## Workstream 1 — Identity & accounts
 
-- [ ] Phone number + OTP login/registration — **open signup, no customer
-      verification**.
-- [ ] Profile management; a user can be **customer and/or owner**.
-- [ ] Role-aware navigation (customer view vs owner view).
+- [x] Phone number + OTP login/registration screen (SMS gateway to configure).
+- [x] Email dev-login as fallback.
+- [x] Profile screen: avatar, email/phone display, language switch, sign out.
+- [x] Role-aware navigation: My Rentals (customer) + Owner Dashboard links in profile.
 
 ## Workstream 2 — Generators & discovery
 
-- [ ] Generator listings: list + detail with photos.
-- [ ] **Nationwide search & filter** by governorate/city, capacity (KVA),
-      price, availability.
-- [ ] Map view with location & distance (Google Maps).
+- [x] Generator listings: scrollable list with polished cards.
+- [x] Generator detail screen: photos carousel, pricing table, company info, Rent Now CTA.
+- [x] **Search & filter** by title/city (search bar) + governorate + max KVA (filter sheet).
+- [ ] Map view with location & distance (Google Maps) — next phase.
 
 ## Workstream 3 — Rental loop (cash on delivery)
 
-- [ ] Rental request: pick dates → **price from day/week/month rates
-      (1 day = 8 operating hours)** → submit.
-- [ ] Status lifecycle: pending → accepted → active → completed / rejected /
-      cancelled.
-- [ ] Owner accepts/rejects; owner delivers & operates the unit; customer
-      tracks status.
-- [ ] Record **cash** payment on completion (`payments.gateway = cash`).
-- [ ] **Commissions:** auto-create a commission row when a rental is
-      `completed`, using the active `commission_config` (fixed amount to start).
-- [ ] Push notifications (FCM) on every status change.
+- [x] Rental request screen: date range picker, best-price calculation (day/week/month), notes, submit.
+- [x] Status lifecycle: pending → accepted → active → completed / rejected / cancelled.
+- [x] Customer: My Rentals screen — list, status chips, cancel pending requests.
+- [x] Owner: accept/reject/start/complete rental requests in Owner Dashboard.
+- [ ] Record cash payment row on completion (payments table).
+- [ ] **Commissions:** auto-create commission row when rental completed.
+- [ ] Push notifications (FCM) on status change.
 
 ## Workstream 4 — Online payments (deferred — later phase)
 
@@ -65,16 +63,14 @@ ratings, and an admin panel. Built properly the first time. See
 
 ## Workstream 5 — Owner platform & onboarding (with verification)
 
-- [ ] Open onboarding so **any** company can apply to join (not only family).
-- [ ] Company sign-up: create company account, upload verification documents
-      (commercial register, tax card, national ID) to a private bucket.
-- [ ] **Verification gate:** new companies start `pending`; their generators
-      stay hidden from customers until an admin approves.
-- [ ] **Admin review:** you approve / reject companies (with a reason), from the
-      admin panel — see Workstream 6.
-- [ ] Owner dashboard: add/manage generators, prices, availability.
+- [x] Open onboarding: any user can register a company via Company Onboarding screen.
+- [x] Company sign-up: name, contact phone, city/governorate → submitted as `pending`.
+- [x] **Verification gate:** pending companies shown a "under review" message; generators hidden until approved.
+- [ ] Document upload (commercial register, tax card, national ID) — needs Storage bucket.
+- [ ] **Admin review UI** — see Workstream 6.
+- [x] Owner dashboard: add generators, set prices, toggle availability.
+- [x] Incoming-request management: accept, reject, start, complete.
 - [ ] Owner earnings view (rentals, commissions taken, net payout).
-- [ ] Incoming-request management.
 
 ## Workstream 6 — Trust & quality
 

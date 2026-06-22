@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
 
-/// Development sign-in with email + password. Frictionless: no SMS, no email
-/// delivery (turn off "Confirm email" in Supabase). The real product login is
-/// phone OTP (see login_screen.dart); this exists so we can build and test the
-/// app before an SMS provider is set up.
 class EmailLoginScreen extends StatefulWidget {
   const EmailLoginScreen({super.key});
 
@@ -18,6 +15,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
+  bool _obscure = true;
 
   Future<void> _submit() async {
     final email = _emailController.text.trim();
@@ -28,13 +26,12 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
     }
     setState(() => _loading = true);
     try {
-      // Try to sign in; if the account doesn't exist yet, create it.
       try {
         await supabase.auth.signInWithPassword(email: email, password: password);
       } on AuthException {
         await supabase.auth.signUp(email: email, password: password);
       }
-      // On success the router sends us home.
+      if (mounted) context.go('/');
     } on AuthException catch (e) {
       _show(e.message);
     } finally {
@@ -46,7 +43,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
     setState(() => _loading = true);
     try {
       await supabase.auth.signInAnonymously();
-      // On success the router sends us home.
+      if (mounted) context.go('/');
     } on AuthException catch (e) {
       _show(e.message);
     } finally {
@@ -56,8 +53,13 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
 
   void _show(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   @override
@@ -69,64 +71,125 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Developer sign-in')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 16),
-            const Text(
-              'Email + password sign-in for development. '
-              'First time creates the account.',
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 8),
+                // Back
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton.outlined(
+                    onPressed: () =>
+                        context.canPop() ? context.pop() : null,
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    style: IconButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(Icons.developer_mode_rounded,
+                      color: cs.onPrimaryContainer, size: 28),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Developer login',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'First time? We\'ll create your account automatically.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: cs.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Email
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  decoration: const InputDecoration(
+                    hintText: 'Email address',
+                    prefixIcon: Icon(Icons.email_outlined),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Password
+                TextField(
+                  controller: _passwordController,
+                  obscureText: _obscure,
+                  decoration: InputDecoration(
+                    hintText: 'Password',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscure
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscure = !_obscure),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: _loading ? null : _submit,
+                  child: _loading
+                      ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: cs.onPrimary),
+                        )
+                      : const Text('Sign in / Create account'),
+                ),
+                const SizedBox(height: 16),
+                Row(children: [
+                  Expanded(
+                      child: Divider(
+                          color: cs.outlineVariant.withOpacity(0.5))),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text('or',
+                        style: TextStyle(
+                            color: cs.onSurfaceVariant, fontSize: 13)),
+                  ),
+                  Expanded(
+                      child: Divider(
+                          color: cs.outlineVariant.withOpacity(0.5))),
+                ]),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: _loading ? null : _guest,
+                  icon: const Icon(Icons.person_outline, size: 18),
+                  label: const Text('Continue as guest'),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              autocorrect: false,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                prefixIcon: Icon(Icons.email_outlined),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                prefixIcon: Icon(Icons.lock_outline),
-              ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _loading ? null : _submit,
-              child: _loading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Sign in / Create account'),
-            ),
-            const SizedBox(height: 12),
-            const Row(children: [
-              Expanded(child: Divider()),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8),
-                child: Text('or'),
-              ),
-              Expanded(child: Divider()),
-            ]),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: _loading ? null : _guest,
-              icon: const Icon(Icons.person_outline),
-              label: const Text('Continue as guest (dev)'),
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -1,0 +1,413 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/config/supabase.dart';
+
+final _generatorDetailProvider =
+    FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, id) async {
+  final data = await supabase
+      .from('generators')
+      .select('*, companies(name, city, verification_status)')
+      .eq('id', id)
+      .single();
+  return data as Map<String, dynamic>;
+});
+
+class GeneratorDetailScreen extends ConsumerWidget {
+  const GeneratorDetailScreen({super.key, required this.id});
+  final String id;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final detail = ref.watch(_generatorDetailProvider(id));
+    final cs = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      body: detail.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error_outline, size: 48, color: cs.error),
+                const SizedBox(height: 16),
+                Text('$e'),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => ref.invalidate(_generatorDetailProvider(id)),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        data: (gen) => _Body(gen: gen, cs: cs),
+      ),
+    );
+  }
+}
+
+class _Body extends StatelessWidget {
+  const _Body({required this.gen, required this.cs});
+  final Map<String, dynamic> gen;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final company = gen['companies'] as Map<String, dynamic>?;
+    final photos = (gen['photos'] as List?)?.cast<String>() ?? [];
+    final loggedIn = supabase.auth.currentSession != null;
+
+    return CustomScrollView(
+      slivers: [
+        // ── Photo header ───────────────────────────────────────────────
+        SliverAppBar(
+          expandedHeight: 240,
+          pinned: true,
+          stretch: true,
+          flexibleSpace: FlexibleSpaceBar(
+            background: photos.isEmpty
+                ? Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          cs.primaryContainer.withOpacity(0.8),
+                          cs.secondaryContainer.withOpacity(0.5),
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: cs.primary.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.bolt, size: 64, color: cs.primary),
+                      ),
+                    ),
+                  )
+                : _PhotoCarousel(photos: photos),
+          ),
+        ),
+
+        // ── Content ────────────────────────────────────────────────────
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 120),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title + capacity badge
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        gen['title']?.toString() ?? 'Generator',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: cs.primaryContainer,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${gen['capacity_kva']} KVA',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: cs.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Company + location
+                if (company != null) ...[
+                  Row(
+                    children: [
+                      Icon(Icons.business_outlined,
+                          size: 14, color: cs.onSurfaceVariant),
+                      const SizedBox(width: 4),
+                      Text(
+                        company['name']?.toString() ?? '',
+                        style: TextStyle(
+                            fontSize: 13, color: cs.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                ],
+                Row(
+                  children: [
+                    Icon(Icons.location_on_outlined,
+                        size: 14, color: cs.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Text(
+                      [
+                        gen['city'],
+                        gen['governorate'],
+                      ]
+                          .where(
+                              (v) => v != null && v.toString().isNotEmpty)
+                          .join(', '),
+                      style: TextStyle(
+                          fontSize: 13, color: cs.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Pricing card
+                _PricingCard(gen: gen, cs: cs),
+                const SizedBox(height: 20),
+
+                // Description
+                if (gen['description'] != null &&
+                    gen['description'].toString().isNotEmpty) ...[
+                  Text(
+                    'About this generator',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    gen['description'].toString(),
+                    style: const TextStyle(fontSize: 15, height: 1.6),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                // Info note
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: cs.outlineVariant.withOpacity(0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline,
+                          size: 18, color: cs.onSurfaceVariant),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Owner delivers, sets up, and operates the generator. Payment in cash on delivery.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: cs.onSurfaceVariant,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Pricing card ─────────────────────────────────────────────────────────────
+class _PricingCard extends StatelessWidget {
+  const _PricingCard({required this.gen, required this.cs});
+  final Map<String, dynamic> gen;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pricing',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: cs.onSurfaceVariant,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _PriceRow(
+              label: 'Per day (8 hrs)',
+              value: gen['price_per_day'],
+              cs: cs,
+              highlight: true,
+            ),
+            if (gen['price_per_week'] != null) ...[
+              const SizedBox(height: 8),
+              _PriceRow(
+                  label: 'Per week', value: gen['price_per_week'], cs: cs),
+            ],
+            if (gen['price_per_month'] != null) ...[
+              const SizedBox(height: 8),
+              _PriceRow(
+                  label: 'Per month',
+                  value: gen['price_per_month'],
+                  cs: cs),
+            ],
+            const SizedBox(height: 8),
+            Text(
+              '1 rental day = 8 operating hours. Best rate is applied automatically.',
+              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PriceRow extends StatelessWidget {
+  const _PriceRow(
+      {required this.label,
+      required this.value,
+      required this.cs,
+      this.highlight = false});
+  final String label;
+  final dynamic value;
+  final ColorScheme cs;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(label,
+            style: TextStyle(
+                fontSize: 14,
+                color: cs.onSurface,
+                fontWeight:
+                    highlight ? FontWeight.w600 : FontWeight.normal)),
+        const Spacer(),
+        Text(
+          'EGP ${value ?? '-'}',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: highlight ? cs.primary : cs.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Photo carousel ────────────────────────────────────────────────────────────
+class _PhotoCarousel extends StatefulWidget {
+  const _PhotoCarousel({required this.photos});
+  final List<String> photos;
+
+  @override
+  State<_PhotoCarousel> createState() => _PhotoCarouselState();
+}
+
+class _PhotoCarouselState extends State<_PhotoCarousel> {
+  int _current = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        PageView.builder(
+          itemCount: widget.photos.length,
+          onPageChanged: (i) => setState(() => _current = i),
+          itemBuilder: (_, i) => Image.network(
+            widget.photos[i],
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              child: const Icon(Icons.bolt, size: 64),
+            ),
+          ),
+        ),
+        if (widget.photos.length > 1)
+          Positioned(
+            bottom: 12,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                widget.photos.length,
+                (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: _current == i ? 16 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: _current == i
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ── Rent Now FAB — added by the scaffold wrapper in the router ────────────────
+class GeneratorDetailWrapper extends ConsumerWidget {
+  const GeneratorDetailWrapper({super.key, required this.id});
+  final String id;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final loggedIn = supabase.auth.currentSession != null;
+
+    return Scaffold(
+      body: GeneratorDetailScreen(id: id),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          if (!loggedIn) {
+            context.push('/login');
+            return;
+          }
+          context.push('/generators/$id/request');
+        },
+        icon: const Icon(Icons.calendar_month_outlined),
+        label: const Text('Rent Now'),
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
+      ),
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.centerFloat,
+    );
+  }
+}

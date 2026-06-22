@@ -5,8 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/supabase.dart';
 import '../../../l10n/app_localizations.dart';
 
-/// Phone + OTP sign-in. Step 1: send code. Step 2: verify code.
-/// Requires the Phone auth provider + an SMS gateway enabled in Supabase.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -20,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _codeSent = false;
   bool _loading = false;
 
-  /// Supabase expects E.164 (e.g. +20...). Convert a local Egyptian number.
   String get _phone {
     var p = _phoneController.text.trim();
     if (p.startsWith('0')) p = p.substring(1);
@@ -48,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
         token: _codeController.text.trim(),
         type: OtpType.sms,
       );
-      // On success, the router redirect sends the user home.
+      if (mounted) context.go('/');
     } on AuthException catch (e) {
       _showError(e.message);
     } finally {
@@ -58,8 +55,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   @override
@@ -72,60 +74,186 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(title: Text(l.loginTitle)),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 16),
-            Text(l.welcomeTitle,
-                style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 8),
-            Text(l.welcomeSubtitle,
-                style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 32),
-            TextField(
-              controller: _phoneController,
-              enabled: !_codeSent,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: l.phoneLabel,
-                hintText: l.phoneHint,
-                prefixIcon: const Icon(Icons.phone),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Brand header ──────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.fromLTRB(28, 48, 28, 36),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      cs.primaryContainer.withOpacity(0.7),
+                      cs.secondaryContainer.withOpacity(0.4),
+                    ],
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Back button
+                    GestureDetector(
+                      onTap: () => context.canPop() ? context.pop() : null,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: cs.surface.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(Icons.arrow_back_rounded,
+                            size: 20, color: cs.onSurface),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: cs.primary,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child:
+                          Icon(Icons.bolt, color: cs.onPrimary, size: 28),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l.welcomeTitle,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: cs.onSurface,
+                        letterSpacing: -0.5,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l.welcomeSubtitle,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: cs.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            if (_codeSent) ...[
-              const SizedBox(height: 16),
-              TextField(
-                controller: _codeController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'OTP',
-                  prefixIcon: Icon(Icons.lock_outline),
+
+              // ── Form ──────────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 4),
+                    Text(
+                      _codeSent ? 'Enter your code' : 'Your phone number',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurfaceVariant,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _phoneController,
+                      enabled: !_codeSent,
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                        hintText: l.phoneHint,
+                        prefixIcon: const Icon(Icons.phone_outlined),
+                        prefixText: '+20 ',
+                      ),
+                    ),
+                    if (_codeSent) ...[
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _codeController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 8,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: '• • • • • •',
+                          prefixIcon: Icon(Icons.lock_outline),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'We sent a code to your phone',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: _loading
+                          ? null
+                          : (_codeSent ? _verifyCode : _sendCode),
+                      child: _loading
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: cs.onPrimary,
+                              ),
+                            )
+                          : Text(
+                              _codeSent ? 'Verify code' : l.sendCode),
+                    ),
+                    if (_codeSent) ...[
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: _loading
+                            ? null
+                            : () => setState(() {
+                                  _codeSent = false;
+                                  _codeController.clear();
+                                }),
+                        child: const Text('Change phone number'),
+                      ),
+                    ],
+                    const SizedBox(height: 32),
+                    Row(children: [
+                      Expanded(
+                          child: Divider(
+                              color:
+                                  cs.outlineVariant.withOpacity(0.5))),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text('or',
+                            style: TextStyle(
+                                color: cs.onSurfaceVariant, fontSize: 13)),
+                      ),
+                      Expanded(
+                          child: Divider(
+                              color:
+                                  cs.outlineVariant.withOpacity(0.5))),
+                    ]),
+                    const SizedBox(height: 16),
+                    OutlinedButton(
+                      onPressed: () => context.push('/dev-login'),
+                      child: const Text('Developer sign-in'),
+                    ),
+                  ],
                 ),
               ),
             ],
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _loading
-                  ? null
-                  : (_codeSent ? _verifyCode : _sendCode),
-              child: _loading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(_codeSent ? 'Verify' : l.sendCode),
-            ),
-            const Spacer(),
-            TextButton(
-              onPressed: () => context.push('/dev-login'),
-              child: const Text('Developer sign-in (email)'),
-            ),
-          ],
+          ),
         ),
       ),
     );
