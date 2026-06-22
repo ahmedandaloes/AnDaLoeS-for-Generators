@@ -24,15 +24,22 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context)!;
     final generators = ref.watch(generatorsProvider);
+    final loggedIn = supabase.auth.currentSession != null;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l.browseGenerators),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            onPressed: () => context.push('/profile'),
-          ),
+          if (loggedIn)
+            IconButton(
+              icon: const Icon(Icons.person_outline),
+              onPressed: () => context.push('/profile'),
+            )
+          else
+            TextButton(
+              onPressed: () => context.push('/login'),
+              child: Text(l.loginTitle),
+            ),
         ],
       ),
       body: generators.when(

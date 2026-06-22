@@ -16,10 +16,14 @@ final appRouter = GoRouter(
   refreshListenable: _GoRouterRefreshStream(supabase.auth.onAuthStateChange),
   redirect: (context, state) {
     final loggedIn = supabase.auth.currentSession != null;
-    final loggingIn = state.matchedLocation == '/login';
+    final loc = state.matchedLocation;
 
-    if (!loggedIn) return loggingIn ? null : '/login';
-    if (loggingIn) return '/';
+    // Browsing is public; only these routes require a session.
+    const protected = {'/profile'};
+    final needsAuth = protected.contains(loc);
+
+    if (!loggedIn && needsAuth) return '/login';
+    if (loggedIn && loc == '/login') return '/';
     return null;
   },
   routes: [
