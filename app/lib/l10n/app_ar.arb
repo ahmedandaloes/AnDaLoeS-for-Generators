@@ -1,0 +1,17 @@
+{
+  "@@locale": "ar",
+  "appTitle": "أندلس للمولدات",
+  "navHome": "الرئيسية",
+  "navProfile": "حسابي",
+  "welcomeTitle": "استأجر مولّد كهرباء في أي مكان في مصر",
+  "welcomeSubtitle": "تصفّح المولدات، أرسل طلب، والمالك يوصّل لك.",
+  "loginTitle": "تسجيل الدخول",
+  "phoneLabel": "رقم الموبايل",
+  "phoneHint": "01XXXXXXXXX",
+  "sendCode": "إرسال الكود",
+  "browseGenerators": "تصفّح المولدات",
+  "noGeneratorsYet": "لا توجد مولدات لعرضها حتى الآن.",
+  "language": "اللغة",
+  "english": "English",
+  "arabic": "العربية"
+}

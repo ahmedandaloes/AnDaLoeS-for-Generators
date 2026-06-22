@@ -7,6 +7,11 @@ commission on every completed rental.
 **Stack:** Flutter (Android + iOS) · Riverpod · Supabase (Postgres) ·
 Paymob/Fawry payments · phone OTP auth · Arabic-first (RTL).
 
+## Project layout
+- [`app/`](app/) — the Flutter mobile app (Android + iOS). See [`app/README.md`](app/README.md) to run it.
+- [`supabase/`](supabase/) — database schema (migrations) + setup. See [`supabase/README.md`](supabase/README.md).
+- [`docs/`](docs/) — product & architecture docs.
+
 ## Documentation
 
 - [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) — product decisions from the
