@@ -42,6 +42,18 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
     }
   }
 
+  Future<void> _guest() async {
+    setState(() => _loading = true);
+    try {
+      await supabase.auth.signInAnonymously();
+      // On success the router sends us home.
+    } on AuthException catch (e) {
+      _show(e.message);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   void _show(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
@@ -98,6 +110,21 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Text('Sign in / Create account'),
+            ),
+            const SizedBox(height: 12),
+            const Row(children: [
+              Expanded(child: Divider()),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Text('or'),
+              ),
+              Expanded(child: Divider()),
+            ]),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _loading ? null : _guest,
+              icon: const Icon(Icons.person_outline),
+              label: const Text('Continue as guest (dev)'),
             ),
           ],
         ),
