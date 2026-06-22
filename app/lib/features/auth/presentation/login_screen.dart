@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
@@ -118,6 +119,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Text(_codeSent ? 'Verify' : l.sendCode),
+            ),
+            const Spacer(),
+            TextButton(
+              onPressed: () => context.push('/dev-login'),
+              child: const Text('Developer sign-in (email)'),
             ),
           ],
         ),

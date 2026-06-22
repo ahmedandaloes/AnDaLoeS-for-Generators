@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/supabase.dart';
+import '../../features/auth/presentation/email_login_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/generators/presentation/home_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
@@ -23,12 +24,13 @@ final appRouter = GoRouter(
     final needsAuth = protected.contains(loc);
 
     if (!loggedIn && needsAuth) return '/login';
-    if (loggedIn && loc == '/login') return '/';
+    if (loggedIn && (loc == '/login' || loc == '/dev-login')) return '/';
     return null;
   },
   routes: [
     GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
     GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+    GoRoute(path: '/dev-login', builder: (_, __) => const EmailLoginScreen()),
     GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
   ],
 );
