@@ -13,11 +13,12 @@ Paymob/Fawry payments · phone OTP auth · Arabic-first (RTL).
   decisions, and the feature-first project structure.
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) — database schema, relationships,
   and security (RLS) design.
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — phased plan. **Phase 1 MVP = core
-  rental loop.**
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — plan to build the **full
+  marketplace** (not a minimal MVP), organized into workstreams.
 
-## Where to start
+## Scope
 
-Read `ROADMAP.md` → Phase 1. The MVP is the core rental loop: phone login →
-browse generators → request rental → owner accepts. No online payment yet
-(added in Phase 2).
+v1 is the complete product: phone-OTP auth, browsing & search, the rental
+loop, **online payments (Paymob + Fawry)**, owner onboarding & dashboard,
+automatic commissions, and ratings. The roadmap orders the work by dependency,
+not by cutting features. Start with `ROADMAP.md` → Workstream 0 (Foundations).

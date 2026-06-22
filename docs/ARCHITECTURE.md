@@ -104,7 +104,7 @@ presentation → domain → data. Domain never imports Flutter or Supabase.
 
 ---
 
-## 4. High-level flow (core rental loop — MVP)
+## 4. High-level flow (rental loop)
 
 ```
 Customer                Platform (Supabase)            Owner
@@ -115,21 +115,26 @@ Customer                Platform (Supabase)            Owner
    |                          |---- notify (FCM) ------->|
    |                          |<--- accept / reject -----|
    |<------- notify ----------|                          |
-   |-- (cash on delivery) --->| mark completed           |
+   |-- pay (Paymob/Fawry) --->| record payment           |
+   |                          | mark completed           |
    |                          | record commission        |
 ```
 
-Online payment (Paymob/Fawry) replaces "cash on delivery" in a later phase.
+Online payment (Paymob/Fawry) is part of v1. Cash/Fawry-kiosk is supported as
+a payment method, not as a workaround for missing payment integration.
 
 ---
 
 ## 5. Scaling path
 
-1. **MVP:** Flutter + Supabase, core rental loop, manual/cash settlement.
-2. **Payments:** integrate Paymob + Fawry; record commission automatically.
-3. **Owner self-service:** owner dashboard, onboarding flow for new partners.
-4. **Business logic layer:** move pricing, payouts, and commission rules into
+The target is the **full marketplace** in v1 (see `ROADMAP.md`), not a minimal
+release. "Scaling" here means how the *architecture* grows under load and
+complexity, not which features ship:
+
+1. **Build:** Flutter + Supabase covering the complete feature set —
+   auth, rentals, payments (Paymob/Fawry), owner platform, commissions.
+2. **Business logic layer:** move pricing, payouts, and commission rules into
    Edge Functions / NestJS as they get complex.
-5. **Operational scale:** read replicas, caching, analytics, fraud checks.
+3. **Operational scale:** read replicas, caching, analytics, fraud checks.
 
 See `ROADMAP.md` for the phased plan and `DATA_MODEL.md` for the schema.
