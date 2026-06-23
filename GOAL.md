@@ -33,16 +33,20 @@
 - Generator cards: company name shown below title (storefront icon)
 - Generator detail: avg response time badge (Responds in ~X hr) based on accepted/rejected requests
 - Notifications: layered bell illustration with green checkmark badge for empty state
+- Generator detail: share button sends name + KVA + price + city
+- Home: Recently Viewed horizontal scroll section (last 5, with photo strip + Clear button)
+- My Rentals Done tab: green gradient spending summary banner (total EGP + count)
+- Owner Earnings: month chip selector to filter by month or All time
 
 ---
 
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Generator detail: share button (share generator name + price + city as text)
-- [ ] Home screen: "Recently viewed" section (last 5 generators tapped, stored in StateProvider)
-- [ ] My Rentals: show total amount spent summary at top of completed tab
-- [ ] Owner Dashboard: earnings tab — add month selector to navigate between months
+- [ ] Generator detail: availability calendar — show booked ranges as red, available as green
+- [ ] Home screen: "Popular in your area" section based on most-rented city
+- [ ] Rental request screen: smarter conflict UX — list exact booked date ranges before picker
+- [ ] Profile: edit phone number inline
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
