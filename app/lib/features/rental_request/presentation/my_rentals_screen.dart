@@ -252,6 +252,11 @@ class _RentalCard extends ConsumerWidget {
                   ),
                 ],
               ),
+              // Status timeline — hide for rejected/cancelled
+              if (status != 'rejected' && status != 'cancelled') ...[
+                const SizedBox(height: 14),
+                _StatusTimeline(status: status, cs: cs),
+              ],
               // Action buttons by status
               if (status == 'pending') ...[
                 const SizedBox(height: 12),
@@ -512,6 +517,83 @@ class _RentalCard extends ConsumerWidget {
     } catch (_) {
       return dateStr.toString();
     }
+  }
+}
+
+// ── Status progress timeline ──────────────────────────────────────────────────
+class _StatusTimeline extends StatelessWidget {
+  const _StatusTimeline({required this.status, required this.cs});
+  final String status;
+  final ColorScheme cs;
+
+  static const _steps = ['pending', 'accepted', 'active', 'completed'];
+  static const _labels = ['Submitted', 'Accepted', 'Active', 'Done'];
+  static const _icons = [
+    Icons.send_rounded,
+    Icons.check_circle_outline,
+    Icons.bolt,
+    Icons.verified_outlined,
+  ];
+
+  int get _currentIndex => _steps.indexOf(status);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(_steps.length * 2 - 1, (i) {
+        if (i.isOdd) {
+          // Connector line
+          final stepIndex = (i - 1) ~/ 2;
+          final done = _currentIndex > stepIndex;
+          return Expanded(
+            child: Container(
+              height: 2,
+              color: done
+                  ? cs.primary
+                  : cs.outlineVariant,
+            ),
+          );
+        }
+        final stepIndex = i ~/ 2;
+        final done = _currentIndex > stepIndex;
+        final active = _currentIndex == stepIndex;
+        final color = done || active ? cs.primary : cs.outlineVariant;
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: active ? 28 : 22,
+              height: active ? 28 : 22,
+              decoration: BoxDecoration(
+                color: done || active ? cs.primary : cs.surfaceContainerHighest,
+                shape: BoxShape.circle,
+                border: active
+                    ? Border.all(
+                        color: cs.primary.withValues(alpha: 0.35), width: 3)
+                    : null,
+              ),
+              child: Icon(
+                _icons[stepIndex],
+                size: active ? 14 : 11,
+                color: done || active ? cs.onPrimary : cs.outlineVariant,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              _labels[stepIndex],
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight:
+                    active ? FontWeight.w700 : FontWeight.w400,
+                color: active ? cs.primary : color,
+              ),
+            ),
+          ],
+        );
+      }),
+    );
   }
 }
 

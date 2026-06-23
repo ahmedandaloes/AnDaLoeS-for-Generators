@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
 
@@ -31,12 +34,56 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
+  final _focusNode = FocusNode();
   bool _sending = false;
+  bool _otherTyping = false;
+  Timer? _typingClearTimer;
+  RealtimeChannel? _typingChannel;
+  final _uid = supabase.auth.currentUser?.id ?? '';
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onTextChanged);
+    _subscribeTyping();
+  }
+
+  void _subscribeTyping() {
+    _typingChannel = supabase
+        .channel('typing-${widget.rentalRequestId}')
+        .onBroadcast(
+          event: 'typing',
+          callback: (payload) {
+            final sender = payload['uid']?.toString();
+            if (sender == null || sender == _uid) return;
+            if (mounted) {
+              setState(() => _otherTyping = true);
+              _typingClearTimer?.cancel();
+              _typingClearTimer =
+                  Timer(const Duration(seconds: 3), () {
+                if (mounted) setState(() => _otherTyping = false);
+              });
+            }
+          },
+        )
+        .subscribe();
+  }
+
+  void _onTextChanged() {
+    if (_controller.text.isNotEmpty) {
+      _typingChannel?.sendBroadcastMessage(
+          event: 'typing', payload: {'uid': _uid});
+    }
+  }
 
   @override
   void dispose() {
+    _controller.removeListener(_onTextChanged);
     _controller.dispose();
     _scrollController.dispose();
+    _focusNode.dispose();
+    _typingClearTimer?.cancel();
+    _typingChannel?.unsubscribe();
     super.dispose();
   }
 
@@ -55,15 +102,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Future<void> _send() async {
     final body = _controller.text.trim();
     if (body.isEmpty) return;
-    final uid = supabase.auth.currentUser?.id;
-    if (uid == null) return;
+    if (_uid.isEmpty) return;
 
     setState(() => _sending = true);
     _controller.clear();
     try {
       await supabase.from('messages').insert({
         'rental_request_id': widget.rentalRequestId,
-        'sender_id': uid,
+        'sender_id': _uid,
         'body': body,
       });
       HapticFeedback.lightImpact();
@@ -71,7 +117,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send: $e'),
+          SnackBar(
+              content: Text('Failed to send: $e'),
               behavior: SnackBarBehavior.floating),
         );
         _controller.text = body;
@@ -84,7 +131,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final uid = supabase.auth.currentUser?.id ?? '';
     final messagesAsync =
         ref.watch(_messagesProvider(widget.rentalRequestId));
 
@@ -94,8 +140,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(widget.otherPartyName,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            Text('Chat', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w600)),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: _otherTyping
+                  ? Text(
+                      'typing…',
+                      key: const ValueKey('typing'),
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: cs.primary,
+                          fontStyle: FontStyle.italic),
+                    )
+                  : Text(
+                      'Chat',
+                      key: const ValueKey('chat'),
+                      style: TextStyle(
+                          fontSize: 12, color: cs.onSurfaceVariant),
+                    ),
+            ),
           ],
         ),
       ),
@@ -114,7 +178,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       children: [
                         Icon(Icons.chat_bubble_outline_rounded,
                             size: 48,
-                            color: cs.onSurfaceVariant.withValues(alpha: 0.4)),
+                            color:
+                                cs.onSurfaceVariant.withValues(alpha: 0.4)),
                         const SizedBox(height: 12),
                         Text(
                           'No messages yet.\nSay hello to ${widget.otherPartyName}!',
@@ -132,10 +197,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   controller: _scrollController,
                   padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 16),
-                  itemCount: messages.length,
+                  itemCount:
+                      messages.length + (_otherTyping ? 1 : 0),
                   itemBuilder: (context, i) {
+                    // Typing indicator bubble at end
+                    if (_otherTyping && i == messages.length) {
+                      return _TypingBubble(cs: cs);
+                    }
+
                     final msg = messages[i];
-                    final isMe = msg['sender_id'] == uid;
+                    final isMe = msg['sender_id'] == _uid;
                     final showDate = i == 0 ||
                         _dayOf(msg['created_at']) !=
                             _dayOf(messages[i - 1]['created_at']);
@@ -144,7 +215,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       children: [
                         if (showDate)
                           Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 8),
                             child: Text(
                               _formatDay(msg['created_at']),
                               style: TextStyle(
@@ -175,16 +247,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 color: cs.surface,
                 border: Border(
                     top: BorderSide(
-                        color: cs.outlineVariant.withValues(alpha: 0.4))),
+                        color:
+                            cs.outlineVariant.withValues(alpha: 0.4))),
               ),
               child: Row(children: [
                 Expanded(
                   child: TextField(
                     controller: _controller,
+                    focusNode: _focusNode,
                     maxLines: null,
                     maxLength: 500,
-                    buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+                    buildCounter: (_,
+                            {required currentLength,
+                            required isFocused,
+                            maxLength}) =>
+                        null,
                     textCapitalization: TextCapitalization.sentences,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _send(),
                     decoration: InputDecoration(
                       hintText: 'Type a message…',
                       filled: true,
@@ -196,7 +276,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 10),
                     ),
-                    onSubmitted: (_) => _send(),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -216,7 +295,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             padding: const EdgeInsets.all(12),
                             minimumSize: const Size(44, 44),
                           ),
-                          child: const Icon(Icons.send_rounded, size: 20),
+                          child:
+                              const Icon(Icons.send_rounded, size: 20),
                         ),
                 ),
               ]),
@@ -244,19 +324,91 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       final now = DateTime.now();
       if (dt.year == now.year &&
           dt.month == now.month &&
-          dt.day == now.day) {
-        return 'Today';
-      }
-      final yesterday = now.subtract(const Duration(days: 1));
-      if (dt.year == yesterday.year &&
-          dt.month == yesterday.month &&
-          dt.day == yesterday.day) {
+          dt.day == now.day) return 'Today';
+      final y = now.subtract(const Duration(days: 1));
+      if (dt.year == y.year && dt.month == y.month && dt.day == y.day) {
         return 'Yesterday';
       }
       return '${dt.day}/${dt.month}/${dt.year}';
     } catch (_) {
       return '';
     }
+  }
+}
+
+class _TypingBubble extends StatefulWidget {
+  const _TypingBubble({required this.cs});
+  final ColorScheme cs;
+
+  @override
+  State<_TypingBubble> createState() => _TypingBubbleState();
+}
+
+class _TypingBubbleState extends State<_TypingBubble>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _anim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: widget.cs.surfaceContainerHigh,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(18),
+            topRight: Radius.circular(18),
+            bottomLeft: Radius.circular(4),
+            bottomRight: Radius.circular(18),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (i) {
+            return AnimatedBuilder(
+              animation: _anim,
+              builder: (_, __) {
+                final v =
+                    ((_anim.value + i / 3) % 1.0);
+                final scale = 0.6 + 0.4 * (v < 0.5 ? v * 2 : (1 - v) * 2);
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Transform.scale(
+                    scale: scale,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: widget.cs.onSurfaceVariant
+                            .withValues(alpha: 0.6),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          }),
+        ),
+      ),
+    );
   }
 }
 
@@ -288,13 +440,16 @@ class _MessageBubble extends StatelessWidget {
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(18),
             topRight: const Radius.circular(18),
-            bottomLeft:
-                isMe ? const Radius.circular(18) : const Radius.circular(4),
-            bottomRight:
-                isMe ? const Radius.circular(4) : const Radius.circular(18),
+            bottomLeft: isMe
+                ? const Radius.circular(18)
+                : const Radius.circular(4),
+            bottomRight: isMe
+                ? const Radius.circular(4)
+                : const Radius.circular(18),
           ),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Column(
           crossAxisAlignment:
               isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,

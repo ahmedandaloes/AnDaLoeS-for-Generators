@@ -11,8 +11,10 @@ import 'widgets/detail_sections.dart';
 import 'widgets/photo_carousel.dart';
 
 class GeneratorDetailScreen extends ConsumerWidget {
-  const GeneratorDetailScreen({super.key, required this.id});
+  const GeneratorDetailScreen(
+      {super.key, required this.id, this.scrollController});
   final String id;
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,16 +42,19 @@ class GeneratorDetailScreen extends ConsumerWidget {
             ),
           ),
         ),
-        data: (gen) => _Body(gen: gen, cs: cs),
+        data: (gen) =>
+            _Body(gen: gen, cs: cs, scrollController: scrollController),
       ),
     );
   }
 }
 
 class _Body extends ConsumerWidget {
-  const _Body({required this.gen, required this.cs});
+  const _Body(
+      {required this.gen, required this.cs, this.scrollController});
   final Map<String, dynamic> gen;
   final ColorScheme cs;
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,6 +66,7 @@ class _Body extends ConsumerWidget {
     final similarAsync = ref.watch(similarGeneratorsProvider(gen));
 
     return CustomScrollView(
+      controller: scrollController,
       slivers: [
         // ── Photo header ───────────────────────────────────────────────
         SliverAppBar(
@@ -322,87 +328,123 @@ class _Body extends ConsumerWidget {
 
 // ── Similar generators ────────────────────────────────────────────────────────
 
-// ── Rent Now FAB — added by the scaffold wrapper in the router ────────────────
-class GeneratorDetailWrapper extends ConsumerWidget {
+// ── Rent Now FAB — scroll-aware sticky wrapper ────────────────────────────────
+class GeneratorDetailWrapper extends ConsumerStatefulWidget {
   const GeneratorDetailWrapper({super.key, required this.id});
   final String id;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GeneratorDetailWrapper> createState() =>
+      _GeneratorDetailWrapperState();
+}
+
+class _GeneratorDetailWrapperState
+    extends ConsumerState<GeneratorDetailWrapper> {
+  final _scrollController = ScrollController();
+  bool _fabVisible = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      final offset = _scrollController.offset;
+      final visible = offset < 100 || _scrollController.position.userScrollDirection.name == 'forward';
+      if (visible != _fabVisible) setState(() => _fabVisible = visible);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final loggedIn = supabase.auth.currentSession != null;
-    final isFavAsync = ref.watch(isFavProvider(id));
+    final isFavAsync = ref.watch(isFavProvider(widget.id));
     final isFav = isFavAsync.valueOrNull ?? false;
+    final id = widget.id;
 
     return Scaffold(
-      body: GeneratorDetailScreen(id: id),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Share button
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: FloatingActionButton.small(
-              heroTag: 'share',
-              backgroundColor: cs.surfaceContainerHighest,
-              foregroundColor: cs.onSurfaceVariant,
-              tooltip: 'Share',
-              onPressed: () => _shareGenerator(ref, id),
-              child: const Icon(Icons.share_outlined, size: 18),
-            ),
-          ),
-          // Favorite button
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: FloatingActionButton.small(
-              heroTag: 'fav',
-              backgroundColor: isFav
-                  ? Colors.red.shade50
-                  : cs.surfaceContainerHighest,
-              foregroundColor:
-                  isFav ? Colors.red.shade400 : cs.onSurfaceVariant,
-              tooltip: isFav ? 'Remove from saved' : 'Save',
-              onPressed: () => _toggleFav(ref, id, isFav),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: Icon(
-                  isFav ? Icons.favorite_rounded : Icons.favorite_border,
-                  key: ValueKey(isFav),
-                  size: 18,
+      body: GeneratorDetailScreen(id: id, scrollController: _scrollController),
+      floatingActionButton: AnimatedSlide(
+        duration: const Duration(milliseconds: 250),
+        offset: _fabVisible ? Offset.zero : const Offset(0, 1.5),
+        curve: Curves.easeInOut,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: _fabVisible ? 1.0 : 0.0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Share button
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: FloatingActionButton.small(
+                  heroTag: 'share',
+                  backgroundColor: cs.surfaceContainerHighest,
+                  foregroundColor: cs.onSurfaceVariant,
+                  tooltip: 'Share',
+                  onPressed: () => _shareGenerator(ref, id),
+                  child: const Icon(Icons.share_outlined, size: 18),
                 ),
               ),
-            ),
-          ),
-          // Report button
-          if (loggedIn)
-            Padding(
-              padding: const EdgeInsets.only(right: 10),
-              child: FloatingActionButton.small(
-                heroTag: 'report',
-                backgroundColor: cs.errorContainer,
-                foregroundColor: cs.onErrorContainer,
-                tooltip: 'Report',
-                onPressed: () => context.push(
-                    '/report?type=generator&id=$id&name=Generator'),
-                child: const Icon(Icons.flag_outlined, size: 18),
+              // Favorite button
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: FloatingActionButton.small(
+                  heroTag: 'fav',
+                  backgroundColor: isFav
+                      ? Colors.red.shade50
+                      : cs.surfaceContainerHighest,
+                  foregroundColor:
+                      isFav ? Colors.red.shade400 : cs.onSurfaceVariant,
+                  tooltip: isFav ? 'Remove from saved' : 'Save',
+                  onPressed: () => _toggleFav(ref, id, isFav),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      isFav ? Icons.favorite_rounded : Icons.favorite_border,
+                      key: ValueKey(isFav),
+                      size: 18,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          FloatingActionButton.extended(
-            heroTag: 'rent',
-            onPressed: () {
-              HapticFeedback.mediumImpact();
-              if (!loggedIn) {
-                context.push('/login');
-                return;
-              }
-              context.push('/generators/$id/request');
-            },
-            icon: const Icon(Icons.calendar_month_outlined),
-            label: const Text('Rent Now'),
-            backgroundColor: cs.primary,
-            foregroundColor: cs.onPrimary,
+              // Report button
+              if (loggedIn)
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: FloatingActionButton.small(
+                    heroTag: 'report',
+                    backgroundColor: cs.errorContainer,
+                    foregroundColor: cs.onErrorContainer,
+                    tooltip: 'Report',
+                    onPressed: () => context.push(
+                        '/report?type=generator&id=$id&name=Generator'),
+                    child: const Icon(Icons.flag_outlined, size: 18),
+                  ),
+                ),
+              FloatingActionButton.extended(
+                heroTag: 'rent',
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  if (!loggedIn) {
+                    context.push('/login');
+                    return;
+                  }
+                  context.push('/generators/$id/request');
+                },
+                icon: const Icon(Icons.calendar_month_outlined),
+                label: const Text('Rent Now'),
+                backgroundColor: cs.primary,
+                foregroundColor: cs.onPrimary,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
       floatingActionButtonLocation:
           FloatingActionButtonLocation.centerFloat,
@@ -434,6 +476,6 @@ class GeneratorDetailWrapper extends ConsumerWidget {
           .from('user_favorites')
           .upsert({'user_id': uid, 'generator_id': id});
     }
-    ref.invalidate(isFavProvider(id));
+    ref.invalidate(isFavProvider(widget.id));
   }
 }
