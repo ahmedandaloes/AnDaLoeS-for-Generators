@@ -25,23 +25,27 @@ class _Filter {
   final String query;
   final String? governorate;
   final double? maxKva;
+  final double? maxPrice;
   final _SortBy sort;
 
   const _Filter({
     this.query = '',
     this.governorate,
     this.maxKva,
+    this.maxPrice,
     this.sort = _SortBy.newest,
   });
 
   _Filter withQuery(String q) =>
-      _Filter(query: q, governorate: governorate, maxKva: maxKva, sort: sort);
+      _Filter(query: q, governorate: governorate, maxKva: maxKva, maxPrice: maxPrice, sort: sort);
   _Filter withGovernorate(String? g) =>
-      _Filter(query: query, governorate: g, maxKva: maxKva, sort: sort);
+      _Filter(query: query, governorate: g, maxKva: maxKva, maxPrice: maxPrice, sort: sort);
   _Filter withMaxKva(double? k) =>
-      _Filter(query: query, governorate: governorate, maxKva: k, sort: sort);
+      _Filter(query: query, governorate: governorate, maxKva: k, maxPrice: maxPrice, sort: sort);
+  _Filter withMaxPrice(double? p) =>
+      _Filter(query: query, governorate: governorate, maxKva: maxKva, maxPrice: p, sort: sort);
   _Filter withSort(_SortBy s) =>
-      _Filter(query: query, governorate: governorate, maxKva: maxKva, sort: s);
+      _Filter(query: query, governorate: governorate, maxKva: maxKva, maxPrice: maxPrice, sort: s);
 }
 
 final _filterProvider = StateProvider<_Filter>((ref) => const _Filter());
@@ -154,6 +158,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final kva = double.tryParse(g['capacity_kva']?.toString() ?? '0') ?? 0;
         if (kva > filter.maxKva!) return false;
       }
+      if (filter.maxPrice != null) {
+        final price =
+            double.tryParse(g['price_per_day']?.toString() ?? '0') ?? 0;
+        if (price > filter.maxPrice!) return false;
+      }
       return true;
     }).toList()
       ..sort((a, b) {
@@ -178,7 +187,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final hasFilter = filter.query.isNotEmpty ||
         filter.governorate != null ||
-        filter.maxKva != null;
+        filter.maxKva != null ||
+        filter.maxPrice != null;
 
     return Scaffold(
       body: CustomScrollView(
@@ -302,6 +312,86 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           _showFilterSheet(context, ref, filter, cs),
                     ),
                   ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Active filter pills ───────────────────────────────────────
+          if (filter.governorate != null || filter.maxKva != null || filter.maxPrice != null)
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 38,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                  children: [
+                    if (filter.governorate != null)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: InputChip(
+                          label: Text(filter.governorate!,
+                              style: const TextStyle(fontSize: 12)),
+                          onDeleted: () => ref
+                              .read(_filterProvider.notifier)
+                              .state = filter.withGovernorate(null),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                    if (filter.maxKva != null)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: InputChip(
+                          label: Text('≤ ${filter.maxKva!.toInt()} KVA',
+                              style: const TextStyle(fontSize: 12)),
+                          onDeleted: () => ref
+                              .read(_filterProvider.notifier)
+                              .state = filter.withMaxKva(null),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                    if (filter.maxPrice != null)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: InputChip(
+                          label: Text('≤ ${filter.maxPrice!.toInt()} EGP',
+                              style: const TextStyle(fontSize: 12)),
+                          onDeleted: () => ref
+                              .read(_filterProvider.notifier)
+                              .state = filter.withMaxPrice(null),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
+          // ── Governorate quick-chips ───────────────────────────────────
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 44,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                children: [
+                  for (final gov in [
+                    'Cairo', 'Giza', 'Alexandria', 'Minya',
+                    'Assiut', 'Sharqia', 'Aswan', 'Luxor'
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        avatar: const Icon(Icons.location_on_outlined, size: 12),
+                        label: Text(gov,
+                            style: const TextStyle(fontSize: 12)),
+                        selected: filter.governorate == gov,
+                        onSelected: (on) => ref
+                            .read(_filterProvider.notifier)
+                            .state = filter.withGovernorate(on ? gov : null),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -965,17 +1055,21 @@ class _FilterSheet extends StatefulWidget {
 class _FilterSheetState extends State<_FilterSheet> {
   late String? _governorate;
   late double? _maxKva;
+  late double? _maxPrice;
 
   @override
   void initState() {
     super.initState();
     _governorate = widget.filter.governorate;
     _maxKva = widget.filter.maxKva;
+    _maxPrice = widget.filter.maxPrice;
   }
 
   void _apply() {
-    widget.ref.read(_filterProvider.notifier).state =
-        widget.filter.withGovernorate(_governorate).withMaxKva(_maxKva);
+    widget.ref.read(_filterProvider.notifier).state = widget.filter
+        .withGovernorate(_governorate)
+        .withMaxKva(_maxKva)
+        .withMaxPrice(_maxPrice);
     Navigator.pop(context);
   }
 
@@ -983,9 +1077,12 @@ class _FilterSheetState extends State<_FilterSheet> {
     setState(() {
       _governorate = null;
       _maxKva = null;
+      _maxPrice = null;
     });
-    widget.ref.read(_filterProvider.notifier).state =
-        widget.filter.withGovernorate(null).withMaxKva(null);
+    widget.ref.read(_filterProvider.notifier).state = widget.filter
+        .withGovernorate(null)
+        .withMaxKva(null)
+        .withMaxPrice(null);
     Navigator.pop(context);
   }
 
@@ -1065,6 +1162,40 @@ class _FilterSheetState extends State<_FilterSheet> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () => setState(() => _maxKva = null),
+                child: const Text('Remove limit'),
+              ),
+            ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const Text('Max daily price (EGP)',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5)),
+              const Spacer(),
+              Text(
+                _maxPrice == null ? 'Any' : '≤ ${_maxPrice!.toInt()} EGP',
+                style: TextStyle(
+                    fontSize: 12, color: cs.onSurfaceVariant),
+              ),
+            ],
+          ),
+          Slider(
+            value: _maxPrice ?? 5000,
+            min: 100,
+            max: 5000,
+            divisions: 49,
+            label: _maxPrice == null
+                ? 'Any'
+                : '${_maxPrice!.toInt()} EGP',
+            onChanged: (v) => setState(() => _maxPrice = v < 5000 ? v : null),
+          ),
+          if (_maxPrice != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => setState(() => _maxPrice = null),
                 child: const Text('Remove limit'),
               ),
             ),

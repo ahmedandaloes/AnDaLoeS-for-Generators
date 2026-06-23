@@ -32,12 +32,28 @@ final _earningsProvider =
   final totalCommissions = commissionList.fold<double>(
       0, (s, c) => s + (double.tryParse(c['commission_amount']?.toString() ?? '0') ?? 0));
 
+  // Group net revenue by month (YYYY-MM)
+  final monthlyMap = <String, double>{};
+  for (final r in rentalList) {
+    final raw = r['start_date']?.toString() ?? '';
+    if (raw.length >= 7) {
+      final month = raw.substring(0, 7);
+      final gross = double.tryParse(r['price_total']?.toString() ?? '0') ?? 0;
+      final fee = commissionMap[r['id'].toString()] != null
+          ? double.tryParse(commissionMap[r['id'].toString()]?['commission_amount']?.toString() ?? '0') ?? 0
+          : 0.0;
+      monthlyMap[month] = (monthlyMap[month] ?? 0) + (gross - fee);
+    }
+  }
+  final sortedMonths = monthlyMap.keys.toList()..sort();
+
   return {
     'rentals': rentalList,
     'commission_map': commissionMap,
     'total_revenue': totalRevenue,
     'total_commissions': totalCommissions,
     'net_payout': totalRevenue - totalCommissions,
+    'monthly_net': {for (final m in sortedMonths) m: monthlyMap[m]!},
   };
 });
 
@@ -103,6 +119,46 @@ class OwnerEarningsScreen extends ConsumerWidget {
                   color: Colors.green.shade700,
                   large: true,
                 ),
+                const SizedBox(height: 12),
+                // Rental count badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: cs.outlineVariant.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.receipt_long_outlined,
+                          size: 18, color: cs.onSurfaceVariant),
+                      const SizedBox(width: 10),
+                      Text('${rentals.length} completed rental${rentals.length == 1 ? '' : 's'}',
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
+                // Monthly breakdown chart
+                if ((data['monthly_net'] as Map<String, double>).isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  Text(
+                    'MONTHLY NET EARNINGS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _MonthlyChart(
+                    monthlyNet: data['monthly_net'] as Map<String, double>,
+                    cs: cs,
+                  ),
+                ],
                 const SizedBox(height: 24),
                 if (rentals.isEmpty)
                   Center(
@@ -158,6 +214,88 @@ class OwnerEarningsScreen extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _MonthlyChart extends StatelessWidget {
+  const _MonthlyChart({required this.monthlyNet, required this.cs});
+  final Map<String, double> monthlyNet;
+  final ColorScheme cs;
+
+  String _label(String ym) {
+    const months = [
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    try {
+      final parts = ym.split('-');
+      final m = int.parse(parts[1]);
+      return '${months[m]}\n${parts[0].substring(2)}';
+    } catch (_) {
+      return ym;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final maxVal = monthlyNet.values.fold<double>(0, (m, v) => v > m ? v : m);
+    if (maxVal == 0) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: cs.outlineVariant.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              for (final entry in monthlyNet.entries)
+                Expanded(
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 3),
+                    child: Column(
+                      children: [
+                        Text(
+                          '${(entry.value / 1000).toStringAsFixed(1)}k',
+                          style: TextStyle(
+                              fontSize: 9, color: cs.onSurfaceVariant),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 600),
+                          curve: Curves.easeOut,
+                          height: 80 * (entry.value / maxVal),
+                          decoration: BoxDecoration(
+                            color: cs.primary
+                                .withValues(alpha: 0.7 + 0.3 * (entry.value / maxVal)),
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(4)),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _label(entry.key),
+                          style: TextStyle(
+                              fontSize: 9, color: cs.onSurfaceVariant),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
