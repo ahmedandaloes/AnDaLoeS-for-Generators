@@ -17,22 +17,23 @@
 - CI: flutter.yml with Flutter 3.32.x, analyze+test, APK build job
 - CLAUDE.md agentic guide
 - /goal + /loop skills for self-sustaining development across context windows
+- Onboarding splash: 3-page PageView, SharedPreferences flag, first-launch only
+- Generator detail: favorite FAB (syncs with Supabase user_favorites), animated icon
+- Company profile: stat chips (generator count, completed rentals)
 
 ---
 
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Onboarding splash: 3-page PageView for new installs (how it works for customers)
-- [ ] Company profile public page: show company name, logo, rating, all their generators
-- [ ] Generator detail: favorite/save button on the detail screen itself (not just home card)
-- [ ] Share generator: platform share sheet with title, price, and deep link
+- [ ] Search autocomplete: as-you-type suggestions from generator titles/cities
+- [ ] Generator fuel type filter (diesel/gas/natural gas) — migration 0014 + UI chip
+- [ ] Rental request UX: calendar date range picker (replace text fields)
+- [ ] Owner: respond to rental request with message (accept + note to customer)
 
 ### SOON
 - [ ] Payment flow: COD confirmation screen with digital payment placeholder
 - [ ] Chat screen: owner ↔ customer thread per rental request
-- [ ] Search autocomplete: as-you-type suggestions from generator titles
-- [ ] Generator fuel type filter (diesel/gas/natural gas) — requires migration 0014
 - [ ] Push notifications: FCM integration with Supabase edge function
 - [ ] Map view: generators plotted on Google Maps
 - [ ] Referral code system: users get discount for referring friends
@@ -48,8 +49,8 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: similar generators, haptic feedback (Apple-level polish), GOAL.md agentic system`
-**Next action:** Onboarding splash (3-page) + company profile page + favorite button on detail screen
+**Last commit:** `feat: onboarding splash, detail favorite button, company stats chips`
+**Next action:** Search autocomplete + fuel type filter (migration 0014) + calendar date picker for rental request
 
 ---
 
