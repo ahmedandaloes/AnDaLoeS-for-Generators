@@ -33,6 +33,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
   final _pricePerMonthController = TextEditingController();
   final _cityController = TextEditingController();
   String? _governorate;
+  String _fuelType = 'diesel';
   bool _submitting = false;
 
   // Photos
@@ -101,6 +102,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
         if (_cityController.text.trim().isNotEmpty)
           'city': _cityController.text.trim(),
         'governorate': _governorate,
+        'fuel_type': _fuelType,
         'status': 'available',
       }).select('id').single();
 
@@ -193,6 +195,29 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
             _Field('Title *', 'e.g. Cummins 100 KVA Diesel', _titleController),
             const SizedBox(height: 12),
             _NumField('Capacity (KVA) *', 'e.g. 100', _capacityController),
+            const SizedBox(height: 12),
+            _Label('Fuel type *'),
+            DropdownButtonFormField<String>(
+              value: _fuelType,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: cs.surfaceContainerLowest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                prefixIcon: const Icon(Icons.local_gas_station_outlined),
+              ),
+              items: const [
+                DropdownMenuItem(value: 'diesel', child: Text('Diesel')),
+                DropdownMenuItem(value: 'petrol', child: Text('Petrol')),
+                DropdownMenuItem(value: 'gas', child: Text('Gas (LPG)')),
+                DropdownMenuItem(
+                    value: 'natural_gas', child: Text('Natural Gas')),
+                DropdownMenuItem(value: 'solar', child: Text('Solar')),
+              ],
+              onChanged: (v) => setState(() => _fuelType = v ?? 'diesel'),
+            ),
             const SizedBox(height: 12),
             _Field('Description', 'Optional details about the generator',
                 _descController,

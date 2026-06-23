@@ -482,8 +482,8 @@ class _OwnerRequestCard extends StatelessWidget {
                         side: BorderSide(color: cs.error.withValues(alpha: 0.4)),
                         minimumSize: const Size.fromHeight(40),
                       ),
-                      onPressed: () =>
-                          _updateStatus(context, request['id'].toString(), 'rejected'),
+                      onPressed: () => _rejectWithNote(
+                          context, request['id'].toString()),
                       child: const Text('Reject'),
                     ),
                   ),
@@ -492,8 +492,8 @@ class _OwnerRequestCard extends StatelessWidget {
                     child: FilledButton(
                       style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(40)),
-                      onPressed: () =>
-                          _updateStatus(context, request['id'].toString(), 'accepted'),
+                      onPressed: () => _acceptWithNote(
+                          context, request['id'].toString()),
                       child: const Text('Accept'),
                     ),
                   ),
@@ -526,12 +526,103 @@ class _OwnerRequestCard extends StatelessWidget {
     );
   }
 
+  Future<void> _acceptWithNote(
+      BuildContext context, String requestId) async {
+    final noteController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Accept request'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+                'Add an optional message to the customer:',
+                style: TextStyle(fontSize: 13)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: noteController,
+              maxLines: 3,
+              maxLength: 200,
+              decoration: const InputDecoration(
+                hintText: 'e.g. I will arrive at 9am. Please ensure access.',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Accept')),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      final note = noteController.text.trim();
+      await _updateStatus(context, requestId, 'accepted',
+          ownerNote: note.isNotEmpty ? note : null);
+    }
+  }
+
+  Future<void> _rejectWithNote(
+      BuildContext context, String requestId) async {
+    final noteController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Reject request'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Let the customer know why (optional):',
+                style: TextStyle(fontSize: 13)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: noteController,
+              maxLines: 3,
+              maxLength: 200,
+              decoration: const InputDecoration(
+                hintText: 'e.g. Generator is already booked for those dates.',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      final note = noteController.text.trim();
+      await _updateStatus(context, requestId, 'rejected',
+          ownerNote: note.isNotEmpty ? note : null);
+    }
+  }
+
   Future<void> _updateStatus(
-      BuildContext context, String requestId, String newStatus) async {
+      BuildContext context, String requestId, String newStatus,
+      {String? ownerNote}) async {
     try {
+      final update = <String, dynamic>{'status': newStatus};
+      if (ownerNote != null) update['owner_note'] = ownerNote;
       await supabase
           .from('rental_requests')
-          .update({'status': newStatus}).eq('id', requestId);
+          .update(update).eq('id', requestId);
       ref.invalidate(_ownerRequestsProvider(companyId));
       // Prompt owner to rate the customer after completion
       if (newStatus == 'completed' && context.mounted) {

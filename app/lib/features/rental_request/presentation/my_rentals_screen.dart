@@ -304,17 +304,93 @@ class _RentalCard extends ConsumerWidget {
                     color: Colors.green.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Row(children: [
-                    Icon(Icons.check_circle_outline,
-                        size: 16, color: Colors.green),
-                    SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        'Accepted — the owner will contact you soon.',
-                        style: TextStyle(fontSize: 12, color: Colors.green),
-                      ),
-                    ),
-                  ]),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        const Icon(Icons.check_circle_outline,
+                            size: 16, color: Colors.green),
+                        const SizedBox(width: 6),
+                        const Expanded(
+                          child: Text(
+                            'Accepted — the owner will contact you soon.',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.green),
+                          ),
+                        ),
+                      ]),
+                      if (rental['owner_note'] != null &&
+                          rental['owner_note'].toString().isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.message_outlined,
+                                size: 13,
+                                color: Colors.green.shade700),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                rental['owner_note'].toString(),
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.green.shade800,
+                                    fontStyle: FontStyle.italic),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+              if (status == 'rejected') ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: cs.errorContainer.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        Icon(Icons.cancel_outlined,
+                            size: 16, color: cs.error),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Request was rejected.',
+                            style: TextStyle(
+                                fontSize: 12, color: cs.error),
+                          ),
+                        ),
+                      ]),
+                      if (rental['owner_note'] != null &&
+                          rental['owner_note'].toString().isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.message_outlined,
+                                size: 13, color: cs.onErrorContainer),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                rental['owner_note'].toString(),
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: cs.onErrorContainer,
+                                    fontStyle: FontStyle.italic),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ],
               if (status == 'completed') ...[

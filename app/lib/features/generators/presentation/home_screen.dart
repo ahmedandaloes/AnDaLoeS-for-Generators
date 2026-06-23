@@ -103,7 +103,7 @@ final generatorsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final data = await supabase
       .from('generators')
-      .select('id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count')
+      .select('id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type')
       .eq('status', 'available')
       .order('created_at', ascending: false);
   return (data as List).cast<Map<String, dynamic>>();
@@ -975,6 +975,11 @@ class _GeneratorCard extends ConsumerWidget {
                               '${generator['capacity_kva']} KVA',
                           cs: cs,
                         ),
+                        const SizedBox(width: 6),
+                        _FuelChip(
+                          fuel: generator['fuel_type']?.toString() ?? 'diesel',
+                          cs: cs,
+                        ),
                         if (location.isNotEmpty) ...[
                           const SizedBox(width: 6),
                           _Chip(
@@ -1110,6 +1115,52 @@ class _Chip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FuelChip extends StatelessWidget {
+  const _FuelChip({required this.fuel, required this.cs});
+  final String fuel;
+  final ColorScheme cs;
+
+  static const _fuelColors = {
+    'diesel': Color(0xFF6B4F1E),
+    'petrol': Color(0xFF1565C0),
+    'gas': Color(0xFF2E7D32),
+    'natural_gas': Color(0xFF00838F),
+    'solar': Color(0xFFF57F17),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _fuelColors[fuel] ?? cs.onSurfaceVariant;
+    final label = _fuelLabel(fuel);
+    final icon = fuel == 'solar'
+        ? Icons.wb_sunny_outlined
+        : fuel == 'gas' || fuel == 'natural_gas'
+            ? Icons.local_fire_department_outlined
+            : Icons.local_gas_station_outlined;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(
+                fontSize: 11,
+                color: color,
+                fontWeight: FontWeight.w500),
           ),
         ],
       ),

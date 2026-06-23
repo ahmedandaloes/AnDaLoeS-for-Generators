@@ -48,6 +48,7 @@ class _EditGeneratorScreenState
   final _cityController = TextEditingController();
 
   String? _governorate;
+  String _fuelType = 'diesel';
   bool _available = true;
   bool _initialised = false;
   bool _saving = false;
@@ -84,6 +85,7 @@ class _EditGeneratorScreenState
     _pricePerMonthController.text = gen['price_per_month']?.toString() ?? '';
     _cityController.text = gen['city']?.toString() ?? '';
     _governorate = gen['governorate']?.toString();
+    _fuelType = gen['fuel_type']?.toString() ?? 'diesel';
     _available = gen['status']?.toString() == 'available';
     _existingPhotos =
         (gen['photos'] as List?)?.cast<String>().toList() ?? [];
@@ -167,6 +169,7 @@ class _EditGeneratorScreenState
             ? _cityController.text.trim()
             : null,
         'governorate': _governorate,
+        'fuel_type': _fuelType,
         'status': _available ? 'available' : 'unavailable',
         'photos': finalPhotos,
       }).eq('id', widget.generatorId);
@@ -278,6 +281,31 @@ class _EditGeneratorScreenState
                 const SizedBox(height: 12),
                 _EditNumField(
                     'Capacity (KVA) *', 'e.g. 100', _capacityController),
+                const SizedBox(height: 12),
+                _EditLabel('Fuel type *'),
+                DropdownButtonFormField<String>(
+                  value: _fuelType,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: cs.surfaceContainerLowest,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(Icons.local_gas_station_outlined),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'diesel', child: Text('Diesel')),
+                    DropdownMenuItem(value: 'petrol', child: Text('Petrol')),
+                    DropdownMenuItem(
+                        value: 'gas', child: Text('Gas (LPG)')),
+                    DropdownMenuItem(
+                        value: 'natural_gas', child: Text('Natural Gas')),
+                    DropdownMenuItem(value: 'solar', child: Text('Solar')),
+                  ],
+                  onChanged: (v) =>
+                      setState(() => _fuelType = v ?? 'diesel'),
+                ),
                 const SizedBox(height: 12),
                 _EditField(
                     'Description', 'Optional details', _descController,

@@ -62,7 +62,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final isLast = _page == _pages.length - 1;
 
     return Scaffold(
