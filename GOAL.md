@@ -26,10 +26,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Search autocomplete: as-you-type suggestions from generator titles/cities
-- [ ] Generator fuel type filter (diesel/gas/natural gas) — migration 0014 + UI chip
-- [ ] Rental request UX: calendar date range picker (replace text fields)
 - [ ] Owner: respond to rental request with message (accept + note to customer)
+- [ ] Rental request: show booked/unavailable dates clearly on the date picker
+- [ ] Generator card: show fuel_type chip (Diesel / Solar / Gas)
+- [ ] Add generator form: include fuel_type dropdown (migration 0014 already applied)
 
 ### SOON
 - [ ] Payment flow: COD confirmation screen with digital payment placeholder
@@ -49,8 +49,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: onboarding splash, detail favorite button, company stats chips`
-**Next action:** Search autocomplete + fuel type filter (migration 0014) + calendar date picker for rental request
+**Last commit:** `feat: fuel type filter, search autocomplete, router instance fix`
+**iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
+**Next action:** Owner accept-with-note flow + fuel_type chip on cards + add generator form update
 
 ---
 
