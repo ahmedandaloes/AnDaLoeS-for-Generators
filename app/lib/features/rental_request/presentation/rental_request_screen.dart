@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/utils/pricing.dart';
 import '../../../core/widgets/press_scale.dart';
 import 'payment_confirmation_screen.dart';
 
@@ -32,29 +33,6 @@ final _requestBookedRangesProvider =
     return DateTimeRange(start: start, end: end);
   }).toList();
 });
-
-/// Greedy best-price calculation.
-/// 1 "day" in the rental = 8 operating hours (as per business rule).
-double _bestPrice({
-  required int days,
-  required double perDay,
-  double? perWeek,
-  double? perMonth,
-}) {
-  double best = days * perDay;
-  for (int m = (perMonth != null ? days ~/ 30 : 0); m >= 0; m--) {
-    final afterMonths = days - m * 30;
-    double baseCost = m * (perMonth ?? 0);
-    for (int w = (perWeek != null ? afterMonths ~/ 7 : 0); w >= 0; w--) {
-      final rem = afterMonths - w * 7;
-      final c = baseCost + w * (perWeek ?? 0) + rem * perDay;
-      if (c < best) best = c;
-    }
-    if (perMonth == null) break;
-  }
-  return best;
-}
-
 
 class RentalRequestScreen extends ConsumerStatefulWidget {
   const RentalRequestScreen({super.key, required this.generatorId});
@@ -129,7 +107,7 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
     final perDay = (_toDouble(gen['price_per_day']) ?? 0.0);
     final perWeek = _toDouble(gen['price_per_week']);
     final perMonth = _toDouble(gen['price_per_month']);
-    final total = _bestPrice(
+    final total = bestRentalPrice(
         days: days, perDay: perDay, perWeek: perWeek, perMonth: perMonth);
 
     Navigator.of(context).push(MaterialPageRoute(
@@ -181,7 +159,7 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
           final perWeek = _toDouble(gen['price_per_week']);
           final perMonth = _toDouble(gen['price_per_month']);
           final total = days > 0
-              ? _bestPrice(
+              ? bestRentalPrice(
                   days: days,
                   perDay: perDay,
                   perWeek: perWeek,

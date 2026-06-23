@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:andaloes/core/utils/commission.dart';
+import 'package:andaloes/core/utils/pricing.dart';
 import 'package:andaloes/core/utils/db_error.dart';
 import 'package:andaloes/core/utils/ics.dart';
 import 'package:andaloes/core/constants/generator_sizes.dart';
@@ -31,6 +32,34 @@ void main() {
       final r = projectCommission(40, (type: 'fixed', value: 50));
       expect(r.commission, 40);
       expect(r.net, 0);
+    });
+  });
+
+  group('bestRentalPrice', () {
+    test('day-only when no week/month rates', () {
+      expect(bestRentalPrice(days: 3, perDay: 500), 1500);
+    });
+
+    test('picks the cheapest tier combination', () {
+      // 10 days: 1 week (3000) + 3 days (1500) = 4500 beats 10×500 = 5000.
+      expect(
+        bestRentalPrice(days: 10, perDay: 500, perWeek: 3000, perMonth: 10000),
+        4500,
+      );
+    });
+
+    test('uses a month when it is cheapest', () {
+      // 30 days: month 10000 beats 30×500 = 15000.
+      expect(
+        bestRentalPrice(days: 30, perDay: 500, perWeek: 3000, perMonth: 10000),
+        10000,
+      );
+    });
+
+    test('never exceeds the plain daily total', () {
+      final p =
+          bestRentalPrice(days: 5, perDay: 500, perWeek: 9000, perMonth: 99999);
+      expect(p, lessThanOrEqualTo(5 * 500));
     });
   });
 
