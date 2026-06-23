@@ -5,8 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 const _kThemeKey = 'app_theme_mode';
 
 class ThemeModeNotifier extends Notifier<ThemeMode> {
+  // Light-first: the brand is the premium light "B2B / Trust" look, so the app
+  // defaults to light. Users can still switch to dark or system in Profile.
   @override
-  ThemeMode build() => ThemeMode.system;
+  ThemeMode build() => ThemeMode.light;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -14,7 +16,8 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
     state = switch (stored) {
       'light' => ThemeMode.light,
       'dark' => ThemeMode.dark,
-      _ => ThemeMode.system,
+      'system' => ThemeMode.system,
+      _ => ThemeMode.light,
     };
   }
 
