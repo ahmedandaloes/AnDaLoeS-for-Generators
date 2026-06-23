@@ -53,6 +53,12 @@ final _platformStatsProvider =
 
   final completed =
       rentalList.where((r) => r['status'] == 'completed').length;
+  final pending =
+      rentalList.where((r) => r['status'] == 'pending').length;
+  final accepted =
+      rentalList.where((r) => r['status'] == 'accepted').length;
+  final active =
+      rentalList.where((r) => r['status'] == 'active').length;
   final totalCommissions = commissionList.fold<double>(
       0,
       (s, c) =>
@@ -65,6 +71,9 @@ final _platformStatsProvider =
     'users': (users as List).length,
     'generators': (generators as List).length,
     'total_rentals': rentalList.length,
+    'pending_rentals': pending,
+    'accepted_rentals': accepted,
+    'active_rentals': active,
     'completed_rentals': completed,
     'total_commission_earned': totalCommissions,
   };
@@ -522,6 +531,8 @@ class _StatsTab extends StatelessWidget {
             const SizedBox(height: 12),
             _StatGrid(stats: stats, cs: cs),
             const SizedBox(height: 24),
+            _RentalStatusChart(stats: stats, cs: cs),
+            const SizedBox(height: 16),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -614,6 +625,135 @@ class _StatGrid extends StatelessWidget {
                 ),
               ))
           .toList(),
+    );
+  }
+}
+
+// ── Rental status bar chart ───────────────────────────────────────────────────
+class _RentalStatusChart extends StatefulWidget {
+  const _RentalStatusChart({required this.stats, required this.cs});
+  final Map<String, dynamic> stats;
+  final ColorScheme cs;
+
+  @override
+  State<_RentalStatusChart> createState() => _RentalStatusChartState();
+}
+
+class _RentalStatusChartState extends State<_RentalStatusChart>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _anim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = widget.cs;
+    final total = (widget.stats['total_rentals'] as int?) ?? 1;
+
+    final bars = [
+      (
+        'Pending',
+        (widget.stats['pending_rentals'] as int?) ?? 0,
+        Colors.orange
+      ),
+      (
+        'Accepted',
+        (widget.stats['accepted_rentals'] as int?) ?? 0,
+        Colors.green
+      ),
+      ('Active', (widget.stats['active_rentals'] as int?) ?? 0, cs.primary),
+      (
+        'Completed',
+        (widget.stats['completed_rentals'] as int?) ?? 0,
+        Colors.green.shade700
+      ),
+    ];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Rental Status Distribution',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: cs.onSurfaceVariant,
+                    letterSpacing: 0.5)),
+            const SizedBox(height: 16),
+            ...bars.map((bar) {
+              final frac = total > 0 ? bar.$2 / total : 0.0;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Text(bar.$1,
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w600)),
+                      const Spacer(),
+                      Text('${bar.$2}',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: bar.$3)),
+                    ]),
+                    const SizedBox(height: 4),
+                    AnimatedBuilder(
+                      animation: _anim,
+                      builder: (_, __) {
+                        final animated = frac *
+                            CurvedAnimation(
+                                    parent: _anim,
+                                    curve: Curves.easeOutCubic)
+                                .value;
+                        return Stack(children: [
+                          Container(
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: cs.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          FractionallySizedBox(
+                            widthFactor: animated.clamp(0.0, 1.0),
+                            child: Container(
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: bar.$3,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ),
+                        ]);
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 4),
+            Text('Total: $total rentals',
+                style: TextStyle(
+                    fontSize: 11, color: cs.onSurfaceVariant)),
+          ],
+        ),
+      ),
     );
   }
 }

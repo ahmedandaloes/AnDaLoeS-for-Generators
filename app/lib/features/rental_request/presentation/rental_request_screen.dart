@@ -339,55 +339,29 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                   ),
                 const SizedBox(height: 8),
 
-                // Price breakdown
-                if (_range != null && days > 0) ...[
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(children: [
-                            Text('Price estimate',
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: cs.onSurfaceVariant,
-                                    letterSpacing: 0.5)),
-                            const Spacer(),
-                            Text('Best rate applied',
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: cs.primary,
-                                    fontWeight: FontWeight.w600)),
-                          ]),
-                          const SizedBox(height: 12),
-                          Row(children: [
-                            Text('$days day${days == 1 ? '' : 's'}',
-                                style: const TextStyle(fontSize: 15)),
-                            const Spacer(),
-                            Text(
-                              'EGP ${total.toStringAsFixed(0)}',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: cs.primary,
-                              ),
-                            ),
-                          ]),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Best rate applied automatically.',
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: cs.onSurfaceVariant),
-                          ),
-                        ],
-                      ),
-                    ),
+                // Animated date summary + price card
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 350),
+                  transitionBuilder: (child, anim) => SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, -0.25),
+                      end: Offset.zero,
+                    ).animate(CurvedAnimation(
+                        parent: anim, curve: Curves.easeOutCubic)),
+                    child: FadeTransition(opacity: anim, child: child),
                   ),
-                  const SizedBox(height: 16),
-                ],
+                  child: (_range != null && days > 0)
+                      ? _DateSummaryCard(
+                          key: ValueKey(_range),
+                          start: _range!.start,
+                          end: _range!.end,
+                          days: days,
+                          total: total,
+                          cs: cs,
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                if (_range != null && days > 0) const SizedBox(height: 16),
 
                 // Notes
                 _SectionLabel('Note to owner (optional)'),
@@ -447,6 +421,173 @@ class _SectionLabel extends StatelessWidget {
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
+    );
+  }
+}
+
+class _DateSummaryCard extends StatefulWidget {
+  const _DateSummaryCard({
+    super.key,
+    required this.start,
+    required this.end,
+    required this.days,
+    required this.total,
+    required this.cs,
+  });
+  final DateTime start;
+  final DateTime end;
+  final int days;
+  final double total;
+  final ColorScheme cs;
+
+  @override
+  State<_DateSummaryCard> createState() => _DateSummaryCardState();
+}
+
+class _DateSummaryCardState extends State<_DateSummaryCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulse;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _scale = Tween<double>(begin: 0.94, end: 1.0).animate(
+      CurvedAnimation(parent: _pulse, curve: Curves.elasticOut),
+    );
+    _pulse.forward();
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  String _fmt(DateTime d) => '${d.day}/${d.month}/${d.year}';
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = widget.cs;
+    return ScaleTransition(
+      scale: _scale,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              cs.primaryContainer.withValues(alpha: 0.7),
+              cs.secondaryContainer.withValues(alpha: 0.5),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(children: [
+              Icon(Icons.check_circle_rounded,
+                  size: 18, color: cs.primary),
+              const SizedBox(width: 8),
+              Text('Dates confirmed',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: cs.primary)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: cs.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${widget.days} day${widget.days == 1 ? '' : 's'}',
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onPrimary),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            Row(children: [
+              _DateChip(
+                  label: 'From', date: _fmt(widget.start), cs: cs),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Divider(
+                      color: cs.primary.withValues(alpha: 0.3)),
+                ),
+              ),
+              _DateChip(
+                  label: 'To', date: _fmt(widget.end), cs: cs),
+            ]),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Estimated total',
+                    style: TextStyle(
+                        fontSize: 12, color: cs.onSurfaceVariant)),
+                Text(
+                  'EGP ${widget.total.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: cs.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                'Best rate applied automatically',
+                style: TextStyle(
+                    fontSize: 10, color: cs.onSurfaceVariant),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DateChip extends StatelessWidget {
+  const _DateChip(
+      {required this.label, required this.date, required this.cs});
+  final String label;
+  final String date;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: TextStyle(
+                fontSize: 10,
+                color: cs.onSurfaceVariant,
+                fontWeight: FontWeight.w600)),
+        const SizedBox(height: 2),
+        Text(date,
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: cs.onSurface)),
+      ],
     );
   }
 }
