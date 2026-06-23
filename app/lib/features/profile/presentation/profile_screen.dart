@@ -319,9 +319,17 @@ class ProfileScreen extends ConsumerWidget {
                                     icon: Icon(Icons.dark_mode, size: 16)),
                               ],
                               selected: {themeMode},
-                              onSelectionChanged: (s) => ref
-                                  .read(themeModeProvider.notifier)
-                                  .state = s.first,
+                              onSelectionChanged: (s) {
+                                final mode = s.first;
+                                // Defer to next frame to avoid widget-tree
+                                // rebuild collision during SegmentedButton animation.
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  ref
+                                      .read(themeModeProvider.notifier)
+                                      .set(mode);
+                                });
+                              },
                             ),
                           ],
                         ),
@@ -366,9 +374,15 @@ class ProfileScreen extends ConsumerWidget {
                                 Localizations.localeOf(context)
                                     .languageCode,
                               },
-                              onSelectionChanged: (s) => ref
-                                  .read(localeProvider.notifier)
-                                  .setLocale(Locale(s.first)),
+                              onSelectionChanged: (s) {
+                                final locale = Locale(s.first);
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  ref
+                                      .read(localeProvider.notifier)
+                                      .setLocale(locale);
+                                });
+                              },
                             ),
                           ],
                         ),
