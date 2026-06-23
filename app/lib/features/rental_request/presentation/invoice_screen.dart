@@ -13,7 +13,7 @@ final _invoiceDataProvider =
       .from('rental_requests')
       .select('''
         id, start_date, end_date, total_days, price_total, note,
-        owner_note, status, created_at,
+        owner_note, status, created_at, invoice_no,
         generators(title, capacity_kva, city, governorate, fuel_type,
                    price_per_day),
         companies(name, phone),
@@ -61,7 +61,7 @@ class InvoiceScreen extends ConsumerWidget {
     final gen = data['generators'] as Map<String, dynamic>?;
     final company = data['companies'] as Map<String, dynamic>?;
     final customer = data['profiles'] as Map<String, dynamic>?;
-    final invId = _invoiceId(data['id'].toString());
+    final invId = _invoiceId(data['id'].toString(), data['invoice_no']);
     final perDay = data['generators'] != null
         ? (data['generators'] as Map)['price_per_day'] ?? 0
         : 0;
@@ -93,8 +93,10 @@ AnDaLoeS for Generators''';
     Share.share(text, subject: 'Invoice $invId');
   }
 
-  static String _invoiceId(String id) =>
-      'INV-${id.substring(0, 8).toUpperCase()}';
+  static String _invoiceId(String id, [Object? invoiceNo]) =>
+      invoiceNo != null
+          ? 'INV-${invoiceNo.toString().padLeft(6, '0')}'
+          : 'INV-${id.substring(0, 8).toUpperCase()}';
 
   static String _fmt(dynamic d) {
     if (d == null) return '-';
@@ -112,8 +114,9 @@ class _InvoiceDocument extends StatelessWidget {
   final Map<String, dynamic> data;
   final ColorScheme cs;
 
-  String get _invoiceId =>
-      'INV-${data['id'].toString().substring(0, 8).toUpperCase()}';
+  String get _invoiceId => data['invoice_no'] != null
+      ? 'INV-${data['invoice_no'].toString().padLeft(6, '0')}'
+      : 'INV-${data['id'].toString().substring(0, 8).toUpperCase()}';
 
   static String _fmt(dynamic d) {
     if (d == null) return '-';

@@ -199,7 +199,7 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 
 ### Tax & Compliance (Egypt — like Uber; get professional advice first)
 - [x] [NOW] Tax Invoice: VAT (14%) breakdown (subtotal excl. VAT + VAT line, treating totals as VAT-inclusive) + company tax-reg# / CR in footer (core/config/company_info.dart — set real values before production)
-- [ ] [NOW] Sequential immutable invoice/receipt numbers
+- [x] [NOW] Sequential immutable invoice numbers (DB 0028: invoice_seq + invoice_no stamped on completion via BEFORE trigger; invoice shows INV-001001…)
 - [ ] [NOW] Accounting export from Revenue tab (date-range CSV: commissions, payments, VAT collected)
 - [ ] [SOON] Owner payout statements (for owner income reporting; WHT if required)
 - [ ] [LATER] ETA e-invoicing integration (needs tax registration + ETA onboarding); confirm corporate tax/WHT with an Egyptian accountant
