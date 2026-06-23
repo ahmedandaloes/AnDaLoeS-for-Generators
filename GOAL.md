@@ -93,6 +93,15 @@ owner paid out ≤3 working days → deposit released/claimed → both RATE.
 - [ ] Status state machine: guard invalid transitions at DB level (e.g. no rejected→active)
 - [x] Double-booking: enforce no overlapping accepted/active rentals per generator (DB 0021)
 
+### ⏳ DECISION PENDING — revenue collection model (owner to choose later)
+A % commission isn't collectable on cash-on-delivery (money never flows through
+the platform). Four options recorded in `docs/MONETIZATION.md §1b`:
+(A) owner subscription + featured, (B) Fawry/escrow % commission, (C) owner
+commission ledger / post-paid, (D) hybrid (subscription now, % later). Until
+chosen: the 10% rate (DB 0022) and the owner request-card "platform fee" label
+are **provisional** — accrued `commissions` rows are the accounting backbone but
+nothing actually collects cash commission yet. Re-word the owner label once decided.
+
 ### SOON — needs external integration / compliance / decision
 - [ ] **Digital escrow payments** (Paymob or Kashier): collect rent to platform
       account, auto-deduct commission, mass-payout owner ≤3 days. → release-ci + security-architect

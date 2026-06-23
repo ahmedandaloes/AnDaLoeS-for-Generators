@@ -16,7 +16,61 @@ Why it must change:
 - In a cash market it is **trivially evadable** — parties settle offline and
   skip the fee.
 
-## 2. Target Revenue Model
+## 1b. Revenue Collection Models — DECISION PENDING (owner to choose)
+
+**The cash problem:** a percentage commission assumes money flows *through* the
+platform. With cash-on-delivery it does not — the customer hands cash to the
+owner directly, so there is nothing to deduct from. In a ~55%-cash market the
+flat-50 / 10%-on-cash model is **not collectable** for cash rentals. The options
+below are recorded for a later decision; each implies different build work.
+
+### Option A — Owner subscription + featured listings
+Owners pay a monthly fee to keep listings active, plus optional paid "featured"
+boosts. Collected digitally **upfront**, independent of how the rental is paid.
+- **Pros:** leakage-proof; collectable today (no gateway/escrow needed);
+  predictable MRR; simplest to build.
+- **Cons:** less upside per high-value rental; must deliver enough value to
+  justify a recurring charge.
+- **Build:** subscription/plan model, billing date, "featured" flag + boosted
+  ranking, paywall/grace logic, a digital charge (even a simple Fawry/Paymob
+  one-off per period).
+
+### Option B — Fawry / escrow percentage commission
+Customer pays **into the platform** (Fawry pay-against-code at a kiosk, or
+card/wallet); platform auto-deducts the % and remits the owner.
+- **Pros:** scales with deal value; works even for "cash" via Fawry code;
+  keeps the per-transaction model.
+- **Cons:** needs Paymob/Fawry/Kashier integration; **CBE payment-facilitator
+  compliance** (escrow account, EGP settlement, ≤3-day payout); customer must
+  pay through the platform.
+- **Build:** gateway integration, escrow/payout flow, payment status on rentals,
+  reconciliation, compliance review.
+
+### Option C — Owner commission ledger (post-paid)
+Commission **accrues** as a debt the owner owes (the `commissions` table already
+has `accrued → settled`). Owner settles via wallet/Fawry; listings **suspended**
+if the unpaid balance exceeds a threshold.
+- **Pros:** uses the existing accrued→settled model; no customer-side payment
+  change; works alongside cash.
+- **Cons:** owners can under-report completions or churn to dodge; collections
+  + enforcement overhead.
+- **Build:** owner balance/wallet, settlement flow, suspension rule, statements.
+
+### Option D — Hybrid: subscription now, % via Fawry later
+Launch with Option A (collectable day one), then layer Option B's % on
+digitally-paid rentals as adoption grows.
+- **Pros:** revenue from launch with no gateway blocker; captures % upside over
+  time; lowest risk.
+- **Cons:** two models to build/maintain eventually.
+
+> **Status:** undecided — owner will choose later. Until then, the accrued
+> `commissions` row (Option C's backbone) is the accounting record; the
+> owner-facing "platform fee" label on the request card is **provisional** and
+> should be re-worded once the collection model is chosen (in a true cash deal
+> the owner receives the full cash and *owes* the fee, rather than having it
+> deducted).
+
+## 2. Target Revenue Model (rate, once a collection model is chosen)
 
 **Percentage commission charged to the owner, collected via digital escrow.**
 
