@@ -25,16 +25,21 @@
 - Chat: owner ↔ customer real-time thread per rental request (Supabase stream), unread message badges
 - Architecture: feature-based structure — providers/ and widgets/ per feature; all files under 800 lines
 - Map view: OpenStreetMap (flutter_map, no API key) with 27 Egyptian governorate pins, tap-to-preview card, View Details CTA
+- Rental Offer screen (OFFER-XXXXXXXX): formal document for accepted rentals, share as text
+- Tax Invoice screen (INV-XXXXXXXX): formal invoice for completed rentals with line-items table, PAID badge, share
+- My Rentals: 4-tab bar (All / Active / Pending / Done) with per-tab count badges
+- Profile: total amount spent + month-over-month trend indicator (↑↓)
+- Company onboarding: description field + live preview card (name, city, bio)
 
 ---
 
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Company onboarding: add phone + description fields, live preview card
 - [ ] Generator detail: average response time badge (based on owner acceptance speed)
-- [ ] My Rentals: group by status tab bar (All / Active / Completed / Pending)
-- [ ] Profile screen: show total amount spent, total rentals count with trend
+- [ ] Generator card: show company name below title
+- [ ] Owner Dashboard: pull-to-refresh on Requests and History tabs
+- [ ] Notifications: empty state illustration when no notifications
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -59,9 +64,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: top-rated carousel + animated sparkline earnings chart`
+**Last commit:** `feat: My Rentals tab bar, profile spending stats, company description preview`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** My Rentals tab bar + profile spending stats + company onboarding improvements
+**Next action:** avg response time badge + pull-to-refresh on Owner Dashboard + notifications empty state
 
 ---
 
