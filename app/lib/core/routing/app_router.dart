@@ -12,6 +12,7 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/company/presentation/company_onboarding_screen.dart';
 import '../../features/generators/presentation/generator_detail_screen.dart';
 import '../../features/generators/presentation/home_screen.dart';
+import '../../features/company/presentation/company_profile_screen.dart';
 import '../../features/owner_dashboard/presentation/add_generator_screen.dart';
 import '../../features/owner_dashboard/presentation/edit_generator_screen.dart';
 import '../../features/owner_dashboard/presentation/owner_dashboard_screen.dart';
@@ -75,6 +76,11 @@ final appRouter = GoRouter(
       path: '/generators/:id/request',
       builder: (_, state) =>
           RentalRequestScreen(generatorId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/company/:id',
+      builder: (_, state) =>
+          CompanyProfileScreen(companyId: state.pathParameters['id']!),
     ),
     GoRoute(
       path: '/owner/generator/add',

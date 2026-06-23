@@ -165,17 +165,26 @@ class _Body extends ConsumerWidget {
 
                 // Company + location
                 if (company != null) ...[
-                  Row(
-                    children: [
-                      Icon(Icons.business_outlined,
-                          size: 14, color: cs.onSurfaceVariant),
-                      const SizedBox(width: 4),
-                      Text(
-                        company['name']?.toString() ?? '',
-                        style: TextStyle(
-                            fontSize: 13, color: cs.onSurfaceVariant),
-                      ),
-                    ],
+                  GestureDetector(
+                    onTap: () => context
+                        .push('/company/${gen['company_id']}'),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.business_outlined,
+                            size: 14, color: cs.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          company['name']?.toString() ?? '',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: cs.primary,
+                            decoration: TextDecoration.underline,
+                            decorationColor: cs.primary.withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 4),
                 ],
