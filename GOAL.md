@@ -209,7 +209,7 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 
 ### Owner directives (2026-06-24) — to schedule
 - [x] [NOW] Role separation audit (RLS): rental_requests (customer cancel-only, owner via owns_company, admin), generators (owner/admin only), messages (rental parties only) — all solid. FIXED gap: ratings could be inserted by anyone → now restricted to a party of a COMPLETED rental + unique per rater/rental (DB 0030).
-- [ ] [SOON] Admin: multiple support dashboards — ops/health views to handle problems (e.g. stuck rentals, overdue active, unmatched requests, failed payments, flagged users, system health) beyond the current 6 tabs.
+- [~] [SOON→started] Admin Ops dashboard (7th tab): overdue active rentals, stale pending (>24h), accepted-not-started — via new RentalRepository (repository layer). More ops views to follow.
 - [ ] [SOON] Calendar access — add a rental's dates to the device calendar (add_2_calendar / ICS); reminders for start/return.
 - [ ] [SOON] Notification access — device push notifications (FCM + flutter_local_notifications) with permission request; currently only in-app realtime. Needs native config (android/ios gitignored) + FCM setup.
 

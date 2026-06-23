@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/supabase.dart';
 import 'admin_companies_tab.dart';
 import 'admin_generators_tab.dart';
+import 'admin_ops_tab.dart';
 import 'admin_reports_tab.dart' show AdminReportsTab, openReportsProvider;
 import 'admin_revenue_tab.dart';
 import 'admin_stats_tab.dart';
@@ -76,7 +77,7 @@ class AdminScreen extends ConsumerWidget {
             );
           }
           return DefaultTabController(
-            length: 6,
+            length: 7,
             child: Column(
               children: [
                 TabBar(
@@ -120,6 +121,7 @@ class AdminScreen extends ConsumerWidget {
                       );
                     }),
                   ),
+                  const Tab(text: 'Ops'),
                   const Tab(text: 'Revenue'),
                   const Tab(text: 'Stats'),
                   const Tab(text: 'Users'),
@@ -130,6 +132,7 @@ class AdminScreen extends ConsumerWidget {
                       AdminCompaniesTab(ref: ref),
                       AdminGeneratorsTab(ref: ref),
                       AdminReportsTab(ref: ref),
+                      AdminOpsTab(ref: ref),
                       AdminRevenueTab(ref: ref),
                       AdminStatsTab(ref: ref),
                       AdminUsersTab(ref: ref),
