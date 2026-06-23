@@ -529,11 +529,41 @@ class _RentalCard extends ConsumerWidget {
             ?.contains(rentalId) ==
         true;
 
+    // Overdue: active rental whose end_date is in the past
+    final isOverdue = status == 'active' &&
+        () {
+          final raw = rental['end_date']?.toString();
+          if (raw == null) return false;
+          final end = DateTime.tryParse(raw);
+          return end != null && end.isBefore(DateTime.now());
+        }();
+
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => context.push(AppRoutes.generatorDetail(rental['generator_id'].toString())),
-        child: Padding(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isOverdue)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 6),
+                color: Colors.red.shade700,
+                child: Row(children: [
+                  const Icon(Icons.warning_amber_rounded,
+                      size: 14, color: Colors.white),
+                  const SizedBox(width: 6),
+                  const Text('Overdue — please contact owner',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white)),
+                ]),
+              ),
+            Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -631,6 +661,40 @@ class _RentalCard extends ConsumerWidget {
                       style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
                     ),
                   ),
+                  if (status == 'active') Builder(builder: (_) {
+                    final raw = rental['end_date']?.toString();
+                    final end = raw != null ? DateTime.tryParse(raw) : null;
+                    if (end == null) return const SizedBox.shrink();
+                    final remaining = end.difference(DateTime.now()).inDays;
+                    final overdue = remaining < 0;
+                    final label = overdue
+                        ? '${-remaining}d overdue'
+                        : remaining == 0
+                            ? 'ends today'
+                            : '$remaining day${remaining == 1 ? '' : 's'} left';
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: overdue
+                            ? Colors.red.withValues(alpha: 0.12)
+                            : remaining <= 2
+                                ? Colors.orange.withValues(alpha: 0.12)
+                                : Colors.green.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(label,
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: overdue
+                                  ? Colors.red.shade700
+                                  : remaining <= 2
+                                      ? Colors.orange.shade700
+                                      : Colors.green.shade700)),
+                    );
+                  })
+                  else
                   Text(
                     '${rental['total_days']} day${rental['total_days'] == 1 ? '' : 's'}',
                     style: TextStyle(
@@ -964,6 +1028,8 @@ class _RentalCard extends ConsumerWidget {
               ],
             ],
           ),
+        ),
+      ],
         ),
       ),
     );

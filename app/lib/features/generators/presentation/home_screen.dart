@@ -561,9 +561,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const Spacer(),
                 generators.maybeWhen(
-                  data: (items) => Text('${items.length} found',
+                  data: (items) => AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    transitionBuilder: (child, anim) => FadeTransition(
+                      opacity: anim,
+                      child: SlideTransition(
+                        position: Tween(
+                                begin: const Offset(0, 0.4),
+                                end: Offset.zero)
+                            .animate(anim),
+                        child: child,
+                      ),
+                    ),
+                    child: Text(
+                      '${items.length} found',
+                      key: ValueKey(items.length),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant)),
+                          color: cs.onSurfaceVariant),
+                    ),
+                  ),
                   orElse: () => const SizedBox.shrink(),
                 ),
                 const SizedBox(width: 8),
