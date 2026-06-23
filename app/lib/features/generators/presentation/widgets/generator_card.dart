@@ -105,6 +105,24 @@ class _GeneratorCardState extends ConsumerState<GeneratorCard> {
                             ],
                           ),
                         ),
+                      if (_isNew(generator))
+                        Container(
+                          margin: const EdgeInsets.only(left: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(4),
+                            border:
+                                Border.all(color: Colors.green.shade300),
+                          ),
+                          child: Text('New',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.green.shade700,
+                              )),
+                        ),
                     ]),
                     if (companyName != null) ...[
                       const SizedBox(height: 2),
@@ -246,6 +264,17 @@ class _GeneratorCardState extends ConsumerState<GeneratorCard> {
       (g['avg_score'] as num).toDouble() >= 4.5 &&
       (g['rating_count'] as num?)?.toInt() != null &&
       (g['rating_count'] as num).toInt() >= 3;
+
+  static bool _isNew(Map<String, dynamic> g) {
+    final raw = g['created_at']?.toString();
+    if (raw == null) return false;
+    try {
+      final created = DateTime.parse(raw);
+      return DateTime.now().difference(created).inHours < 48;
+    } catch (_) {
+      return false;
+    }
+  }
 
   static bool _hasRating(Map<String, dynamic> g) =>
       (g['rating_count'] as num?)?.toInt() != null &&

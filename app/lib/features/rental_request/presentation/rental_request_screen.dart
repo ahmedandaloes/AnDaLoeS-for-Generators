@@ -68,11 +68,13 @@ class RentalRequestScreen extends ConsumerStatefulWidget {
 class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
   DateTimeRange? _range;
   final _noteController = TextEditingController();
+  final _addressController = TextEditingController();
   int _conflictCount = 0;
 
   @override
   void dispose() {
     _noteController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -136,7 +138,12 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
         endDate: _range!.end,
         days: days,
         totalPrice: total,
-        note: _noteController.text.trim(),
+        note: [
+          if (_addressController.text.trim().isNotEmpty)
+            'Delivery address: ${_addressController.text.trim()}',
+          if (_noteController.text.trim().isNotEmpty)
+            _noteController.text.trim(),
+        ].join('\n'),
       ),
     ));
   }
@@ -425,14 +432,25 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                 ),
                 if (_range != null && days > 0) const SizedBox(height: 16),
 
+                // Delivery address
+                _SectionLabel('Delivery address'),
+                TextField(
+                  controller: _addressController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    hintText: 'Street, building, city…',
+                    prefixIcon: Icon(Icons.location_on_outlined),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 // Notes
                 _SectionLabel('Note to owner (optional)'),
                 TextField(
                   controller: _noteController,
-                  maxLines: 3,
+                  maxLines: 2,
                   decoration: const InputDecoration(
-                    hintText:
-                        'Delivery address, special requirements…',
+                    hintText: 'Special requirements, access instructions…',
                   ),
                 ),
                 const SizedBox(height: 24),
