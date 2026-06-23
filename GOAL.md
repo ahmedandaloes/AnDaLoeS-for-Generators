@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Profile: edit full name and phone inline (currently read-only in some places)
-- [ ] Home: "Top in your area" section using user profile governorate field
-- [ ] Rental request: date range conflict warning if generator already booked
-- [ ] Owner generators: sort by rentals count (most rented first)
+- [ ] Role-based deep authorization: verify RLS policies cover all 3 roles
+- [ ] Owner-only screen guard: redirect customers trying to access owner routes
+- [ ] Profile: "Switch to Owner" CTA for customers who want to list generators
+- [ ] Home: personalized greeting card based on role (Customer/Owner/Admin)
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: copy link, avg spend card, pending badge in owner AppBar`
+**Last commit:** `feat: notification filter chips, role badge on profile, avg spend stats`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 

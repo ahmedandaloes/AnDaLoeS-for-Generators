@@ -224,6 +224,30 @@ class ProfileScreen extends ConsumerWidget {
                           ],
                         ],
                       ),
+                      // Role badge
+                      if (!isAnon) Builder(builder: (_) {
+                        final role = profileAsync.valueOrNull?['role']?.toString() ?? 'customer';
+                        final roleConfig = switch (role) {
+                          'admin' => (label: 'Admin', color: cs.error, icon: Icons.shield_outlined),
+                          'owner' => (label: 'Owner', color: cs.secondary, icon: Icons.storefront_outlined),
+                          _ => (label: 'Customer', color: cs.primary, icon: Icons.person_outline_rounded),
+                        };
+                        return Container(
+                          margin: const EdgeInsets.only(top: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: roleConfig.color.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: roleConfig.color.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            Icon(roleConfig.icon, size: 12, color: roleConfig.color),
+                            const SizedBox(width: 5),
+                            Text(roleConfig.label,
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: roleConfig.color)),
+                          ]),
+                        );
+                      }),
                       if (isAnon)
                         Container(
                           margin: const EdgeInsets.only(top: 6),

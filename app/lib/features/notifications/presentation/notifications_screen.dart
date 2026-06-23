@@ -20,6 +20,7 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   RealtimeChannel? _channel;
+  String? _typeFilter; // null = All
 
   @override
   void initState() {
@@ -197,8 +198,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             );
           }
 
+          // Apply type filter
+          final filtered = _typeFilter == null
+              ? items
+              : items
+                  .where((n) => n['type']?.toString() == _typeFilter)
+                  .toList();
+
+          // Filter chips row
+          final typeChips = _buildTypeChips(items, cs);
+
           // Group by day
-          final groups = _groupByDay(items);
+          final groups = _groupByDay(filtered);
           // Flatten into a mixed list of headers + items
           final rows = <_Row>[];
           for (final entry in groups.entries) {
@@ -212,9 +223,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             onRefresh: () => ref.refresh(notificationsProvider.future),
             child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 24),
-              itemCount: rows.length,
+              itemCount: rows.length + 1,
               itemBuilder: (_, i) {
-                final row = rows[i];
+                if (i == 0) return typeChips;
+                final row = rows[i - 1];
                 if (row.isHeader) {
                   return _DayHeader(label: row.label!, cs: cs);
                 }
@@ -324,6 +336,52 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   // Group notifications into Today / Yesterday / date buckets
+  Widget _buildTypeChips(
+      List<Map<String, dynamic>> all, ColorScheme cs) {
+    final types = <String>{};
+    for (final n in all) {
+      final t = n['type']?.toString();
+      if (t != null) types.add(t);
+    }
+    if (types.length < 2) return const SizedBox.shrink();
+    final labels = {
+      'rental_request': 'Rentals',
+      'rating': 'Ratings',
+      'status_update': 'Status',
+      'payment': 'Payments',
+    };
+    return SizedBox(
+      height: 48,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: const Text('All', style: TextStyle(fontSize: 12)),
+              selected: _typeFilter == null,
+              onSelected: (_) => setState(() => _typeFilter = null),
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+          for (final t in types)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                label: Text(labels[t] ?? t,
+                    style: const TextStyle(fontSize: 12)),
+                selected: _typeFilter == t,
+                onSelected: (_) =>
+                    setState(() => _typeFilter = _typeFilter == t ? null : t),
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Map<String, List<Map<String, dynamic>>> _groupByDay(
       List<Map<String, dynamic>> items) {
     final now = DateTime.now();
