@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/supabase.dart';
@@ -370,12 +371,19 @@ class _CompanyCardState extends State<_CompanyCard> {
                             final res = await supabase.storage
                                 .from('company-docs')
                                 .createSignedUrl(path, 300);
+                            await Clipboard.setData(ClipboardData(text: res));
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Signed URL (copy to browser):\n$res',
-                                      style: const TextStyle(fontSize: 11)),
-                                  duration: const Duration(seconds: 10),
+                                  content: Text('$label URL copied to clipboard'),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: const Duration(seconds: 3),
+                                  action: SnackBarAction(
+                                    label: 'Open',
+                                    onPressed: () async {
+                                      // Users can open from browser after copying.
+                                    },
+                                  ),
                                 ),
                               );
                             }
