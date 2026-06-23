@@ -19,19 +19,21 @@ class ReportScreen extends StatefulWidget {
     required this.entityId,
     this.rentalRequestId,
     this.entityName,
+    this.initialReason,
   });
 
   final String entityType;
   final String entityId;
   final String? rentalRequestId;
   final String? entityName;
+  final String? initialReason;
 
   @override
   State<ReportScreen> createState() => _ReportScreenState();
 }
 
 class _ReportScreenState extends State<ReportScreen> {
-  String? _reason;
+  late String? _reason = widget.initialReason;
   final _descController = TextEditingController();
   bool _submitting = false;
 

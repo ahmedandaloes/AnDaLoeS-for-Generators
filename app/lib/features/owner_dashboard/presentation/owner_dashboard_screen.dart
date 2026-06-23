@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
 import '../providers/owner_providers.dart';
+import '../../generators/providers/detail_providers.dart';
 import 'widgets/request_card.dart';
 import '../../../core/routing/app_routes.dart';
 
@@ -754,8 +755,59 @@ class _DashboardStats extends StatelessWidget {
             const SizedBox(width: 8),
             _StatChip(label: 'Active', value: '$active', color: cs.primary, icon: Icons.bolt, cs: cs),
           ]),
+          const SizedBox(height: 8),
+          _ResponseTimeChip(companyId: companyId, cs: cs, ref: ref),
         ],
       ),
+    );
+  }
+}
+
+class _ResponseTimeChip extends StatelessWidget {
+  const _ResponseTimeChip(
+      {required this.companyId, required this.cs, required this.ref});
+  final String companyId;
+  final ColorScheme cs;
+  final WidgetRef ref;
+
+  static const _targetMinutes = 120; // 2-hour goal
+
+  @override
+  Widget build(BuildContext context) {
+    final avgAsync = ref.watch(avgResponseTimeProvider(companyId));
+    return avgAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (avgMin) {
+        if (avgMin == null) return const SizedBox.shrink();
+        final hrs = avgMin ~/ 60;
+        final mins = avgMin % 60;
+        final label = hrs > 0 ? '~${hrs}h ${mins}m avg response' : '~${mins}m avg response';
+        final onTarget = avgMin <= _targetMinutes;
+        final color = onTarget ? Colors.green : cs.error;
+        final icon = onTarget ? Icons.timer_outlined : Icons.timer_off_outlined;
+        final goal = onTarget ? '✓ Under 2hr goal' : '⚠ Over 2hr goal';
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: color)),
+            const SizedBox(width: 6),
+            Text('· $goal',
+                style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.8))),
+          ]),
+        );
+      },
     );
   }
 }

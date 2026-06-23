@@ -237,7 +237,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   child: InkWell(
                     onTap: () {
                       if (!isRead) _markOneRead(id);
-                      _navigate(context, type, rentalId);
+                      _navigate(context, type, rentalId, n);
                     },
                     child: Container(
                       color: isRead
@@ -348,22 +348,42 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     return groups;
   }
 
-  void _navigate(BuildContext context, String type, String? rentalId) {
+  void _navigate(
+      BuildContext context, String type, String? rentalId, Map<String, dynamic> n) {
     switch (type) {
       case 'request_accepted':
+        // Owner accepted → show the formal offer document
+        if (rentalId != null) context.push(AppRoutes.offer(rentalId));
       case 'request_rejected':
+        // Rejected → land on My Rentals so user sees the rejection note
+        context.push(AppRoutes.myRentals);
       case 'rental_started':
-      case 'rental_completed':
       case 'rental_status':
-        if (rentalId != null) {
-          context.push(AppRoutes.receipt(rentalId));
-        } else {
-          context.push(AppRoutes.myRentals);
-        }
+        // Rental went active → My Rentals overview
+        context.push(AppRoutes.myRentals);
+      case 'rental_completed':
+        // Completed → tax invoice
+        if (rentalId != null) context.push(AppRoutes.invoice(rentalId));
       case 'new_request':
+        // Owner gets new request → Owner Dashboard
         context.push(AppRoutes.ownerDashboard);
+      case 'new_message':
+        // Chat message → open chat thread
+        final otherName = n['data']?['sender_name']?.toString() ?? 'Chat';
+        if (rentalId != null) {
+          context.push(AppRoutes.chat(rentalId, otherName: otherName));
+        }
+      case 'rating_reminder':
+        // Prompt to rate → rate screen (need ratee info from data)
+        final data = n['data'] as Map<String, dynamic>?;
+        final rateeId = data?['ratee_id']?.toString();
+        final rateeName = data?['ratee_name']?.toString() ?? 'User';
+        if (rentalId != null && rateeId != null) {
+          context.push(AppRoutes.rate(rentalId, rateeId: rateeId, rateeName: rateeName));
+        }
       default:
-        break;
+        // Fallback: open My Rentals
+        if (rentalId != null) context.push(AppRoutes.myRentals);
     }
   }
 

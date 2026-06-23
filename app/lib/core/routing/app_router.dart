@@ -152,6 +152,7 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
           entityId: p['id'] ?? '',
           rentalRequestId: p['rental'],
           entityName: p['name'],
+          initialReason: p['reason'],
         );
       },
     ),

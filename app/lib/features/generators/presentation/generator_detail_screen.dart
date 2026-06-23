@@ -471,9 +471,8 @@ class _GeneratorDetailWrapperState
                     heroTag: 'report',
                     backgroundColor: cs.errorContainer,
                     foregroundColor: cs.onErrorContainer,
-                    tooltip: 'Report',
-                    onPressed: () => context.push(
-                        '/report?type=generator&id=$id&name=Generator'),
+                    tooltip: 'Report a problem',
+                    onPressed: () => _showReportSheet(context, ref, id, cs),
                     child: const Icon(Icons.flag_outlined, size: 18),
                   ),
                 ),
@@ -498,6 +497,76 @@ class _GeneratorDetailWrapperState
       ),
       floatingActionButtonLocation:
           FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  void _showReportSheet(
+      BuildContext context, WidgetRef ref, String id, ColorScheme cs) {
+    final gen = ref.read(generatorDetailProvider(id)).valueOrNull;
+    final name = gen?['title']?.toString() ?? 'Generator';
+
+    const issues = [
+      ('misrepresentation', Icons.info_outline, 'Specs mismatch',
+          'Capacity, price or photos don\'t match reality'),
+      ('fraud', Icons.security_outlined, 'Suspected fraud',
+          'Suspicious activity or payment request'),
+      ('no_show', Icons.cancel_outlined, 'Generator unavailable',
+          'Listed as available but owner not responding'),
+      ('damage', Icons.build_outlined, 'Equipment damage',
+          'Generator was returned damaged or in bad condition'),
+      ('other', Icons.more_horiz, 'Other issue', 'Something else'),
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: cs.outlineVariant,
+                    borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(children: [
+                Icon(Icons.flag_outlined, size: 18, color: cs.error),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Report a problem with "$name"',
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w700)),
+                ),
+              ]),
+            ),
+            const SizedBox(height: 12),
+            ...issues.map((issue) => ListTile(
+                  leading: Icon(issue.$2, color: cs.onSurfaceVariant),
+                  title: Text(issue.$3,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600)),
+                  subtitle: Text(issue.$4,
+                      style: TextStyle(
+                          fontSize: 12, color: cs.onSurfaceVariant)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    context.push(AppRoutes.report(
+                        type: 'generator',
+                        id: id,
+                        name: name,
+                        reason: issue.$1));
+                  },
+                )),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
     );
   }
 

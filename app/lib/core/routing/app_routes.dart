@@ -55,10 +55,12 @@ abstract final class AppRoutes {
     required String id,
     String? rentalId,
     String? name,
+    String? reason,
   }) {
     final buf = StringBuffer('/report?type=$type&id=$id');
     if (rentalId != null) buf.write('&rental=$rentalId');
     if (name != null) buf.write('&name=${Uri.encodeComponent(name)}');
+    if (reason != null) buf.write('&reason=$reason');
     return buf.toString();
   }
 }
