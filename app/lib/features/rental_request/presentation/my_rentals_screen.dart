@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../chat/providers/chat_providers.dart';
 
 final myRentalsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
@@ -102,39 +103,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
         error: (e, _) => Center(child: Text('$e')),
         data: (items) {
           if (items.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(40),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        color: cs.primaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                      child:
-                          Icon(Icons.receipt_long, size: 36, color: cs.primary),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text('No rentals yet',
-                        style: TextStyle(
-                            fontSize: 17, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 8),
-                    Text('Browse generators and send your first request.',
-                        style: TextStyle(color: cs.onSurfaceVariant),
-                        textAlign: TextAlign.center),
-                    const SizedBox(height: 24),
-                    FilledButton.tonal(
-                      onPressed: () => context.go('/'),
-                      child: const Text('Browse generators'),
-                    ),
-                  ],
-                ),
-              ),
-            );
+            return _EmptyRentals(cs: cs, onBrowse: () => context.go('/'));
           }
           return RefreshIndicator(
             onRefresh: () => ref.refresh(myRentalsProvider.future),
@@ -347,20 +316,14 @@ class _RentalCard extends ConsumerWidget {
               ],
               if (status == 'accepted' || status == 'active') ...[
                 const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40),
-                  ),
-                  onPressed: () {
-                    final ownerName =
-                        (rental['companies'] as Map<String, dynamic>?)?['name']
-                            ?.toString() ??
-                        'Owner';
-                    context.push(
-                        '/chat/${rental['id']}?name=${Uri.encodeComponent(ownerName)}');
-                  },
-                  icon: const Icon(Icons.chat_outlined, size: 16),
-                  label: const Text('Chat with owner'),
+                _ChatButton(
+                  rentalId: rental['id'].toString(),
+                  label: 'Chat with owner',
+                  otherPartyName: (rental['companies'] as Map<String, dynamic>?)?['name']
+                          ?.toString() ??
+                      'Owner',
+                  wRef: wRef,
+                  context: context,
                 ),
               ],
               if (status == 'rejected') ...[
@@ -549,5 +512,126 @@ class _RentalCard extends ConsumerWidget {
     } catch (_) {
       return dateStr.toString();
     }
+  }
+}
+
+class _EmptyRentals extends StatelessWidget {
+  const _EmptyRentals({required this.cs, required this.onBrowse});
+  final ColorScheme cs;
+  final VoidCallback onBrowse;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Stacked icon illustration
+            SizedBox(
+              width: 120,
+              height: 120,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer.withValues(alpha: 0.3),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  Container(
+                    width: 84,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.bolt, size: 44, color: cs.primary),
+                  ),
+                  Positioned(
+                    right: 8,
+                    bottom: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: cs.surface,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                              color: cs.shadow.withValues(alpha: 0.1),
+                              blurRadius: 8),
+                        ],
+                      ),
+                      child: Icon(Icons.receipt_long,
+                          size: 20, color: cs.primary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text('No rentals yet',
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: cs.onSurface)),
+            const SizedBox(height: 10),
+            Text(
+              'Browse available generators nearby\nand send your first rental request.',
+              style: TextStyle(
+                  color: cs.onSurfaceVariant,
+                  fontSize: 14,
+                  height: 1.5),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 28),
+            FilledButton.icon(
+              onPressed: onBrowse,
+              icon: const Icon(Icons.search_rounded),
+              label: const Text('Browse generators'),
+              style: FilledButton.styleFrom(
+                  minimumSize: const Size(200, 48)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChatButton extends StatelessWidget {
+  const _ChatButton({
+    required this.rentalId,
+    required this.label,
+    required this.otherPartyName,
+    required this.wRef,
+    required this.context,
+  });
+  final String rentalId;
+  final String label;
+  final String otherPartyName;
+  final WidgetRef wRef;
+  final BuildContext context;
+
+  @override
+  Widget build(BuildContext _) {
+    final unread = wRef.watch(unreadMessagesProvider(rentalId)).valueOrNull ?? 0;
+    return Badge(
+      isLabelVisible: unread > 0,
+      label: Text('$unread'),
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(40),
+        ),
+        onPressed: () => context.push(
+            '/chat/$rentalId?name=${Uri.encodeComponent(otherPartyName)}'),
+        icon: const Icon(Icons.chat_outlined, size: 16),
+        label: Text(label),
+      ),
+    );
   }
 }

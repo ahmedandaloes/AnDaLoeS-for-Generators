@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/supabase.dart';
+import '../../../chat/providers/chat_providers.dart';
 import '../../../ratings/presentation/rate_rental_screen.dart';
 import '../../providers/owner_providers.dart' show ownerRequestsProvider;
 
@@ -119,21 +120,7 @@ class OwnerRequestCard extends StatelessWidget {
             ],
             if (status == 'accepted' || status == 'active') ...[
               const SizedBox(height: 8),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40)),
-                onPressed: () {
-                  final customer =
-                      request['profiles'] as Map<String, dynamic>?;
-                  final name = customer?['full_name'] ??
-                      customer?['phone'] ??
-                      'Customer';
-                  context.push(
-                      '/chat/${request['id']}?name=${Uri.encodeComponent(name.toString())}');
-                },
-                icon: const Icon(Icons.chat_outlined, size: 16),
-                label: const Text('Chat with customer'),
-              ),
+              _OwnerChatButton(request: request, ref: ref),
             ],
             if (status == 'accepted') ...[
               const SizedBox(height: 8),
@@ -291,6 +278,34 @@ class OwnerRequestCard extends StatelessWidget {
     } catch (_) {
       return d.toString();
     }
+  }
+}
+
+class _OwnerChatButton extends ConsumerWidget {
+  const _OwnerChatButton({required this.request, required this.ref});
+  final Map<String, dynamic> request;
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context, WidgetRef wRef) {
+    final rentalId = request['id'].toString();
+    final unread =
+        wRef.watch(unreadMessagesProvider(rentalId)).valueOrNull ?? 0;
+    final customer = request['profiles'] as Map<String, dynamic>?;
+    final name = (customer?['full_name'] ?? customer?['phone'] ?? 'Customer').toString();
+
+    return Badge(
+      isLabelVisible: unread > 0,
+      label: Text('$unread'),
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(40)),
+        onPressed: () => context.push(
+            '/chat/$rentalId?name=${Uri.encodeComponent(name)}'),
+        icon: const Icon(Icons.chat_outlined, size: 16),
+        label: const Text('Chat with customer'),
+      ),
+    );
   }
 }
 

@@ -415,8 +415,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           // ── Generator list ────────────────────────────────────────────
           generators.when(
-            loading: () => const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator())),
+            loading: () => SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (_, __) => const _SkeletonCard(),
+                childCount: 5,
+              ),
+            ),
             error: (e, _) => SliverFillRemaining(
               child: _ErrorState(
                   message: '$e',
@@ -573,6 +577,110 @@ class _HeroBanner extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Skeleton loading card ─────────────────────────────────────────────────────
+
+class _SkeletonCard extends StatefulWidget {
+  const _SkeletonCard();
+
+  @override
+  State<_SkeletonCard> createState() => _SkeletonCardState();
+}
+
+class _SkeletonCardState extends State<_SkeletonCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final base = cs.surfaceContainerLow;
+        final highlight = cs.surfaceContainerHighest;
+        final color = Color.lerp(base, highlight, _anim.value)!;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: Container(
+            height: 110,
+            decoration: BoxDecoration(
+              color: cs.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                  color: cs.outlineVariant.withValues(alpha: 0.3)),
+            ),
+            child: Row(children: [
+              // Photo placeholder
+              ClipRRect(
+                borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(15)),
+                child: Container(width: 100, color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                          height: 14,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(6))),
+                      Container(
+                          height: 12,
+                          width: 120,
+                          decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(6))),
+                      Row(children: [
+                        Container(
+                            height: 22,
+                            width: 60,
+                            decoration: BoxDecoration(
+                                color: color,
+                                borderRadius: BorderRadius.circular(20))),
+                        const SizedBox(width: 8),
+                        Container(
+                            height: 22,
+                            width: 70,
+                            decoration: BoxDecoration(
+                                color: color,
+                                borderRadius: BorderRadius.circular(20))),
+                      ]),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+            ]),
+          ),
+        );
+      },
     );
   }
 }

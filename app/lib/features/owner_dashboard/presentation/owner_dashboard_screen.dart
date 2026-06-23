@@ -258,6 +258,8 @@ class _Dashboard extends StatelessWidget {
               ],
             ),
           ),
+          _DashboardStats(
+              companyId: company['id'].toString(), cs: cs, ref: ref),
           TabBar(
             tabs: const [
               Tab(text: 'Requests'),
@@ -643,6 +645,69 @@ class _HistoryTab extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// ── Dashboard summary stats ───────────────────────────────────────────────────
+class _DashboardStats extends StatelessWidget {
+  const _DashboardStats(
+      {required this.companyId, required this.cs, required this.ref});
+  final String companyId;
+  final ColorScheme cs;
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    final requestsAsync = ref.watch(ownerRequestsProvider(companyId));
+    final historyAsync = ref.watch(ownerHistoryProvider(companyId));
+    final pending = requestsAsync.valueOrNull?.where((r) => r['status'] == 'pending').length ?? 0;
+    final active = requestsAsync.valueOrNull?.where((r) => r['status'] == 'active').length ?? 0;
+    final completed = historyAsync.valueOrNull?.where((r) => r['status'] == 'completed').length ?? 0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(children: [
+        _StatChip(label: 'Pending', value: '$pending', color: Colors.orange, icon: Icons.hourglass_empty_rounded, cs: cs),
+        const SizedBox(width: 8),
+        _StatChip(label: 'Active', value: '$active', color: cs.primary, icon: Icons.bolt, cs: cs),
+        const SizedBox(width: 8),
+        _StatChip(label: 'Done', value: '$completed', color: Colors.green.shade700, icon: Icons.check_circle_outline, cs: cs),
+      ]),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  const _StatChip({required this.label, required this.value, required this.color, required this.icon, required this.cs});
+  final String label;
+  final String value;
+  final Color color;
+  final IconData icon;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: color)),
+              Text(label, style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ]),
+      ),
     );
   }
 }

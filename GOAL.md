@@ -9,33 +9,48 @@
 - Generator detail: photo carousel, call/WhatsApp, booked dates, ratings, similar generators horizontal scroll, haptic on Rent Now, favorite FAB
 - Notifications: realtime, mark-all-read, unread badge
 - Profile: rental stats, dark mode (persisted), language toggle (persisted), avatar photo upload (FilePicker → Supabase avatars bucket)
-- My Rentals: conflict warning, rating badge, view receipt, owner accept/reject note shown to customer
+- My Rentals: conflict warning, rating badge, view receipt, owner accept/reject note shown to customer, chat button
 - Rental Receipt: gradient header, copy-as-text
-- Owner Dashboard: requests, history, rate customer, earnings + monthly chart, accept/reject with optional message dialog
+- Owner Dashboard: requests, history, rate customer, earnings + monthly chart, accept/reject with optional message dialog, chat button
 - Add Generator + Edit Generator: fuel type dropdown (diesel/petrol/gas/natural_gas/solar)
 - Admin panel: company approval, reports, platform stats
 - Company profile: stat chips (generator count, completed rentals)
-- DB migrations 0011–0015 (favorites, notifications, avatar, fuel_type, owner_note)
+- DB migrations 0011–0016 (favorites, notifications, avatar, fuel_type, owner_note, messages)
 - CI: flutter.yml with Flutter 3.32.x, analyze+test, APK build job
 - CLAUDE.md agentic guide
 - /goal + /loop skills for self-sustaining development across context windows
 - Onboarding splash: 3-page PageView, SharedPreferences flag, first-launch only
+- Rental request: booked dates shown before date picker; review & confirm flow
+- Payment: COD confirmation screen with digital payment placeholder ("Soon")
+- Chat: owner ↔ customer real-time thread per rental request (Supabase stream)
+- Architecture: feature-based structure — providers/ and widgets/ per feature; all files under 800 lines
 
 ---
 
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Payment flow: COD confirmation screen with digital payment placeholder
-- [ ] Rental request: calendar date range picker (replace plain text fields) with booked dates blocked
-- [ ] Chat screen: owner ↔ customer thread per rental request (Supabase Realtime)
-- [ ] Generator detail: booked dates from rental_requests shown as unavailable day dots
+- [ ] Generator detail: booked dates shown as mini calendar with highlighted unavailable days
+- [ ] Unread message badge on chat buttons (My Rentals + Owner Dashboard)
+- [ ] DB trigger: auto-notify customer when owner accepts/rejects their rental request
+- [ ] Map view: generators plotted on Google Maps / map picker on add-generator
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
-- [ ] Map view: generators plotted on Google Maps
 - [ ] Referral code system: users get discount for referring friends
 - [ ] Deep linking: share generator page via URL
+- [ ] Advanced search: save search, price history chart
+
+### UI/UX POLISH (ongoing — improve with every loop)
+- [ ] Home: skeleton loading cards instead of spinner
+- [ ] Generator detail: sticky "Rent Now" FAB animation on scroll, better hero image aspect ratio
+- [ ] My Rentals: empty state illustration, status timeline instead of plain chip
+- [ ] Owner Dashboard: summary stats cards at top (pending count, active count, total earned this month)
+- [ ] Rental request: animated date selection confirmation, smarter conflict UX
+- [ ] Chat: typing indicator, message read receipts, send on Enter key
+- [ ] Global: haptic feedback on all primary actions, micro-animations on state transitions
+- [ ] Global: pull-to-refresh on every list screen
+- [ ] Notifications: grouped by day, swipe-to-dismiss, mark individual as read
 
 ### DONE-WHEN
 - [ ] 80%+ test coverage (current: placeholder only)

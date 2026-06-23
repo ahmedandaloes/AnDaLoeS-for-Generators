@@ -128,67 +128,210 @@ class BookedDatesSection extends StatelessWidget {
   final List<Map<String, dynamic>> bookings;
   final ColorScheme cs;
 
+  // Build a set of booked DateTime days from booking ranges
+  Set<DateTime> _bookedDays() {
+    final days = <DateTime>{};
+    for (final b in bookings) {
+      try {
+        final start = DateTime.parse(b['start_date'].toString());
+        final end = DateTime.parse(b['end_date'].toString());
+        for (var d = start;
+            !d.isAfter(end);
+            d = d.add(const Duration(days: 1))) {
+          days.add(DateTime(d.year, d.month, d.day));
+        }
+      } catch (_) {}
+    }
+    return days;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bookedDays = _bookedDays();
+    final now = DateTime.now();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Already booked',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-            color: cs.onSurfaceVariant,
+        Row(children: [
+          Text(
+            'Availability',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: cs.onSurfaceVariant,
+            ),
           ),
+          const SizedBox(width: 10),
+          _LegendDot(color: cs.error, label: 'Booked', cs: cs),
+          const SizedBox(width: 12),
+          _LegendDot(color: Colors.green, label: 'Available', cs: cs),
+        ]),
+        const SizedBox(height: 10),
+        // Show current month and next month
+        _MiniCalendarMonth(
+          year: now.year,
+          month: now.month,
+          bookedDays: bookedDays,
+          cs: cs,
         ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: cs.errorContainer.withValues(alpha: 0.25),
-            borderRadius: BorderRadius.circular(12),
-            border:
-                Border.all(color: cs.error.withValues(alpha: 0.2), width: 1),
-          ),
-          child: Column(
-            children: bookings.map((b) {
-              final status = b['status']?.toString() ?? '';
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(children: [
-                  Icon(
-                    status == 'active'
-                        ? Icons.circle
-                        : Icons.calendar_today_outlined,
-                    size: 12,
-                    color: status == 'active' ? cs.error : cs.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${b['start_date']}  →  ${b['end_date']}',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: cs.onSurface,
-                        fontWeight: status == 'active'
-                            ? FontWeight.w600
-                            : FontWeight.normal),
-                  ),
-                  if (status == 'active') ...[
-                    const SizedBox(width: 6),
-                    Text('(active)',
-                        style: TextStyle(
-                            fontSize: 11,
-                            color: cs.error,
-                            fontWeight: FontWeight.w600)),
-                  ],
-                ]),
-              );
-            }).toList(),
-          ),
+        const SizedBox(height: 12),
+        _MiniCalendarMonth(
+          year: now.month == 12 ? now.year + 1 : now.year,
+          month: now.month == 12 ? 1 : now.month + 1,
+          bookedDays: bookedDays,
+          cs: cs,
         ),
         const SizedBox(height: 16),
       ],
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  const _LegendDot(
+      {required this.color, required this.label, required this.cs});
+  final Color color;
+  final String label;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 4),
+      Text(label,
+          style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+    ]);
+  }
+}
+
+class _MiniCalendarMonth extends StatelessWidget {
+  const _MiniCalendarMonth({
+    required this.year,
+    required this.month,
+    required this.bookedDays,
+    required this.cs,
+  });
+  final int year;
+  final int month;
+  final Set<DateTime> bookedDays;
+  final ColorScheme cs;
+
+  static const _weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  static const _monthNames = [
+    '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final firstDay = DateTime(year, month, 1);
+    // weekday: 1=Mon … 7=Sun → offset 0-6
+    final startOffset = (firstDay.weekday - 1) % 7;
+    final daysInMonth = DateUtils.getDaysInMonth(year, month);
+    final today = DateTime.now();
+    final todayNorm = DateTime(today.year, today.month, today.day);
+
+    final cells = <Widget>[];
+    // Leading blanks
+    for (var i = 0; i < startOffset; i++) {
+      cells.add(const SizedBox());
+    }
+    for (var d = 1; d <= daysInMonth; d++) {
+      final date = DateTime(year, month, d);
+      final isBooked = bookedDays.contains(date);
+      final isPast = date.isBefore(todayNorm);
+      final isToday = date == todayNorm;
+
+      Color? bg;
+      Color textColor;
+      FontWeight fw = FontWeight.normal;
+
+      if (isBooked) {
+        bg = cs.error;
+        textColor = cs.onError;
+        fw = FontWeight.w600;
+      } else if (isToday) {
+        bg = cs.primaryContainer;
+        textColor = cs.primary;
+        fw = FontWeight.w700;
+      } else if (isPast) {
+        bg = null;
+        textColor = cs.onSurface.withValues(alpha: 0.3);
+      } else {
+        bg = null;
+        textColor = cs.onSurface;
+      }
+
+      cells.add(
+        Container(
+          margin: const EdgeInsets.all(1),
+          decoration: BoxDecoration(
+            color: bg,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              '$d',
+              style: TextStyle(
+                fontSize: 11,
+                color: textColor,
+                fontWeight: fw,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${_monthNames[month]} $year',
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: cs.onSurface),
+          ),
+          const SizedBox(height: 8),
+          // Day-of-week header
+          Row(
+            children: _weekdays
+                .map((d) => Expanded(
+                      child: Center(
+                        child: Text(d,
+                            style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: cs.onSurfaceVariant)),
+                      ),
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: 4),
+          GridView.count(
+            crossAxisCount: 7,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 1,
+            children: cells,
+          ),
+        ],
+      ),
     );
   }
 }
