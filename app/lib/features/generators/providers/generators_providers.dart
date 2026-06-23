@@ -36,6 +36,20 @@ final showFavoritesOnlyProvider = StateProvider<bool>((ref) => false);
 final recentSearchesProvider =
     StateProvider<List<String>>((ref) => const []);
 
+// Top-rated generators for the Featured carousel on home screen.
+final featuredGeneratorsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final data = await supabase
+      .from('generators')
+      .select(
+          'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type')
+      .eq('status', 'available')
+      .gte('avg_score', 4.0)
+      .order('avg_score', ascending: false)
+      .limit(8);
+  return (data as List).cast<Map<String, dynamic>>();
+});
+
 // Autocomplete suggestions based on partial query (min 2 chars).
 final autocompleteProvider =
     FutureProvider.autoDispose.family<List<String>, String>((ref, q) async {

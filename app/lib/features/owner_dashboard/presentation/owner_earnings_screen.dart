@@ -219,20 +219,45 @@ class OwnerEarningsScreen extends ConsumerWidget {
   }
 }
 
-class _MonthlyChart extends StatelessWidget {
+class _MonthlyChart extends StatefulWidget {
   const _MonthlyChart({required this.monthlyNet, required this.cs});
   final Map<String, double> monthlyNet;
   final ColorScheme cs;
 
+  @override
+  State<_MonthlyChart> createState() => _MonthlyChartState();
+}
+
+class _MonthlyChartState extends State<_MonthlyChart>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _anim;
+  int? _hoverIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _anim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  static const _monthLabels = [
+    '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
   String _label(String ym) {
-    const months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
     try {
       final parts = ym.split('-');
       final m = int.parse(parts[1]);
-      return '${months[m]}\n${parts[0].substring(2)}';
+      return '${_monthLabels[m]}\n\'${parts[0].substring(2)}';
     } catch (_) {
       return ym;
     }
@@ -240,65 +265,234 @@ class _MonthlyChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxVal = monthlyNet.values.fold<double>(0, (m, v) => v > m ? v : m);
+    final data = widget.monthlyNet;
+    if (data.isEmpty) return const SizedBox.shrink();
+    final maxVal = data.values.fold<double>(0, (m, v) => v > m ? v : m);
     if (maxVal == 0) return const SizedBox.shrink();
+
+    final values = data.values.toList();
+    final keys = data.keys.toList();
+
+    // Trend: last month vs prev
+    String trendText = '';
+    Color trendColor = widget.cs.onSurfaceVariant;
+    if (values.length >= 2) {
+      final last = values.last;
+      final prev = values[values.length - 2];
+      if (prev > 0) {
+        final pct = ((last - prev) / prev * 100).toStringAsFixed(0);
+        final up = last >= prev;
+        trendText = '${up ? '▲' : '▼'} $pct% vs last month';
+        trendColor = up ? Colors.green.shade600 : widget.cs.error;
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerLowest,
+        color: widget.cs.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: cs.outlineVariant.withValues(alpha: 0.4)),
+            color: widget.cs.outlineVariant.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              for (final entry in monthlyNet.entries)
-                Expanded(
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 3),
-                    child: Column(
-                      children: [
-                        Text(
-                          '${(entry.value / 1000).toStringAsFixed(1)}k',
-                          style: TextStyle(
-                              fontSize: 9, color: cs.onSurfaceVariant),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 4),
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 600),
-                          curve: Curves.easeOut,
-                          height: 80 * (entry.value / maxVal),
-                          decoration: BoxDecoration(
-                            color: cs.primary
-                                .withValues(alpha: 0.7 + 0.3 * (entry.value / maxVal)),
-                            borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(4)),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _label(entry.key),
-                          style: TextStyle(
-                              fontSize: 9, color: cs.onSurfaceVariant),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+          Row(children: [
+            Text('Monthly Revenue',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: widget.cs.onSurfaceVariant)),
+            const Spacer(),
+            if (trendText.isNotEmpty)
+              Text(trendText,
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: trendColor)),
+          ]),
+          const SizedBox(height: 12),
+          // Sparkline
+          AnimatedBuilder(
+            animation: _anim,
+            builder: (_, __) {
+              final progress = CurvedAnimation(
+                      parent: _anim, curve: Curves.easeInOut)
+                  .value;
+              return GestureDetector(
+                onTapDown: (details) {
+                  final box = context.findRenderObject() as RenderBox?;
+                  if (box == null) return;
+                  final localX = details.localPosition.dx;
+                  final w = box.size.width - 32;
+                  final idx = (localX / w * (values.length - 1))
+                      .round()
+                      .clamp(0, values.length - 1);
+                  setState(() => _hoverIndex = idx);
+                },
+                onTapUp: (_) =>
+                    Future.delayed(const Duration(seconds: 2),
+                        () { if (mounted) setState(() => _hoverIndex = null); }),
+                child: SizedBox(
+                  height: 90,
+                  child: CustomPaint(
+                    painter: _SparklinePainter(
+                      values: values,
+                      progress: progress,
+                      color: widget.cs.primary,
+                      fillColor: widget.cs.primary.withValues(alpha: 0.12),
+                      hoverIndex: _hoverIndex,
+                      hoverColor: widget.cs.primary,
                     ),
+                    size: const Size(double.infinity, 90),
                   ),
                 ),
-            ],
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          // X-axis labels
+          Row(
+            children: List.generate(keys.length, (i) {
+              return Expanded(
+                child: Text(
+                  _label(keys[i]),
+                  style: TextStyle(
+                      fontSize: 8,
+                      color: widget.cs.onSurfaceVariant,
+                      height: 1.2),
+                  textAlign: TextAlign.center,
+                ),
+              );
+            }),
           ),
         ],
       ),
     );
   }
+}
+
+class _SparklinePainter extends CustomPainter {
+  const _SparklinePainter({
+    required this.values,
+    required this.progress,
+    required this.color,
+    required this.fillColor,
+    required this.hoverIndex,
+    required this.hoverColor,
+  });
+
+  final List<double> values;
+  final double progress;
+  final Color color;
+  final Color fillColor;
+  final int? hoverIndex;
+  final Color hoverColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.isEmpty) return;
+    final maxVal = values.fold<double>(0, (m, v) => v > m ? v : m);
+    if (maxVal == 0) return;
+
+    final n = values.length;
+    final xStep = size.width / (n - 1 < 1 ? 1 : n - 1);
+
+    Offset pt(int i) {
+      final x = i * xStep;
+      final y = size.height - (values[i] / maxVal) * size.height * 0.85 - 4;
+      return Offset(x, y);
+    }
+
+    // Build path up to progress
+    final totalPoints = (progress * (n - 1)).floor() + 1;
+    final partialFrac = (progress * (n - 1)) - totalPoints + 1;
+
+    final linePath = Path();
+    linePath.moveTo(pt(0).dx, pt(0).dy);
+    for (int i = 1; i < totalPoints && i < n; i++) {
+      final p0 = pt(i - 1);
+      final p1 = pt(i);
+      final cx = (p0.dx + p1.dx) / 2;
+      linePath.cubicTo(cx, p0.dy, cx, p1.dy, p1.dx, p1.dy);
+    }
+    // Partial last segment
+    if (totalPoints < n) {
+      final p0 = pt(totalPoints - 1);
+      final p1 = pt(totalPoints);
+      final cx = (p0.dx + p1.dx) / 2;
+      final endX = p0.dx + (p1.dx - p0.dx) * partialFrac;
+      final endY = p0.dy + (p1.dy - p0.dy) * partialFrac;
+      linePath.cubicTo(cx, p0.dy, cx, p1.dy, endX, endY);
+    }
+
+    // Fill
+    final fillPath = Path.from(linePath)
+      ..lineTo(linePath.getBounds().right, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(
+      fillPath,
+      Paint()
+        ..color = fillColor
+        ..style = PaintingStyle.fill,
+    );
+
+    // Line
+    canvas.drawPath(
+      linePath,
+      Paint()
+        ..color = color
+        ..strokeWidth = 2.5
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+
+    // Dots on each point
+    for (int i = 0; i < n; i++) {
+      final visibleUpTo = progress * (n - 1);
+      if (i > visibleUpTo) break;
+      final p = pt(i);
+      final isHover = hoverIndex == i;
+      canvas.drawCircle(
+        p,
+        isHover ? 6 : 3.5,
+        Paint()..color = color,
+      );
+      canvas.drawCircle(
+        p,
+        isHover ? 4 : 2,
+        Paint()..color = Colors.white,
+      );
+    }
+
+    // Hover value label
+    if (hoverIndex != null && hoverIndex! < n) {
+      final p = pt(hoverIndex!);
+      final val = values[hoverIndex!];
+      final label = val >= 1000
+          ? '${(val / 1000).toStringAsFixed(1)}k'
+          : val.toStringAsFixed(0);
+      final tp = TextPainter(
+        text: TextSpan(
+          text: 'EGP $label',
+          style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: hoverColor),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      final tx = (p.dx - tp.width / 2).clamp(0.0, size.width - tp.width);
+      tp.paint(canvas, Offset(tx, p.dy - 20));
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SparklinePainter old) =>
+      old.progress != progress || old.hoverIndex != hoverIndex;
 }
 
 class _SummaryCard extends StatelessWidget {

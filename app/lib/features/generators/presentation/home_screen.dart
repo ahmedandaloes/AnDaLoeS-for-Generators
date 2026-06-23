@@ -326,6 +326,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
+          // ── Top Rated carousel ───────────────────────────────────────
+          SliverToBoxAdapter(
+            child: _FeaturedCarousel(ref: ref, cs: cs),
+          ),
+
           // ── Section header + sort ─────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
@@ -791,4 +796,157 @@ class _NoResultsState extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Top Rated Featured Carousel ───────────────────────────────────────────────
+class _FeaturedCarousel extends StatelessWidget {
+  const _FeaturedCarousel({required this.ref, required this.cs});
+  final WidgetRef ref;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final featuredAsync = ref.watch(featuredGeneratorsProvider);
+    return featuredAsync.maybeWhen(
+      data: (items) {
+        if (items.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
+              child: Row(children: [
+                Icon(Icons.star_rounded,
+                    size: 16, color: Colors.amber.shade600),
+                const SizedBox(width: 6),
+                Text('Top Rated',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: cs.onSurface)),
+              ]),
+            ),
+            SizedBox(
+              height: 170,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                itemCount: items.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, i) =>
+                    _FeaturedCard(gen: items[i], cs: cs),
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _FeaturedCard extends StatelessWidget {
+  const _FeaturedCard({required this.gen, required this.cs});
+  final Map<String, dynamic> gen;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final photo = (gen['photos'] as List?)?.isNotEmpty == true
+        ? gen['photos'][0].toString()
+        : null;
+    final score = (gen['avg_score'] as num?)?.toStringAsFixed(1) ?? '–';
+    final id = gen['id'].toString();
+
+    return GestureDetector(
+      onTap: () => context.push('/generators/$id'),
+      child: Container(
+        width: 150,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: cs.surfaceContainerLow,
+          boxShadow: [
+            BoxShadow(
+              color: cs.shadow.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+              child: photo != null
+                  ? Image.network(
+                      photo,
+                      height: 90,
+                      width: 150,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _placeholder(),
+                    )
+                  : _placeholder(),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    gen['title']?.toString() ?? 'Generator',
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w700),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(children: [
+                    Icon(Icons.star_rounded,
+                        size: 12, color: Colors.amber.shade600),
+                    const SizedBox(width: 2),
+                    Text(score,
+                        style: const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    Text(
+                      'EGP ${gen['price_per_day']}',
+                      style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: cs.primary),
+                    ),
+                  ]),
+                  const SizedBox(height: 2),
+                  Row(children: [
+                    Icon(Icons.location_on_outlined,
+                        size: 10, color: cs.onSurfaceVariant),
+                    const SizedBox(width: 2),
+                    Expanded(
+                      child: Text(
+                        gen['city']?.toString() ?? '',
+                        style: TextStyle(
+                            fontSize: 10, color: cs.onSurfaceVariant),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ]),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _placeholder() => Container(
+        height: 90,
+        width: 150,
+        color: cs.primaryContainer,
+        child: Icon(Icons.bolt, size: 36, color: cs.primary),
+      );
 }
