@@ -274,6 +274,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
+          // ── Budget quick-chips ────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 44,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                children: [
+                  for (final price in [300, 500, 800, 1200, 2000])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        avatar: const Icon(Icons.payments_outlined, size: 12),
+                        label: Text('≤ $price EGP',
+                            style: const TextStyle(fontSize: 12)),
+                        selected: filter.maxPrice == price.toDouble(),
+                        onSelected: (on) => ref
+                            .read(filterProvider.notifier)
+                            .state = filter.withMaxPrice(
+                                on ? price.toDouble() : null),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
           // ── Recent searches ───────────────────────────────────────────
           if (filter.query.isEmpty && recentSearches.isNotEmpty)
             SliverToBoxAdapter(

@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Notifications: mark individual notification as read on tap (not just all)
-- [ ] Owner: edit generator inline status toggle (available ↔ unavailable)
-- [ ] Home: price range quick filter chip (budget filter, e.g. "< 500 EGP")
-- [ ] Admin: generator approval/rejection directly from generators tab
+- [ ] Home: "Flash deals" section — generators with price below governorate average
+- [ ] Owner: earnings tab filter by month picker
+- [ ] Generator detail: share with friend button with deep link preview
+- [ ] My Rentals: group by month with sticky month headers
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: Near Me section, bulk accept-all for owner pending requests`
+**Last commit:** `feat: budget filter chips, rental price calculator on generator detail`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 
