@@ -1,6 +1,10 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/config/supabase.dart';
 
@@ -31,6 +35,10 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
   String? _governorate;
   bool _submitting = false;
 
+  // Photos
+  final List<File> _photos = [];
+  static const _maxPhotos = 5;
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -41,6 +49,25 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
     _pricePerMonthController.dispose();
     _cityController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPhoto() async {
+    if (_photos.length >= _maxPhotos) {
+      _snack('Maximum $_maxPhotos photos allowed');
+      return;
+    }
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+      if (result == null || result.files.isEmpty) return;
+      final path = result.files.first.path;
+      if (path == null) return;
+      setState(() => _photos.add(File(path)));
+    } catch (e) {
+      _snack('Could not open photo picker: $e');
+    }
   }
 
   Future<void> _submit() async {
@@ -59,24 +86,49 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
 
     setState(() => _submitting = true);
     try {
-      await supabase.from('generators').insert({
+      // 1 — insert generator
+      final data = await supabase.from('generators').insert({
         'company_id': widget.companyId,
         'title': title,
         'capacity_kva': double.parse(capacityStr),
         'price_per_day': double.parse(priceStr),
         if (_pricePerWeekController.text.trim().isNotEmpty)
-          'price_per_week':
-              double.parse(_pricePerWeekController.text.trim()),
+          'price_per_week': double.parse(_pricePerWeekController.text.trim()),
         if (_pricePerMonthController.text.trim().isNotEmpty)
-          'price_per_month':
-              double.parse(_pricePerMonthController.text.trim()),
+          'price_per_month': double.parse(_pricePerMonthController.text.trim()),
         if (_descController.text.trim().isNotEmpty)
           'description': _descController.text.trim(),
         if (_cityController.text.trim().isNotEmpty)
           'city': _cityController.text.trim(),
         'governorate': _governorate,
         'status': 'available',
-      });
+      }).select('id').single();
+
+      final generatorId = (data as Map<String, dynamic>)['id'].toString();
+
+      // 2 — upload photos if any
+      if (_photos.isNotEmpty) {
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final urls = <String>[];
+        for (var i = 0; i < _photos.length; i++) {
+          final file = _photos[i];
+          final ext = file.path.split('.').last.toLowerCase();
+          final remotePath =
+              '${widget.companyId}/$generatorId/${ts}_$i.$ext';
+          await supabase.storage.from('generator-photos').upload(
+                remotePath,
+                file,
+                fileOptions: const FileOptions(upsert: true),
+              );
+          final url = supabase.storage
+              .from('generator-photos')
+              .getPublicUrl(remotePath);
+          urls.add(url);
+        }
+        await supabase.from('generators').update({'photos': urls}).eq(
+            'id', generatorId);
+      }
+
       if (mounted) {
         _snack('Generator added!');
         context.pop();
@@ -90,13 +142,11 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
 
   void _snack(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    ));
   }
 
   @override
@@ -110,9 +160,37 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // ── Photos ──────────────────────────────────────────────────
+            _Section('Photos (optional)'),
+            SizedBox(
+              height: 110,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  // Add button
+                  if (_photos.length < _maxPhotos)
+                    _PhotoAddButton(onTap: _pickPhoto, cs: cs),
+                  // Picked photos
+                  ..._photos.asMap().entries.map(
+                        (e) => _PhotoThumb(
+                          file: e.value,
+                          onRemove: () =>
+                              setState(() => _photos.removeAt(e.key)),
+                        ),
+                      ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Up to $_maxPhotos photos — shown in the generator listing',
+              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Basic info ──────────────────────────────────────────────
             _Section('Basic info'),
-            _Field('Title *', 'e.g. Cummins 100 KVA Diesel',
-                _titleController),
+            _Field('Title *', 'e.g. Cummins 100 KVA Diesel', _titleController),
             const SizedBox(height: 12),
             _NumField('Capacity (KVA) *', 'e.g. 100', _capacityController),
             const SizedBox(height: 12),
@@ -121,6 +199,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                 maxLines: 3),
             const SizedBox(height: 20),
 
+            // ── Location ────────────────────────────────────────────────
             _Section('Location'),
             _Field('City', 'e.g. Nasr City', _cityController),
             const SizedBox(height: 12),
@@ -144,15 +223,9 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
             ),
             const SizedBox(height: 20),
 
+            // ── Pricing ─────────────────────────────────────────────────
             _Section('Pricing (EGP)'),
-            Row(
-              children: [
-                Expanded(
-                  child: _NumField(
-                      'Per day (8 hrs) *', '0', _pricePerDayController),
-                ),
-              ],
-            ),
+            _NumField('Per day (8 hrs) *', '0', _pricePerDayController),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -161,8 +234,8 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                         'Per week', 'optional', _pricePerWeekController)),
                 const SizedBox(width: 12),
                 Expanded(
-                    child: _NumField('Per month', 'optional',
-                        _pricePerMonthController)),
+                    child: _NumField(
+                        'Per month', 'optional', _pricePerMonthController)),
               ],
             ),
             const SizedBox(height: 8),
@@ -181,7 +254,9 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: cs.onPrimary),
                     )
-                  : const Text('Add generator'),
+                  : Text(_photos.isEmpty
+                      ? 'Add generator'
+                      : 'Add generator + ${_photos.length} photo${_photos.length == 1 ? '' : 's'}'),
             ),
           ],
         ),
@@ -189,6 +264,89 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
     );
   }
 }
+
+// ── Photo widgets ─────────────────────────────────────────────────────────────
+
+class _PhotoAddButton extends StatelessWidget {
+  const _PhotoAddButton({required this.onTap, required this.cs});
+  final VoidCallback onTap;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 96,
+        height: 96,
+        margin: const EdgeInsets.only(right: 10),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: cs.outlineVariant,
+            width: 1.5,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_a_photo_outlined,
+                size: 28, color: cs.onSurfaceVariant),
+            const SizedBox(height: 4),
+            Text('Add photo',
+                style:
+                    TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PhotoThumb extends StatelessWidget {
+  const _PhotoThumb({required this.file, required this.onRemove});
+  final File file;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Container(
+          width: 96,
+          height: 96,
+          margin: const EdgeInsets.only(right: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            image: DecorationImage(
+              image: FileImage(file),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        Positioned(
+          top: 4,
+          right: 14,
+          child: GestureDetector(
+            onTap: onRemove,
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: const BoxDecoration(
+                color: Colors.black54,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, size: 14, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Shared form widgets ───────────────────────────────────────────────────────
 
 class _Section extends StatelessWidget {
   const _Section(this.text);
@@ -255,10 +413,9 @@ class _NumField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
-      keyboardType:
-          const TextInputType.numberWithOptions(decimal: true),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))
+        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
       ],
       decoration: InputDecoration(labelText: label, hintText: hint),
     );

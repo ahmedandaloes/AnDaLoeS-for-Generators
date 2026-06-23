@@ -13,6 +13,7 @@ import '../../features/company/presentation/company_onboarding_screen.dart';
 import '../../features/generators/presentation/generator_detail_screen.dart';
 import '../../features/generators/presentation/home_screen.dart';
 import '../../features/owner_dashboard/presentation/add_generator_screen.dart';
+import '../../features/owner_dashboard/presentation/edit_generator_screen.dart';
 import '../../features/owner_dashboard/presentation/owner_dashboard_screen.dart';
 import '../../features/owner_dashboard/presentation/owner_earnings_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
@@ -79,6 +80,12 @@ final appRouter = GoRouter(
       path: '/owner/generator/add',
       builder: (_, state) => AddGeneratorScreen(
         companyId: state.uri.queryParameters['company'] ?? '',
+      ),
+    ),
+    GoRoute(
+      path: '/owner/generator/:id/edit',
+      builder: (_, state) => EditGeneratorScreen(
+        generatorId: state.pathParameters['id']!,
       ),
     ),
     GoRoute(

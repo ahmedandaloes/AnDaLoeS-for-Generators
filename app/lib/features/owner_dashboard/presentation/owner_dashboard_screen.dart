@@ -595,9 +595,20 @@ class _OwnerGeneratorTile extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(
             '${gen['capacity_kva']} KVA  •  EGP ${gen['price_per_day']}/day'),
-        trailing: Switch(
-          value: isAvailable,
-          onChanged: (v) => _toggleStatus(context, v),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, size: 20),
+              tooltip: 'Edit',
+              onPressed: () =>
+                  context.push('/owner/generator/${gen['id']}/edit'),
+            ),
+            Switch(
+              value: isAvailable,
+              onChanged: (v) => _toggleStatus(context, v),
+            ),
+          ],
         ),
       ),
     );
