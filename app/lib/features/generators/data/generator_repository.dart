@@ -18,6 +18,22 @@ class GeneratorRepository {
     return (data as List).cast<Map<String, dynamic>>();
   }
 
+  /// Count of available generators per governorate (supply-liquidity view).
+  Future<Map<String, int>> countAvailableByGovernorate() async {
+    final data = await supabase
+        .from('generators')
+        .select('governorate')
+        .eq('status', 'available');
+    final list = (data as List).cast<Map<String, dynamic>>();
+    final counts = <String, int>{};
+    for (final g in list) {
+      final gov = g['governorate']?.toString();
+      final key = (gov == null || gov.isEmpty) ? 'Unknown' : gov;
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }
+
   Future<List<Map<String, dynamic>>> fetchFeatured() async {
     final data = await supabase
         .from('generators')

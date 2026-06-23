@@ -5,6 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../generators/data/generator_repository.dart';
+
+/// Supply liquidity: available generators per governorate (cold-start tracker).
+final supplyByGovernorateProvider =
+    FutureProvider.autoDispose<Map<String, int>>((ref) =>
+        ref.read(generatorRepositoryProvider).countAvailableByGovernorate());
 
 final platformStatsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
@@ -213,6 +219,70 @@ class AdminStatsTab extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
+              const SizedBox(height: 16),
+              // Supply liquidity by governorate (cold-start tracker)
+              ref.watch(supplyByGovernorateProvider).maybeWhen(
+                data: (counts) {
+                  if (counts.isEmpty) return const SizedBox.shrink();
+                  final entries = counts.entries.toList()
+                    ..sort((a, b) => b.value.compareTo(a.value));
+                  return Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Supply by governorate',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: cs.onSurfaceVariant,
+                                  letterSpacing: 0.5)),
+                          const SizedBox(height: 4),
+                          Text(
+                              'Available generators per area — seed Cairo & Alexandria first.',
+                              style: TextStyle(
+                                  fontSize: 11, color: cs.onSurfaceVariant)),
+                          const SizedBox(height: 12),
+                          for (final e in entries)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(children: [
+                                Icon(Icons.location_on_outlined,
+                                    size: 14, color: cs.onSurfaceVariant),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                    child: Text(e.key,
+                                        style: const TextStyle(fontSize: 13))),
+                                if (e.value < 3)
+                                  Container(
+                                    margin: const EdgeInsets.only(right: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                        color: Colors.orange
+                                            .withValues(alpha: 0.15),
+                                        borderRadius:
+                                            BorderRadius.circular(20)),
+                                    child: Text('thin',
+                                        style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.orange.shade800)),
+                                  ),
+                                Text('${e.value}',
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800)),
+                              ]),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                orElse: () => const SizedBox.shrink(),
               ),
             ],
           ),

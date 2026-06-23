@@ -181,7 +181,7 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 ### Growth (supply, demand, liquidity)
 - [ ] [NOW] Public web listing pages (no-auth, SEO/Arabic URLs) per generator/company — organic discovery
 - [ ] [NOW] WhatsApp deep-link sharing with rich preview (photo+kVA+rate+city), app/web fallback
-- [ ] [NOW] Cairo+Alexandria supply-liquidity tracker (listings/city, %cities ≥N, request-without-match rate)
+- [x] [NOW] Supply-by-governorate tracker in Admin Stats (available generators per area, "thin" flag <3) — via GeneratorRepository.countAvailableByGovernorate (repository, no inline dup)
 - [ ] [SOON] Owner quick-add / bulk listing flow (migrate OLX/Facebook owners with low friction)
 - [ ] [SOON] Saved searches + "new match" alerts (reuse notifications + use_cases)
 - [ ] [SOON] Two-sided referral invites with deep links (attribution; credit value = monetization)
