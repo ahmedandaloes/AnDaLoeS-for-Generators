@@ -444,12 +444,20 @@ class _GeneratorDetailWrapperState
                       isFav ? Colors.red.shade400 : cs.onSurfaceVariant,
                   tooltip: isFav ? 'Remove from saved' : 'Save',
                   onPressed: () => _toggleFav(ref, id, isFav),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      isFav ? Icons.favorite_rounded : Icons.favorite_border,
-                      key: ValueKey(isFav),
-                      size: 18,
+                  child: TweenAnimationBuilder<double>(
+                    key: ValueKey(isFav),
+                    tween: Tween(begin: 1.4, end: 1.0),
+                    duration: const Duration(milliseconds: 380),
+                    curve: Curves.elasticOut,
+                    builder: (_, scale, child) =>
+                        Transform.scale(scale: scale, child: child),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        isFav ? Icons.favorite_rounded : Icons.favorite_border,
+                        key: ValueKey(isFav),
+                        size: 18,
+                      ),
                     ),
                   ),
                 ),

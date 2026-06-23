@@ -8,13 +8,21 @@ import '../../providers/generators_providers.dart'
     show favoritesProvider, recentlyViewedProvider;
 import 'fuel_chip.dart';
 
-class GeneratorCard extends ConsumerWidget {
+class GeneratorCard extends ConsumerStatefulWidget {
   const GeneratorCard({super.key, required this.generator});
   final Map<String, dynamic> generator;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GeneratorCard> createState() => _GeneratorCardState();
+}
+
+class _GeneratorCardState extends ConsumerState<GeneratorCard> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final generator = widget.generator;
     final id = generator['id']?.toString() ?? '';
     final isFav = ref.watch(favoritesProvider).contains(id);
     final location = [generator['city'], generator['governorate']]
@@ -22,9 +30,16 @@ class GeneratorCard extends ConsumerWidget {
         .join(', ');
     final companyName = (generator['companies'] as Map<String, dynamic>?)?['name']?.toString();
 
-    return Card(
+    return AnimatedScale(
+      scale: _pressed ? 0.97 : 1.0,
+      duration: const Duration(milliseconds: 100),
+      curve: Curves.easeOut,
+      child: Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
         onTap: () {
           // Track recently viewed
           final current =
@@ -194,6 +209,7 @@ class GeneratorCard extends ConsumerWidget {
           ),
         ),
       ),
+    ),
     );
   }
 
