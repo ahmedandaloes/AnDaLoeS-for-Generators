@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../chat/providers/chat_providers.dart';
@@ -634,6 +635,37 @@ class _RentalCard extends ConsumerWidget {
                   label: const Text('View Offer',
                       style: TextStyle(fontSize: 13)),
                 ),
+                Builder(builder: (_) {
+                  final note = rental['note']?.toString() ?? '';
+                  final prefix = 'Delivery address: ';
+                  final addressLine =
+                      note.split('\n').firstWhere(
+                          (l) => l.startsWith(prefix),
+                          orElse: () => '');
+                  final address = addressLine.isNotEmpty
+                      ? addressLine.substring(prefix.length).trim()
+                      : '';
+                  if (address.isEmpty) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(40),
+                        foregroundColor: cs.secondary,
+                      ),
+                      onPressed: () async {
+                        final q = Uri.encodeComponent(address);
+                        final url =
+                            Uri.parse('https://www.google.com/maps/search/?api=1&query=$q');
+                        await launchUrl(url,
+                            mode: LaunchMode.externalApplication);
+                      },
+                      icon: const Icon(Icons.map_outlined, size: 15),
+                      label: const Text('Track Delivery',
+                          style: TextStyle(fontSize: 13)),
+                    ),
+                  );
+                }),
                 const SizedBox(height: 4),
                 _ChatButton(
                   rentalId: rental['id'].toString(),

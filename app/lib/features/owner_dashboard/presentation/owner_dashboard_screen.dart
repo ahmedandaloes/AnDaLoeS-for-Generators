@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
@@ -717,11 +720,13 @@ class _HistoryTab extends StatelessWidget {
 
         final extraCards = (hasEarnings ? 1 : 0) + (hasMonthly ? 1 : 0);
 
-        return RefreshIndicator(
+        return Stack(
+          children: [
+            RefreshIndicator(
           onRefresh: () =>
               ref.refresh(ownerHistoryProvider(companyId).future),
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
             itemCount: items.length + extraCards,
             separatorBuilder: (_, i) =>
                 SizedBox(height: i < extraCards ? 16 : 10),
@@ -1047,8 +1052,42 @@ class _HistoryTab extends StatelessWidget {
               );
             },
           ),
+        ),
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: hasEarnings
+              ? FloatingActionButton.extended(
+                  heroTag: 'export_csv',
+                  onPressed: () => _exportCsv(context, completed),
+                  icon: const Icon(Icons.download_outlined),
+                  label: const Text('Export CSV'),
+                )
+              : const SizedBox.shrink(),
+        ),
+          ],
         );
       },
+    );
+  }
+
+  Future<void> _exportCsv(
+      BuildContext context, List<Map<String, dynamic>> rows) async {
+    final buf = StringBuffer('Generator,Customer,Start,End,Days,Total EGP\n');
+    for (final r in rows) {
+      final gen = (r['generators'] as Map?)?['title'] ?? '';
+      final cust = (r['profiles'] as Map?)?['full_name'] ?? '';
+      final start = r['start_date'] ?? '';
+      final end = r['end_date'] ?? '';
+      final days = r['total_days'] ?? '';
+      final total = r['price_total'] ?? '';
+      buf.writeln('"$gen","$cust","$start","$end","$days","$total"');
+    }
+    final file = File('${Directory.systemTemp.path}/earnings_export.csv');
+    await file.writeAsString(buf.toString());
+    await Share.shareXFiles(
+      [XFile(file.path, mimeType: 'text/csv')],
+      subject: 'AnDaLoeS Earnings Export',
     );
   }
 }

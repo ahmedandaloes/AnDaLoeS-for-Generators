@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Generator detail: availability calendar mini-view (booked ranges highlighted)
-- [ ] My Rentals: "track" button on active rental opens delivery address in maps
-- [ ] Owner Dashboard: export earnings CSV button in History tab
-- [ ] Home screen: "Recently viewed" section above featured carousel
+- [ ] Home: "Near me" section — filter by user's governorate stored in profile
+- [ ] Owner Dashboard: bulk "accept all" for pending requests
+- [ ] Generator detail: contact owner panel with expandable WhatsApp + call buttons
+- [ ] Admin: company approval shows owner contact info inline
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: monthly earnings bar chart, admin reports badge`
+**Last commit:** `feat: earnings CSV export, track delivery button in My Rentals`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 
