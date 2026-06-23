@@ -4,6 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../notifications/presentation/notifications_screen.dart'
+    show unreadCountProvider;
+
+// Local alias used by the bell badge in this file.
+final _unreadCountProvider = unreadCountProvider;
 
 // Search + filter state
 enum _SortBy { newest, priceLow, priceHigh, ratingTop, capacityLow }
@@ -191,6 +196,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   icon: const Icon(Icons.receipt_long_outlined),
                   tooltip: 'My Rentals',
                   onPressed: () => context.push('/my-rentals'),
+                ),
+                // Notification bell with unread badge
+                Consumer(
+                  builder: (context, watchRef, _) {
+                    final count = watchRef
+                        .watch(_unreadCountProvider)
+                        .valueOrNull ?? 0;
+                    return Badge(
+                      isLabelVisible: count > 0,
+                      label: Text('$count'),
+                      child: IconButton(
+                        icon: const Icon(
+                            Icons.notifications_outlined),
+                        tooltip: 'Notifications',
+                        onPressed: () =>
+                            context.push('/notifications'),
+                      ),
+                    );
+                  },
                 ),
                 IconButton(
                   icon: CircleAvatar(

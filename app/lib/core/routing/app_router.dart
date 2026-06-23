@@ -18,6 +18,7 @@ import '../../features/owner_dashboard/presentation/edit_generator_screen.dart';
 import '../../features/owner_dashboard/presentation/owner_dashboard_screen.dart';
 import '../../features/owner_dashboard/presentation/owner_earnings_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/ratings/presentation/rate_rental_screen.dart';
 import '../../features/rental_request/presentation/my_rentals_screen.dart';
 import '../../features/rental_request/presentation/rental_request_screen.dart';
@@ -35,6 +36,7 @@ final appRouter = GoRouter(
       '/owner-dashboard',
       '/company/onboard',
       '/admin',
+      '/notifications',
     };
     final needsAuth = protected.contains(loc) ||
         (loc.startsWith('/generators/') && loc.endsWith('/request')) ||
@@ -51,6 +53,10 @@ final appRouter = GoRouter(
     GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
     GoRoute(path: '/dev-login', builder: (_, __) => const EmailLoginScreen()),
     GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+    GoRoute(
+      path: '/notifications',
+      builder: (_, __) => const NotificationsScreen(),
+    ),
     GoRoute(path: '/my-rentals', builder: (_, __) => const MyRentalsScreen()),
     GoRoute(path: '/admin', builder: (_, __) => const AdminScreen()),
     GoRoute(
