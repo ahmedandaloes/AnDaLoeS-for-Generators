@@ -11,7 +11,18 @@ import 'l10n/app_localizations.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initSupabase();
-  runApp(const ProviderScope(child: AndaloesApp()));
+
+  // Boot the provider scope early so we can load persisted preferences.
+  final container = ProviderContainer();
+  await Future.wait([
+    container.read(themeModeProvider.notifier).load(),
+    container.read(localeProvider.notifier).load(),
+  ]);
+
+  runApp(UncontrolledProviderScope(
+    container: container,
+    child: const AndaloesApp(),
+  ));
 }
 
 class AndaloesApp extends ConsumerWidget {

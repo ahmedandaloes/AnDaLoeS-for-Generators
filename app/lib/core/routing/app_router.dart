@@ -21,6 +21,7 @@ import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/ratings/presentation/rate_rental_screen.dart';
 import '../../features/rental_request/presentation/my_rentals_screen.dart';
+import '../../features/rental_request/presentation/rental_receipt_screen.dart';
 import '../../features/rental_request/presentation/rental_request_screen.dart';
 
 final appRouter = GoRouter(
@@ -111,6 +112,12 @@ final appRouter = GoRouter(
           isOwnerRating: params['owner'] == 'true',
         );
       },
+    ),
+    GoRoute(
+      path: '/receipt/:rentalId',
+      builder: (_, state) => RentalReceiptScreen(
+        rentalId: state.pathParameters['rentalId']!,
+      ),
     ),
     GoRoute(
       path: '/report',

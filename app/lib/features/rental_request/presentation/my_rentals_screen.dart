@@ -357,8 +357,22 @@ class _RentalCard extends ConsumerWidget {
                     label: const Text('Rate this rental'),
                   ),
               ],
-              if (status == 'completed' || status == 'active') ...[
+              if (status == 'completed') ...[
                 const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(38),
+                    foregroundColor: cs.onSurfaceVariant,
+                  ),
+                  onPressed: () =>
+                      context.push('/receipt/${rental['id']}'),
+                  icon: const Icon(Icons.receipt_outlined, size: 15),
+                  label: const Text('View receipt',
+                      style: TextStyle(fontSize: 13)),
+                ),
+              ],
+              if (status == 'completed' || status == 'active') ...[
+                const SizedBox(height: 4),
                 TextButton.icon(
                   style: TextButton.styleFrom(
                     foregroundColor: cs.onSurfaceVariant,
