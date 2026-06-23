@@ -73,10 +73,14 @@ class _Body extends ConsumerWidget {
       slivers: [
         // ── Photo header ───────────────────────────────────────────────
         SliverAppBar(
-          expandedHeight: 240,
+          expandedHeight: 300,
           pinned: true,
           stretch: true,
           flexibleSpace: FlexibleSpaceBar(
+            stretchModes: const [
+              StretchMode.zoomBackground,
+              StretchMode.fadeTitle,
+            ],
             background: photos.isEmpty
                 ? Container(
                     decoration: BoxDecoration(
@@ -100,7 +104,59 @@ class _Body extends ConsumerWidget {
                       ),
                     ),
                   )
-                : PhotoCarousel(photos: photos),
+                : Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      PhotoCarousel(photos: photos),
+                      // Bottom gradient so title text remains readable
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 80,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                              colors: [
+                                Colors.black.withValues(alpha: 0.55),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Photo count badge
+                      Positioned(
+                        bottom: 10,
+                        right: 14,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.55),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.photo_library_outlined,
+                                  size: 11, color: Colors.white70),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${photos.length}',
+                                style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ),
 

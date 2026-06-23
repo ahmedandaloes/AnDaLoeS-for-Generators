@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/supabase.dart';
+import '../../../../core/routing/app_routes.dart';
+import '../../../../core/widgets/press_scale.dart';
 import '../../../chat/providers/chat_providers.dart';
 import '../../../ratings/presentation/rate_rental_screen.dart';
 import '../../providers/owner_providers.dart' show ownerRequestsProvider;
@@ -108,12 +110,16 @@ class OwnerRequestCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(40)),
-                    onPressed: () =>
+                  child: PressScale(
+                    onTap: () =>
                         _acceptWithNote(context, request['id'].toString()),
-                    child: const Text('Accept'),
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(40)),
+                      onPressed: () =>
+                          _acceptWithNote(context, request['id'].toString()),
+                      child: const Text('Accept'),
+                    ),
                   ),
                 ),
               ]),
@@ -126,7 +132,7 @@ class OwnerRequestCard extends StatelessWidget {
                   foregroundColor: cs.primary,
                 ),
                 onPressed: () =>
-                    context.push('/offer/${request['id']}'),
+                    context.push(AppRoutes.offer(request['id'].toString())),
                 icon: const Icon(Icons.description_outlined, size: 15),
                 label: const Text('View Offer',
                     style: TextStyle(fontSize: 13)),
@@ -144,7 +150,7 @@ class OwnerRequestCard extends StatelessWidget {
                       color: Colors.green.withValues(alpha: 0.4)),
                 ),
                 onPressed: () =>
-                    context.push('/invoice/${request['id']}'),
+                    context.push(AppRoutes.invoice(request['id'].toString())),
                 icon: const Icon(Icons.receipt_long_outlined, size: 15),
                 label: const Text('View Invoice',
                     style: TextStyle(fontSize: 13)),

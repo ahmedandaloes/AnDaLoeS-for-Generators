@@ -50,16 +50,21 @@
 - Owner Dashboard: today's earnings gradient card + Pending/Accepted/Active chips
 - Home screen: "New Arrivals" section (7-day window, age badge per card)
 - Profile: sign-out confirmation dialog with joined date, rental count, total spent
+- Architecture: AppRoutes constants (23 routes, replaces 57 hardcoded strings); admin screen split into 4 tab files; GeneratorRepository data layer
+- Generator detail: report-a-problem bottom sheet with 5 pre-labelled issue types; hero image expanded to 300px with gradient overlay + photo count badge; zoom/fade stretch modes
+- Owner Dashboard: response-time goal chip (avg vs 2hr target, green ✓ / red ⚠)
+- Notifications: tap routes to correct screen per type (accepted→offer, completed→invoice, message→chat, rating→rate)
+- Global: PressScale widget; micro-animations on Accept + Review & Confirm CTAs
 
 ---
 
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Generator detail: "Report a problem" button with pre-filled type selector (fraud/damage/unavailable)
-- [ ] Owner Dashboard: response-time goal chip (show avg vs 2hr target, green/red)
-- [ ] My Rentals: empty state with CTA to browse generators
-- [ ] Notification detail: tap notification → navigate to relevant rental/generator
+- [ ] Rental request: smarter conflict UX — show exact blocked date ranges as chips before picker
+- [ ] Admin: export stats as CSV (share sheet with raw numbers)
+- [ ] Generator detail: skeleton loading state while data loads
+- [ ] Home: featured generators section visible even when main list is empty
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -68,11 +73,9 @@
 - [ ] Advanced search: save search, price history chart
 
 ### UI/UX POLISH (ongoing — improve with every loop)
-- [ ] Generator detail: better hero image aspect ratio, share button
-- [ ] Rental request: smarter conflict UX with exact blocked date ranges
-- [ ] Global: micro-animations on state transitions (card tap, button press feedback)
-- [ ] Global: pull-to-refresh on Owner Dashboard list views
-- [ ] Admin: better stats charts, export CSV
+- [ ] Rental request: date range conflict chip UX improvements
+- [ ] Admin: better stats charts, CSV export
+- [ ] Accessibility audit (semantic labels, contrast ratios)
 
 ### DONE-WHEN
 - [ ] 80%+ test coverage (current: placeholder only)
@@ -84,9 +87,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: today's earnings card, new arrivals section, logout confirm dialog`
+**Last commit:** `feat: hero image 300px + gradient overlay, PressScale widget, micro-animations on Accept/Review CTAs`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** report-a-problem button, owner response-time chip, notification deep-link
+**Next action:** conflict UX chips, admin CSV export, detail skeleton, featured section fallback
 
 ---
 

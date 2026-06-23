@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/widgets/press_scale.dart';
 import 'payment_confirmation_screen.dart';
 
 final _generatorForRequestProvider =
@@ -426,14 +427,17 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                 const SizedBox(height: 24),
 
                 // Review & confirm
-                FilledButton.icon(
-                  onPressed: _range == null
-                      ? null
-                      : () => _reviewAndConfirm(gen),
-                  icon: const Icon(Icons.arrow_forward_rounded),
-                  label: const Text('Review & confirm'),
-                  style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50)),
+                PressScale(
+                  onTap: _range == null ? null : () => _reviewAndConfirm(gen),
+                  child: FilledButton.icon(
+                    onPressed: _range == null
+                        ? null
+                        : () => _reviewAndConfirm(gen),
+                    icon: const Icon(Icons.arrow_forward_rounded),
+                    label: const Text('Review & confirm'),
+                    style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(50)),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
