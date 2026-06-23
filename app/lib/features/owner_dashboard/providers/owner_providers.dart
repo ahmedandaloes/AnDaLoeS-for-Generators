@@ -61,3 +61,20 @@ final ownerGeneratorsProvider =
       .order('created_at', ascending: false);
   return (data as List).cast<Map<String, dynamic>>();
 });
+
+// Maps generator_id → count of active/accepted rentals
+final activeRentalCountsProvider =
+    FutureProvider.autoDispose.family<Map<String, int>, String>(
+        (ref, companyId) async {
+  final data = await supabase
+      .from('rental_requests')
+      .select('generator_id')
+      .eq('company_id', companyId)
+      .inFilter('status', ['accepted', 'active']);
+  final counts = <String, int>{};
+  for (final row in (data as List)) {
+    final gid = row['generator_id']?.toString() ?? '';
+    counts[gid] = (counts[gid] ?? 0) + 1;
+  }
+  return counts;
+});

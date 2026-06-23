@@ -468,26 +468,59 @@ class _OwnerGeneratorTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAvailable = gen['status']?.toString() == 'available';
+    final countsAsync = ref.watch(activeRentalCountsProvider(companyId));
+    final activeCount = countsAsync.valueOrNull?[gen['id']?.toString()] ?? 0;
 
     return Card(
       child: ListTile(
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color:
-                isAvailable ? cs.primaryContainer : cs.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(Icons.bolt,
-              color: isAvailable ? cs.primary : cs.onSurfaceVariant,
-              size: 22),
+        leading: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isAvailable
+                    ? cs.primaryContainer
+                    : cs.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.bolt,
+                  color: isAvailable ? cs.primary : cs.onSurfaceVariant,
+                  size: 22),
+            ),
+            if (activeCount > 0)
+              Positioned(
+                top: -4,
+                right: -4,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade700,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        width: 1.5),
+                  ),
+                  child: Text(
+                    '$activeCount',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+          ],
         ),
         title: Text(gen['title']?.toString() ?? '-',
             style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(
-            '${gen['capacity_kva']} KVA  •  EGP ${gen['price_per_day']}/day'),
+          '${gen['capacity_kva']} KVA  •  EGP ${gen['price_per_day']}/day'
+          '${activeCount > 0 ? '  •  $activeCount active' : ''}',
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

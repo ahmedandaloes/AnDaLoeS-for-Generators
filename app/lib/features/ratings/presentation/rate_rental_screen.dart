@@ -160,6 +160,32 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
             ),
             const SizedBox(height: 28),
 
+            // Quick-tag chips — score-sensitive suggestions
+            if (_score > 0) ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _suggestions(_score)
+                    .map((tag) => ActionChip(
+                          label: Text(tag,
+                              style: const TextStyle(fontSize: 12)),
+                          onPressed: () {
+                            final cur = _commentController.text.trim();
+                            if (!cur.contains(tag)) {
+                              _commentController.text =
+                                  cur.isEmpty ? tag : '$cur. $tag';
+                              _commentController.selection =
+                                  TextSelection.collapsed(
+                                      offset:
+                                          _commentController.text.length);
+                            }
+                          },
+                        ))
+                    .toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Comment
             TextField(
               controller: _commentController,
@@ -194,6 +220,33 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
       ),
     );
   }
+
+  static List<String> _suggestions(int score) => switch (score) {
+        5 => [
+            'Generator arrived on time',
+            'Very clean and well-maintained',
+            'Owner was very helpful',
+            'Ran smoothly throughout',
+            'Would rent again',
+          ],
+        4 => [
+            'Good condition overall',
+            'On time delivery',
+            'Owner was responsive',
+            'Slight noise but manageable',
+          ],
+        3 => [
+            'Decent but could improve',
+            'Minor delays in delivery',
+            'Performance was average',
+          ],
+        _ => [
+            'Late delivery',
+            'Generator had issues',
+            'Owner was unresponsive',
+            'Not as described',
+          ],
+      };
 
   String _scoreLabel(int score) {
     return switch (score) {

@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] My Rentals: rental status timeline visual stepper (pending → accepted → active → completed)
-- [ ] Generator detail: report issue shortcut with pre-filled reason chips
-- [ ] Admin companies tab: pagination (currently loads all pending at once)
-- [ ] Profile: edit phone number inline without full profile modal
+- [ ] Owner Dashboard: generator thumbnail photo on the generator tile (currently icon only)
+- [ ] Home: skeleton loading state for the featured carousel
+- [ ] Rental receipt: share as image (screenshot + share_plus)
+- [ ] Admin: generator moderation tab (approve/suspend listings)
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: company Call/WhatsApp buttons, owner history earnings summary`
+**Last commit:** `feat: rating quick-tag chips, active rental badge on generator tiles`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 
