@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Rental request: estimated delivery time field (hours after start date)
 - [ ] Generator detail: share now includes company name and rating
-- [ ] Owner Dashboard: bulk action — accept all pending with single tap confirmation
-- [ ] My Rentals: mark as received button for active rentals (customer side)
+- [ ] Home: search results count animates when filter changes
+- [ ] Owner Dashboard: swipe-to-reject pending requests (left) in Requests tab
+- [ ] Admin stats: add daily active users chart to Stats tab
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: profile company link for owners, enriched earnings export with text statement`
+**Last commit:** `feat: delivery time chip on rental request, mark-as-received for active rentals`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 

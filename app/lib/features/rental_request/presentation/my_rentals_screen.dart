@@ -738,6 +738,56 @@ class _RentalCard extends ConsumerWidget {
                   label: const Text('View Offer',
                       style: TextStyle(fontSize: 13)),
                 ),
+                if (status == 'active') ...[
+                  const SizedBox(height: 4),
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(40),
+                      backgroundColor: Colors.green.shade600,
+                    ),
+                    onPressed: () async {
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text('Mark as received?'),
+                          content: const Text(
+                              'Confirm the generator was delivered and is in use. '
+                              'The owner will be notified.'),
+                          actions: [
+                            TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Not yet')),
+                            FilledButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Yes, received')),
+                          ],
+                        ),
+                      );
+                      if (ok != true || !context.mounted) return;
+                      try {
+                        await supabase
+                            .from('rental_requests')
+                            .update({'status': 'completed'})
+                            .eq('id', rental['id'].toString());
+                        ref.invalidate(myRentalsProvider);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Marked as received!')),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error: $e')));
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.check_circle_outline, size: 15),
+                    label: const Text('Mark as Received',
+                        style: TextStyle(fontSize: 13)),
+                  ),
+                ],
                 Builder(builder: (_) {
                   final note = rental['note']?.toString() ?? '';
                   final prefix = 'Delivery address: ';

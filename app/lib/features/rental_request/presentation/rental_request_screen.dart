@@ -69,6 +69,7 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
   DateTimeRange? _range;
   final _noteController = TextEditingController();
   final _addressController = TextEditingController();
+  String _deliveryTime = 'Flexible';
   int _conflictCount = 0;
 
   @override
@@ -141,6 +142,8 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
         note: [
           if (_addressController.text.trim().isNotEmpty)
             'Delivery address: ${_addressController.text.trim()}',
+          if (_deliveryTime != 'Flexible')
+            'Preferred delivery: $_deliveryTime',
           if (_noteController.text.trim().isNotEmpty)
             _noteController.text.trim(),
         ].join('\n'),
@@ -441,6 +444,21 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                     hintText: 'Street, building, city…',
                     prefixIcon: Icon(Icons.location_on_outlined),
                   ),
+                ),
+                const SizedBox(height: 16),
+
+                // Preferred delivery time
+                _SectionLabel('Preferred delivery time'),
+                Wrap(
+                  spacing: 8,
+                  children: ['Morning', 'Afternoon', 'Evening', 'Flexible']
+                      .map((t) => ChoiceChip(
+                            label: Text(t, style: const TextStyle(fontSize: 13)),
+                            selected: _deliveryTime == t,
+                            onSelected: (_) =>
+                                setState(() => _deliveryTime = t),
+                          ))
+                      .toList(),
                 ),
                 const SizedBox(height: 16),
 
