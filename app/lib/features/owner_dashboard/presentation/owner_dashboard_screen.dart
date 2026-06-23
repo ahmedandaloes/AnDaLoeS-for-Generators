@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/utils/db_error.dart';
 import '../providers/owner_providers.dart';
 import '../../generators/providers/detail_providers.dart';
 import 'widgets/request_card.dart';
@@ -427,10 +428,19 @@ class _RequestsTab extends StatelessWidget {
                 confirmDismiss: (dir) async {
                   if (dir == DismissDirection.startToEnd) {
                     // Swipe right → accept
-                    await supabase
-                        .from('rental_requests')
-                        .update({'status': 'accepted'}).eq('id', reqId);
-                    ref.invalidate(ownerRequestsProvider(companyId));
+                    try {
+                      await supabase
+                          .from('rental_requests')
+                          .update({'status': 'accepted'}).eq('id', reqId);
+                      ref.invalidate(ownerRequestsProvider(companyId));
+                    } catch (e) {
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(content: Text(friendlyDbError(e,
+                              fallback: 'Could not accept the request.'))),
+                        );
+                      }
+                    }
                     return false;
                   } else {
                     // Swipe left → reject (with confirmation)
@@ -549,12 +559,28 @@ class _RequestsTab extends StatelessWidget {
       ),
     );
     if (confirmed != true) return;
-    final ids = pending.map((r) => r['id'].toString()).toList();
-    await supabase
-        .from('rental_requests')
-        .update({'status': 'accepted'})
-        .inFilter('id', ids);
+    // Accept one-by-one so non-conflicting requests still succeed; any that
+    // overlap an already-accepted rental (DB exclusion constraint) are skipped.
+    var accepted = 0;
+    var skipped = 0;
+    for (final r in pending) {
+      try {
+        await supabase
+            .from('rental_requests')
+            .update({'status': 'accepted'}).eq('id', r['id'].toString());
+        accepted++;
+      } catch (_) {
+        skipped++;
+      }
+    }
     ref.invalidate(ownerRequestsProvider(companyId));
+    if (context.mounted) {
+      final msg = skipped == 0
+          ? 'Accepted $accepted request${accepted == 1 ? '' : 's'}.'
+          : 'Accepted $accepted; skipped $skipped with date conflicts.';
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(msg)));
+    }
   }
 }
 

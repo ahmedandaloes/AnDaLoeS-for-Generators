@@ -57,6 +57,7 @@
 - Global: PressScale widget; micro-animations on Accept + Review & Confirm CTAs
 - DB fix 0019: accept/reject crash — dropped duplicate broken status-notification trigger (was inserting into a nonexistent notifications.rental_request_id column, rolling back every status change)
 - DB fix 0020: generator_status enum gained `pending`+`rejected` — admin Generators tab no longer crashes; admins can reject/take down listings
+- DB 0021: no-double-booking — partial GiST exclusion constraint blocks overlapping accepted/active rentals per generator (verified live: overlap blocked, pending allowed); friendly "already booked" error in all owner accept paths; accept-all now per-row (skips conflicts, reports count)
 
 ---
 
@@ -66,11 +67,10 @@ over UI polish. Core workflow: browse → request → accept → pay → active 
 complete → commission → rate. Harden each transition + the money path.
 
 ### NEXT (this loop)
-- [ ] Commission: ensure a commission row is recorded on rental completion
-      (rate defined in one place; computed from price_total)
-- [ ] Status state machine: validate/guard transitions (no invalid jumps)
-- [ ] Double-booking: enforce no overlapping active rentals per generator
 - [ ] Pricing transparency: show fee/commission breakdown at request time
+- [ ] Status state machine: guard invalid transitions at DB level (e.g. no rejected→active)
+- [ ] Commission: admin can edit commission_config rate from the panel (currently DB-only)
+- [x] Double-booking: enforce no overlapping accepted/active rentals per generator (DB 0021)
 
 ### SOON
 - [ ] Generator approval gate: new generators default to `pending` and require admin approval before going public (PRODUCT DECISION — needs active moderation commitment; enum already supports it. Route to product-strategy-expert.)
@@ -95,9 +95,9 @@ complete → commission → rate. Harden each transition + the money path.
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
 **Working branch:** `development` (main is integration/release)
-**Last commit:** `fix: generator_status enum (0020) — unblock admin Generators tab`
+**Last commit:** `feat: prevent double-booking (DB 0021 exclusion constraint) + friendly accept errors`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** double-booking DB enforcement (exclusion constraint) + commission breakdown at request time. Use master-orchestrator to drive.
+**Next action:** pricing/commission breakdown at request time; admin-editable commission rate. Delegate via Agent tool to parallelize (investigation + build).
 
 ---
 
