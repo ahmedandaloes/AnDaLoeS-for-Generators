@@ -37,16 +37,20 @@
 - Home: Recently Viewed horizontal scroll section (last 5, with photo strip + Clear button)
 - My Rentals Done tab: green gradient spending summary banner (total EGP + count)
 - Owner Earnings: month chip selector to filter by month or All time
+- Availability calendar: green for available days, red for booked
+- Conflict UX: booked range chips turn red/filled when selected dates overlap
+- Home screen: "Popular in [City]" horizontal section (top city auto-detected)
+- Profile: inline phone number edit/add via dialog
 
 ---
 
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Generator detail: availability calendar — show booked ranges as red, available as green
-- [ ] Home screen: "Popular in your area" section based on most-rented city
-- [ ] Rental request screen: smarter conflict UX — list exact booked date ranges before picker
-- [ ] Profile: edit phone number inline
+- [ ] Push notifications: FCM integration with Supabase edge function (or in-app only banner)
+- [ ] Global: pull-to-refresh on Owner Dashboard and My Rentals lists
+- [ ] Generator detail: photo gallery swipe (tap photo → full-screen swipe)
+- [ ] Global: micro-animations on state transitions (card tap, button press feedback)
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -71,9 +75,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: My Rentals tab bar, profile spending stats, company description preview`
+**Last commit:** `feat: calendar green days, conflict chips, popular-in-area, phone edit`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** avg response time badge + pull-to-refresh on Owner Dashboard + notifications empty state
+**Next action:** pull-to-refresh, photo gallery swipe, micro-animations
 
 ---
 
