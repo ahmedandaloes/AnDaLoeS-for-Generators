@@ -6,16 +6,37 @@ import '../../../core/config/supabase.dart';
 import '../../../l10n/app_localizations.dart';
 
 // Search + filter state
+enum _SortBy { newest, priceLow, priceHigh, ratingTop, capacityLow }
+
+const _sortLabels = {
+  _SortBy.newest: 'Newest first',
+  _SortBy.priceLow: 'Price: low → high',
+  _SortBy.priceHigh: 'Price: high → low',
+  _SortBy.ratingTop: 'Top rated',
+  _SortBy.capacityLow: 'Capacity: low → high',
+};
+
 class _Filter {
   final String query;
   final String? governorate;
   final double? maxKva;
+  final _SortBy sort;
 
-  const _Filter({this.query = '', this.governorate, this.maxKva});
+  const _Filter({
+    this.query = '',
+    this.governorate,
+    this.maxKva,
+    this.sort = _SortBy.newest,
+  });
 
-  _Filter withQuery(String q) => _Filter(query: q, governorate: governorate, maxKva: maxKva);
-  _Filter withGovernorate(String? g) => _Filter(query: query, governorate: g, maxKva: maxKva);
-  _Filter withMaxKva(double? k) => _Filter(query: query, governorate: governorate, maxKva: k);
+  _Filter withQuery(String q) =>
+      _Filter(query: q, governorate: governorate, maxKva: maxKva, sort: sort);
+  _Filter withGovernorate(String? g) =>
+      _Filter(query: query, governorate: g, maxKva: maxKva, sort: sort);
+  _Filter withMaxKva(double? k) =>
+      _Filter(query: query, governorate: governorate, maxKva: k, sort: sort);
+  _Filter withSort(_SortBy s) =>
+      _Filter(query: query, governorate: governorate, maxKva: maxKva, sort: s);
 }
 
 final _filterProvider = StateProvider<_Filter>((ref) => const _Filter());
@@ -62,7 +83,26 @@ class HomeScreen extends ConsumerWidget {
         if (kva > filter.maxKva!) return false;
       }
       return true;
-    }).toList());
+    }).toList()
+      ..sort((a, b) {
+        switch (filter.sort) {
+          case _SortBy.priceLow:
+            return (a['price_per_day'] as num)
+                .compareTo(b['price_per_day'] as num);
+          case _SortBy.priceHigh:
+            return (b['price_per_day'] as num)
+                .compareTo(a['price_per_day'] as num);
+          case _SortBy.ratingTop:
+            final ra = (a['avg_score'] as num?)?.toDouble() ?? 0;
+            final rb = (b['avg_score'] as num?)?.toDouble() ?? 0;
+            return rb.compareTo(ra);
+          case _SortBy.capacityLow:
+            return (a['capacity_kva'] as num)
+                .compareTo(b['capacity_kva'] as num);
+          case _SortBy.newest:
+            return 0; // DB already ordered by created_at desc
+        }
+      }));
 
     final hasFilter = filter.query.isNotEmpty ||
         filter.governorate != null ||
@@ -213,6 +253,43 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     orElse: () => const SizedBox.shrink(),
                   ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => _showSortSheet(context, ref, filter, cs),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: filter.sort != _SortBy.newest
+                            ? cs.primaryContainer
+                            : cs.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.sort,
+                              size: 14,
+                              color: filter.sort != _SortBy.newest
+                                  ? cs.primary
+                                  : cs.onSurfaceVariant),
+                          const SizedBox(width: 4),
+                          Text(
+                            filter.sort == _SortBy.newest
+                                ? 'Sort'
+                                : _sortLabels[filter.sort]!.split(':').first.trim(),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: filter.sort != _SortBy.newest
+                                  ? cs.primary
+                                  : cs.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -252,6 +329,55 @@ class HomeScreen extends ConsumerWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  void _showSortSheet(
+      BuildContext context, WidgetRef ref, _Filter filter, ColorScheme cs) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('Sort by',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: cs.onSurface)),
+            const SizedBox(height: 12),
+            ..._SortBy.values.map((s) => RadioListTile<_SortBy>(
+                  title: Text(_sortLabels[s]!),
+                  value: s,
+                  groupValue: filter.sort,
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (v) {
+                    if (v != null) {
+                      ref.read(_filterProvider.notifier).state =
+                          filter.withSort(v);
+                    }
+                    Navigator.pop(context);
+                  },
+                )),
+          ],
+        ),
       ),
     );
   }

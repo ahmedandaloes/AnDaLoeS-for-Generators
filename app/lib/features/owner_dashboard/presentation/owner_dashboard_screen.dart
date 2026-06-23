@@ -32,6 +32,19 @@ final _ownerRequestsProvider =
   return (data as List).cast<Map<String, dynamic>>();
 });
 
+final _ownerHistoryProvider =
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+        (ref, companyId) async {
+  final data = await supabase
+      .from('rental_requests')
+      .select('*, generators(title, capacity_kva), profiles(full_name, phone)')
+      .eq('company_id', companyId)
+      .inFilter('status', ['completed', 'rejected', 'cancelled'])
+      .order('updated_at', ascending: false)
+      .limit(50);
+  return (data as List).cast<Map<String, dynamic>>();
+});
+
 final _ownerGeneratorsProvider =
     FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
         (ref, companyId) async {
@@ -244,7 +257,7 @@ class _Dashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Column(
         children: [
           // Company chip + earnings button
@@ -298,6 +311,7 @@ class _Dashboard extends StatelessWidget {
             tabs: const [
               Tab(text: 'Requests'),
               Tab(text: 'Generators'),
+              Tab(text: 'History'),
             ],
           ),
           Expanded(
@@ -306,6 +320,8 @@ class _Dashboard extends StatelessWidget {
                 _RequestsTab(
                     companyId: company['id'].toString(), cs: cs, ref: ref),
                 _GeneratorsTab(
+                    companyId: company['id'].toString(), cs: cs, ref: ref),
+                _HistoryTab(
                     companyId: company['id'].toString(), cs: cs, ref: ref),
               ],
             ),
@@ -673,6 +689,141 @@ class _OwnerGeneratorTile extends StatelessWidget {
             .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
+  }
+}
+
+// ── History tab ───────────────────────────────────────────────────────────────
+class _HistoryTab extends StatelessWidget {
+  const _HistoryTab(
+      {required this.companyId, required this.cs, required this.ref});
+  final String companyId;
+  final ColorScheme cs;
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    final historyAsync = ref.watch(_ownerHistoryProvider(companyId));
+
+    return historyAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('$e')),
+      data: (items) {
+        if (items.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(40),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.history, size: 48, color: cs.onSurfaceVariant),
+                  const SizedBox(height: 16),
+                  Text('No completed rentals yet',
+                      style: TextStyle(color: cs.onSurfaceVariant)),
+                ],
+              ),
+            ),
+          );
+        }
+        return RefreshIndicator(
+          onRefresh: () =>
+              ref.refresh(_ownerHistoryProvider(companyId).future),
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (_, i) {
+              final r = items[i];
+              final gen = r['generators'] as Map<String, dynamic>?;
+              final customer = r['profiles'] as Map<String, dynamic>?;
+              final status = r['status']?.toString() ?? '';
+              final statusColor = switch (status) {
+                'completed' => Colors.green.shade700,
+                'cancelled' => cs.onSurfaceVariant,
+                _ => cs.error,
+              };
+              final statusLabel = switch (status) {
+                'completed' => 'Completed',
+                'cancelled' => 'Cancelled',
+                _ => 'Rejected',
+              };
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(statusLabel,
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: statusColor)),
+                          ),
+                          const Spacer(),
+                          if (r['price_total'] != null)
+                            Text(
+                              'EGP ${r['price_total']}',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: cs.primary),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        gen?['title']?.toString() ?? 'Generator',
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        '${gen?['capacity_kva']} KVA',
+                        style: TextStyle(
+                            fontSize: 12, color: cs.onSurfaceVariant),
+                      ),
+                      if (customer != null) ...[
+                        const SizedBox(height: 4),
+                        Row(children: [
+                          Icon(Icons.person_outline,
+                              size: 13, color: cs.onSurfaceVariant),
+                          const SizedBox(width: 4),
+                          Text(
+                            customer['full_name']?.toString() ??
+                                customer['phone']?.toString() ??
+                                'Customer',
+                            style: TextStyle(
+                                fontSize: 12, color: cs.onSurfaceVariant),
+                          ),
+                        ]),
+                      ],
+                      const SizedBox(height: 4),
+                      Row(children: [
+                        Icon(Icons.calendar_today_outlined,
+                            size: 13, color: cs.onSurfaceVariant),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${r['start_date'] ?? '-'}  →  ${r['end_date'] ?? '-'}',
+                          style: TextStyle(
+                              fontSize: 12, color: cs.onSurfaceVariant),
+                        ),
+                      ]),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 }
 
