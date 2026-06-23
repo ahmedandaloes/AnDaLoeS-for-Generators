@@ -62,9 +62,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: owner accept/reject with note, fuel type chip on cards, fuel type in forms`
+**Last commit:** `feat: UX polish — mini calendar, skeleton loader, empty state, stats + auto-notifications`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** COD payment screen + calendar date range picker for rental request
+**Next action:** Map view (generators on Google Maps) + more UI/UX polish from checklist
 
 ---
 
