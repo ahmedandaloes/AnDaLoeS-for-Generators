@@ -47,16 +47,19 @@
 - Similar generators: fix route bug + add price to card
 - My Rentals: swipe-right = offer/invoice, swipe-left = cancel (Dismissible)
 - Admin: Generators tab with approve/reject/toggle, extracted to admin_generators_tab.dart
+- Owner Dashboard: today's earnings gradient card + Pending/Accepted/Active chips
+- Home screen: "New Arrivals" section (7-day window, age badge per card)
+- Profile: sign-out confirmation dialog with joined date, rental count, total spent
 
 ---
 
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Owner Dashboard: "Quick stats" header card (today's earnings, pending count, active rentals)
-- [ ] Generator detail: "Report a problem" flow with pre-filled type selector
-- [ ] Home screen: "New arrivals" section — generators added in the last 7 days
-- [ ] Profile: logout confirmation dialog with session summary (rental count, joined date)
+- [ ] Generator detail: "Report a problem" button with pre-filled type selector (fraud/damage/unavailable)
+- [ ] Owner Dashboard: response-time goal chip (show avg vs 2hr target, green/red)
+- [ ] My Rentals: empty state with CTA to browse generators
+- [ ] Notification detail: tap notification → navigate to relevant rental/generator
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -81,9 +84,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: similar gen route fix+price, swipe-to-action rentals, admin generators tab`
+**Last commit:** `feat: today's earnings card, new arrivals section, logout confirm dialog`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** owner quick-stats card, new arrivals section, profile logout dialog
+**Next action:** report-a-problem button, owner response-time chip, notification deep-link
 
 ---
 
