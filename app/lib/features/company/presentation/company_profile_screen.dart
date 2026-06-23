@@ -249,6 +249,39 @@ class _CompanyBody extends StatelessWidget {
           ),
         ),
 
+        // ── Stats chips ───────────────────────────────────────────────
+        generatorsAsync.maybeWhen(
+          data: (gens) {
+            final totalRentals = gens.fold<int>(
+                0,
+                (s, g) =>
+                    s + ((g['rating_count'] as num?)?.toInt() ?? 0));
+            return SliverToBoxAdapter(
+              child: Padding(
+                padding:
+                    const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Wrap(
+                  spacing: 8,
+                  children: [
+                    _StatChip(
+                      icon: Icons.bolt_rounded,
+                      label: '${gens.length} generators',
+                      cs: cs,
+                    ),
+                    if (totalRentals > 0)
+                      _StatChip(
+                        icon: Icons.receipt_long_rounded,
+                        label: '$totalRentals completed rentals',
+                        cs: cs,
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+          orElse: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
+        ),
+
         // ── Generators section ────────────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
@@ -416,6 +449,43 @@ class _CompanyGeneratorTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.cs,
+  });
+  final IconData icon;
+  final String label;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: cs.primary),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: cs.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase.dart';
 import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/auth/presentation/email_login_screen.dart';
+import '../../features/auth/presentation/onboarding_screen.dart';
 import '../../features/reports/presentation/report_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/company/presentation/company_onboarding_screen.dart';
@@ -24,8 +25,8 @@ import '../../features/rental_request/presentation/my_rentals_screen.dart';
 import '../../features/rental_request/presentation/rental_receipt_screen.dart';
 import '../../features/rental_request/presentation/rental_request_screen.dart';
 
-final appRouter = GoRouter(
-  initialLocation: '/',
+GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
+  initialLocation: initialLocation,
   refreshListenable: _GoRouterRefreshStream(supabase.auth.onAuthStateChange),
   redirect: (context, state) {
     final loggedIn = supabase.auth.currentSession != null;
@@ -52,6 +53,8 @@ final appRouter = GoRouter(
   },
   routes: [
     GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
+    GoRoute(
+        path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
     GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
     GoRoute(path: '/dev-login', builder: (_, __) => const EmailLoginScreen()),
     GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),

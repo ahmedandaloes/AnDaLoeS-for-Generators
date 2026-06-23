@@ -6,27 +6,30 @@ import 'core/localization/locale_provider.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode_provider.dart';
+import 'features/auth/presentation/onboarding_screen.dart';
 import 'l10n/app_localizations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initSupabase();
 
-  // Boot the provider scope early so we can load persisted preferences.
   final container = ProviderContainer();
-  await Future.wait([
+  final results = await Future.wait([
     container.read(themeModeProvider.notifier).load(),
     container.read(localeProvider.notifier).load(),
+    hasSeenOnboarding(),
   ]);
+  final seenOnboarding = results[2] as bool;
 
   runApp(UncontrolledProviderScope(
     container: container,
-    child: const AndaloesApp(),
+    child: AndaloesApp(initialLocation: seenOnboarding ? '/' : '/onboarding'),
   ));
 }
 
 class AndaloesApp extends ConsumerWidget {
-  const AndaloesApp({super.key});
+  const AndaloesApp({super.key, this.initialLocation = '/'});
+  final String initialLocation;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -39,7 +42,7 @@ class AndaloesApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
-      routerConfig: appRouter,
+      routerConfig: buildAppRouter(initialLocation),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

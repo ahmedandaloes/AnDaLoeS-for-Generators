@@ -55,6 +55,20 @@ final _generatorReviewsProvider =
   return (data as List).cast<Map<String, dynamic>>();
 });
 
+// Whether this generator is in the current user's favorites
+final _isFavProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, id) async {
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) return false;
+  final data = await supabase
+      .from('user_favorites')
+      .select('generator_id')
+      .eq('user_id', uid)
+      .eq('generator_id', id)
+      .maybeSingle();
+  return data != null;
+});
+
 // Similar generators — same governorate, overlapping KVA range, excluding current
 final _similarGeneratorsProvider = FutureProvider.autoDispose
     .family<List<Map<String, dynamic>>, Map<String, dynamic>>((ref, gen) async {
@@ -970,6 +984,8 @@ class GeneratorDetailWrapper extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final loggedIn = supabase.auth.currentSession != null;
+    final isFavAsync = ref.watch(_isFavProvider(id));
+    final isFav = isFavAsync.valueOrNull ?? false;
 
     return Scaffold(
       body: GeneratorDetailScreen(id: id),
@@ -986,6 +1002,28 @@ class GeneratorDetailWrapper extends ConsumerWidget {
               tooltip: 'Share',
               onPressed: () => _shareGenerator(ref, id),
               child: const Icon(Icons.share_outlined, size: 18),
+            ),
+          ),
+          // Favorite button
+          Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: FloatingActionButton.small(
+              heroTag: 'fav',
+              backgroundColor: isFav
+                  ? Colors.red.shade50
+                  : cs.surfaceContainerHighest,
+              foregroundColor:
+                  isFav ? Colors.red.shade400 : cs.onSurfaceVariant,
+              tooltip: isFav ? 'Remove from saved' : 'Save',
+              onPressed: () => _toggleFav(ref, id, isFav),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: Icon(
+                  isFav ? Icons.favorite_rounded : Icons.favorite_border,
+                  key: ValueKey(isFav),
+                  size: 18,
+                ),
+              ),
             ),
           ),
           // Report button
@@ -1032,5 +1070,23 @@ class GeneratorDetailWrapper extends ConsumerWidget {
         ? 'Check out $title ($kva KVA) on AnDaLoeS for Generators!'
         : 'Check out $title on AnDaLoeS for Generators!';
     await Share.share(text, subject: title);
+  }
+
+  Future<void> _toggleFav(WidgetRef ref, String id, bool isFav) async {
+    HapticFeedback.lightImpact();
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+    if (isFav) {
+      await supabase
+          .from('user_favorites')
+          .delete()
+          .eq('user_id', uid)
+          .eq('generator_id', id);
+    } else {
+      await supabase
+          .from('user_favorites')
+          .upsert({'user_id': uid, 'generator_id': id});
+    }
+    ref.invalidate(_isFavProvider(id));
   }
 }
