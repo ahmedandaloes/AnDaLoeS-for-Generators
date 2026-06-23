@@ -662,10 +662,10 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                         trailing: Icon(Icons.chevron_right,
                             color: cs.onSurfaceVariant),
-                        onTap: () async {
-                          await supabase.auth.signOut();
-                          if (context.mounted) context.go('/');
-                        },
+                        onTap: () => _confirmSignOut(
+                            context,
+                            statsAsync.valueOrNull,
+                            supabase.auth.currentUser?.createdAt),
                       ),
                     ],
                   ),
@@ -730,6 +730,92 @@ class ProfileScreen extends ConsumerWidget {
           SnackBar(content: Text('Upload failed: $e')),
         );
       }
+    }
+  }
+
+  Future<void> _confirmSignOut(
+      BuildContext context,
+      Map<String, num>? stats,
+      String? createdAt) async {
+    final totalRentals = (stats?['total'] ?? 0).toInt();
+    final totalSpent = stats?['total_spent'] ?? 0;
+
+    String? joinedLabel;
+    if (createdAt != null) {
+      try {
+        final dt = DateTime.parse(createdAt);
+        joinedLabel = '${dt.day}/${dt.month}/${dt.year}';
+      } catch (_) {}
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return AlertDialog(
+          title: const Text('Sign out?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (joinedLabel != null || totalRentals > 0) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (joinedLabel != null)
+                        _SessionRow(
+                            icon: Icons.calendar_today_outlined,
+                            label: 'Joined',
+                            value: joinedLabel,
+                            cs: cs),
+                      if (totalRentals > 0) ...[
+                        const SizedBox(height: 6),
+                        _SessionRow(
+                            icon: Icons.receipt_outlined,
+                            label: 'Rentals',
+                            value: '$totalRentals',
+                            cs: cs),
+                      ],
+                      if (totalSpent > 0) ...[
+                        const SizedBox(height: 6),
+                        _SessionRow(
+                            icon: Icons.payments_outlined,
+                            label: 'Total spent',
+                            value: 'EGP ${totalSpent.toStringAsFixed(0)}',
+                            cs: cs),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              const Text('You will need to sign in again to access your account.'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Stay'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: FilledButton.styleFrom(backgroundColor: cs.error),
+              child: const Text('Sign out'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await supabase.auth.signOut();
+      if (context.mounted) context.go('/');
     }
   }
 
@@ -858,6 +944,32 @@ class _StatDivider extends StatelessWidget {
         width: 1,
       ),
     );
+  }
+}
+
+class _SessionRow extends StatelessWidget {
+  const _SessionRow(
+      {required this.icon,
+      required this.label,
+      required this.value,
+      required this.cs});
+  final IconData icon;
+  final String label;
+  final String value;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Icon(icon, size: 14, color: cs.onSurfaceVariant),
+      const SizedBox(width: 6),
+      Text(label,
+          style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+      const Spacer(),
+      Text(value,
+          style: const TextStyle(
+              fontSize: 12, fontWeight: FontWeight.w600)),
+    ]);
   }
 }
 

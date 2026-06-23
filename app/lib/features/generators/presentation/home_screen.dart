@@ -331,6 +331,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: _FeaturedCarousel(ref: ref, cs: cs),
           ),
 
+          // ── New arrivals ─────────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Consumer(
+              builder: (_, ref, __) {
+                final newAsync = ref.watch(newArrivalsProvider);
+                return newAsync.maybeWhen(
+                  data: (items) => items.isEmpty
+                      ? const SizedBox.shrink()
+                      : _NewArrivalsSection(items: items, cs: cs),
+                  orElse: () => const SizedBox.shrink(),
+                );
+              },
+            ),
+          ),
+
           // ── Popular in your area ─────────────────────────────────────
           SliverToBoxAdapter(
             child: generators.maybeWhen(
@@ -963,6 +978,202 @@ class _FeaturedCard extends StatelessWidget {
         color: cs.primaryContainer,
         child: Icon(Icons.bolt, size: 36, color: cs.primary),
       );
+}
+
+// ── New Arrivals Section ──────────────────────────────────────────────────────
+class _NewArrivalsSection extends StatelessWidget {
+  const _NewArrivalsSection({required this.items, required this.cs});
+  final List<Map<String, dynamic>> items;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+          child: Row(children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.3)),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                      color: Colors.green, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 5),
+                const Text('New this week',
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.green)),
+              ]),
+            ),
+            const SizedBox(width: 10),
+            Text('New Arrivals',
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: cs.onSurface)),
+            const SizedBox(width: 6),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text('${items.length}',
+                  style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onSurfaceVariant)),
+            ),
+          ]),
+        ),
+        SizedBox(
+          height: 150,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, i) =>
+                _NewArrivalCard(gen: items[i], cs: cs),
+          ),
+        ),
+        const SizedBox(height: 4),
+      ],
+    );
+  }
+}
+
+class _NewArrivalCard extends StatelessWidget {
+  const _NewArrivalCard({required this.gen, required this.cs});
+  final Map<String, dynamic> gen;
+  final ColorScheme cs;
+
+  String _timeAgo(String? createdAt) {
+    if (createdAt == null) return 'New';
+    try {
+      final dt = DateTime.parse(createdAt);
+      final diff = DateTime.now().difference(dt);
+      if (diff.inHours < 24) return 'Today';
+      if (diff.inDays == 1) return 'Yesterday';
+      return '${diff.inDays}d ago';
+    } catch (_) {
+      return 'New';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final photos = (gen['photos'] as List?)?.cast<String>() ?? [];
+    final photo = photos.isNotEmpty ? photos.first : null;
+    final kva = gen['capacity_kva'];
+    final price = gen['price_per_day'];
+    final city = gen['city']?.toString();
+    final title = gen['title']?.toString() ?? '-';
+    final age = _timeAgo(gen['created_at']?.toString());
+
+    return GestureDetector(
+      onTap: () => context.push('/generators/${gen['id']}'),
+      child: Container(
+        width: 140,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+              color: Colors.green.withValues(alpha: 0.3)),
+          color: cs.surface,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(13)),
+                  child: photo != null
+                      ? Image.network(photo,
+                          height: 76, width: 140, fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                                height: 76,
+                                color: cs.primaryContainer,
+                                child: Icon(Icons.bolt,
+                                    size: 28, color: cs.primary),
+                              ))
+                      : Container(
+                          height: 76,
+                          color: cs.primaryContainer,
+                          child: Icon(Icons.bolt,
+                              size: 28, color: cs.primary),
+                        ),
+                ),
+                Positioned(
+                  top: 5,
+                  left: 5,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade700,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(age,
+                        style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(7),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 2),
+                  if (kva != null || city != null)
+                    Text(
+                      [if (kva != null) '$kva KVA', if (city != null) city]
+                          .join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 10,
+                          color: cs.onSurfaceVariant),
+                    ),
+                  if (price != null) ...[
+                    const SizedBox(height: 2),
+                    Text('EGP $price/day',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: cs.primary)),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ── Popular In Area Section ───────────────────────────────────────────────────

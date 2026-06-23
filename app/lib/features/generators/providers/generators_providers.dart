@@ -54,6 +54,21 @@ final featuredGeneratorsProvider =
 final recentlyViewedProvider =
     StateProvider<List<Map<String, dynamic>>>((ref) => const []);
 
+// Generators added in the last 7 days.
+final newArrivalsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final since = DateTime.now().subtract(const Duration(days: 7));
+  final data = await supabase
+      .from('generators')
+      .select(
+          'id, title, capacity_kva, price_per_day, city, photos, avg_score, fuel_type, created_at')
+      .eq('status', 'available')
+      .gte('created_at', since.toIso8601String())
+      .order('created_at', ascending: false)
+      .limit(10);
+  return (data as List).cast<Map<String, dynamic>>();
+});
+
 // Autocomplete suggestions based on partial query (min 2 chars).
 final autocompleteProvider =
     FutureProvider.autoDispose.family<List<String>, String>((ref, q) async {

@@ -662,18 +662,99 @@ class _DashboardStats extends StatelessWidget {
     final requestsAsync = ref.watch(ownerRequestsProvider(companyId));
     final historyAsync = ref.watch(ownerHistoryProvider(companyId));
     final pending = requestsAsync.valueOrNull?.where((r) => r['status'] == 'pending').length ?? 0;
+    final accepted = requestsAsync.valueOrNull?.where((r) => r['status'] == 'accepted').length ?? 0;
     final active = requestsAsync.valueOrNull?.where((r) => r['status'] == 'active').length ?? 0;
     final completed = historyAsync.valueOrNull?.where((r) => r['status'] == 'completed').length ?? 0;
 
+    // Today's earnings: sum of price_total for rentals updated today
+    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    num todayEarnings = 0;
+    for (final r in historyAsync.valueOrNull ?? []) {
+      if (r['status'] == 'completed') {
+        final updated = r['updated_at']?.toString() ?? '';
+        if (updated.startsWith(todayStr)) {
+          todayEarnings += (r['price_total'] as num?) ?? 0;
+        }
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Row(children: [
-        _StatChip(label: 'Pending', value: '$pending', color: Colors.orange, icon: Icons.hourglass_empty_rounded, cs: cs),
-        const SizedBox(width: 8),
-        _StatChip(label: 'Active', value: '$active', color: cs.primary, icon: Icons.bolt, cs: cs),
-        const SizedBox(width: 8),
-        _StatChip(label: 'Done', value: '$completed', color: Colors.green.shade700, icon: Icons.check_circle_outline, cs: cs),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Today's earnings banner
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  cs.primary.withValues(alpha: 0.15),
+                  cs.secondary.withValues(alpha: 0.08),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
+            ),
+            child: Row(children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.today_rounded, size: 20, color: cs.primary),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Today's earnings",
+                    style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                  ),
+                  Text(
+                    todayEarnings > 0
+                        ? 'EGP ${todayEarnings.toStringAsFixed(0)}'
+                        : 'No completions yet',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: todayEarnings > 0
+                            ? cs.primary
+                            : cs.onSurfaceVariant),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('${accepted + active} active',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: cs.primary)),
+                  Text('$completed total done',
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: cs.onSurfaceVariant)),
+                ],
+              ),
+            ]),
+          ),
+          const SizedBox(height: 8),
+          // Chips row
+          Row(children: [
+            _StatChip(label: 'Pending', value: '$pending', color: Colors.orange, icon: Icons.hourglass_empty_rounded, cs: cs),
+            const SizedBox(width: 8),
+            _StatChip(label: 'Accepted', value: '$accepted', color: cs.secondary, icon: Icons.check_rounded, cs: cs),
+            const SizedBox(width: 8),
+            _StatChip(label: 'Active', value: '$active', color: cs.primary, icon: Icons.bolt, cs: cs),
+          ]),
+        ],
+      ),
     );
   }
 }
