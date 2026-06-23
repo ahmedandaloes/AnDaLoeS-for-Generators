@@ -198,7 +198,7 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 - [ ] [LATER] Damage protection/insurance add-on (justifies 12–15% take); CBE payment-facilitator compliance review (gates escrow)
 
 ### Tax & Compliance (Egypt — like Uber; get professional advice first)
-- [ ] [NOW] VAT (14%) line + company tax-registration number on the Tax Invoice screen
+- [x] [NOW] Tax Invoice: VAT (14%) breakdown (subtotal excl. VAT + VAT line, treating totals as VAT-inclusive) + company tax-reg# / CR in footer (core/config/company_info.dart — set real values before production)
 - [ ] [NOW] Sequential immutable invoice/receipt numbers
 - [ ] [NOW] Accounting export from Revenue tab (date-range CSV: commissions, payments, VAT collected)
 - [ ] [SOON] Owner payout statements (for owner income reporting; WHT if required)

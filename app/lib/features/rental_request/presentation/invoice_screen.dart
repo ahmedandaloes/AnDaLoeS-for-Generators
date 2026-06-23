@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../core/config/company_info.dart';
 import '../../../core/config/supabase.dart';
 import 'doc_widgets.dart';
 
@@ -387,9 +388,35 @@ class _InvoiceDocument extends StatelessWidget {
               ),
             ),
 
+            // ── VAT breakdown (displayed totals are VAT-inclusive) ─────────
+            Builder(builder: (_) {
+              final t = (total is num)
+                  ? total.toDouble()
+                  : double.tryParse('$total') ?? 0;
+              if (t <= 0) return const SizedBox.shrink();
+              final vat = CompanyInfo.vatComponentOf(t);
+              final net = t - vat;
+              final s = TextStyle(fontSize: 12, color: Colors.grey.shade700);
+              Widget row(String l, String r) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(children: [
+                      Text(l, style: s),
+                      const Spacer(),
+                      Text(r, style: s),
+                    ]),
+                  );
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
+                child: Column(children: [
+                  row('Subtotal (excl. VAT)', 'EGP ${net.toStringAsFixed(2)}'),
+                  row('VAT (14%)', 'EGP ${vat.toStringAsFixed(2)}'),
+                ]),
+              );
+            }),
+
             // ── Total ─────────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -468,9 +495,17 @@ class _InvoiceDocument extends StatelessWidget {
                 children: [
                   Divider(color: Colors.grey.shade200),
                   const SizedBox(height: 12),
+                  if (CompanyInfo.hasTaxIds)
+                    Text(
+                      '${CompanyInfo.legalName} · Tax Reg. ${CompanyInfo.taxRegistrationNumber} · CR ${CompanyInfo.commercialRegister}',
+                      style: TextStyle(
+                          fontSize: 9.5, color: Colors.grey.shade600),
+                      textAlign: TextAlign.center,
+                    ),
+                  const SizedBox(height: 6),
                   Text(
                     'Thank you for using AnDaLoeS for Generators.\n'
-                    'This is an official invoice for services rendered.',
+                    'This is an official tax invoice for services rendered.',
                     style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey.shade500,
