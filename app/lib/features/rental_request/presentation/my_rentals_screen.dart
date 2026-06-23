@@ -11,7 +11,7 @@ final myRentalsProvider =
   if (uid == null) return [];
   final data = await supabase
       .from('rental_requests')
-      .select('*, generators(title, capacity_kva, city, photos)')
+      .select('*, generators(title, capacity_kva, city, photos), companies(name)')
       .eq('customer_id', uid)
       .order('created_at', ascending: false);
   return (data as List).cast<Map<String, dynamic>>();
@@ -343,6 +343,24 @@ class _RentalCard extends ConsumerWidget {
                       ],
                     ],
                   ),
+                ),
+              ],
+              if (status == 'accepted' || status == 'active') ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(40),
+                  ),
+                  onPressed: () {
+                    final ownerName =
+                        (rental['companies'] as Map<String, dynamic>?)?['name']
+                            ?.toString() ??
+                        'Owner';
+                    context.push(
+                        '/chat/${rental['id']}?name=${Uri.encodeComponent(ownerName)}');
+                  },
+                  icon: const Icon(Icons.chat_outlined, size: 16),
+                  label: const Text('Chat with owner'),
                 ),
               ],
               if (status == 'rejected') ...[

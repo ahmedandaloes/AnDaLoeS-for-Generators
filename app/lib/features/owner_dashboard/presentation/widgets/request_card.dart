@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/supabase.dart';
 import '../../../ratings/presentation/rate_rental_screen.dart';
@@ -116,8 +117,26 @@ class OwnerRequestCard extends StatelessWidget {
                 ),
               ]),
             ],
+            if (status == 'accepted' || status == 'active') ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(40)),
+                onPressed: () {
+                  final customer =
+                      request['profiles'] as Map<String, dynamic>?;
+                  final name = customer?['full_name'] ??
+                      customer?['phone'] ??
+                      'Customer';
+                  context.push(
+                      '/chat/${request['id']}?name=${Uri.encodeComponent(name.toString())}');
+                },
+                icon: const Icon(Icons.chat_outlined, size: 16),
+                label: const Text('Chat with customer'),
+              ),
+            ],
             if (status == 'accepted') ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               FilledButton.tonal(
                 style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(40)),
@@ -127,7 +146,7 @@ class OwnerRequestCard extends StatelessWidget {
               ),
             ],
             if (status == 'active') ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               FilledButton(
                 style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(40)),

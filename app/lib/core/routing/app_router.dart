@@ -24,6 +24,7 @@ import '../../features/ratings/presentation/rate_rental_screen.dart';
 import '../../features/rental_request/presentation/my_rentals_screen.dart';
 import '../../features/rental_request/presentation/rental_receipt_screen.dart';
 import '../../features/rental_request/presentation/rental_request_screen.dart';
+import '../../features/chat/presentation/chat_screen.dart';
 
 GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
   initialLocation: initialLocation,
@@ -45,6 +46,7 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
         loc.startsWith('/owner/') ||
         loc.startsWith('/rate/') ||
         loc.startsWith('/receipt/') ||
+        loc.startsWith('/chat/') ||
         loc.startsWith('/report');
 
     if (!loggedIn && needsAuth) return '/login';
@@ -121,6 +123,13 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
       path: '/receipt/:rentalId',
       builder: (_, state) => RentalReceiptScreen(
         rentalId: state.pathParameters['rentalId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/chat/:rentalId',
+      builder: (_, state) => ChatScreen(
+        rentalRequestId: state.pathParameters['rentalId']!,
+        otherPartyName: state.uri.queryParameters['name'] ?? 'Chat',
       ),
     ),
     GoRoute(
