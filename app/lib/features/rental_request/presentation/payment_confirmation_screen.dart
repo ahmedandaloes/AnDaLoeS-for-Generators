@@ -16,6 +16,8 @@ class PaymentConfirmationScreen extends ConsumerStatefulWidget {
     required this.days,
     required this.totalPrice,
     required this.note,
+    this.deliveryAddress = '',
+    this.deliveryTime = 'Flexible',
   });
 
   final Map<String, dynamic> generator;
@@ -24,6 +26,8 @@ class PaymentConfirmationScreen extends ConsumerStatefulWidget {
   final int days;
   final double totalPrice;
   final String note;
+  final String deliveryAddress;
+  final String deliveryTime;
 
   @override
   ConsumerState<PaymentConfirmationScreen> createState() =>
@@ -51,6 +55,10 @@ class _PaymentConfirmationScreenState
         'payment_method': _paymentMethod,
         'status': 'pending',
         if (widget.note.isNotEmpty) 'note': widget.note,
+        if (widget.deliveryAddress.isNotEmpty)
+          'delivery_address': widget.deliveryAddress,
+        if (widget.deliveryTime.isNotEmpty && widget.deliveryTime != 'Flexible')
+          'delivery_time': widget.deliveryTime,
       });
       if (mounted) {
         _showSuccess();
@@ -241,6 +249,49 @@ class _PaymentConfirmationScreenState
               ),
             ),
             const SizedBox(height: 16),
+
+            // Delivery details
+            if (widget.deliveryAddress.isNotEmpty ||
+                (widget.deliveryTime.isNotEmpty &&
+                    widget.deliveryTime != 'Flexible')) ...[
+              _SectionLabel('Delivery'),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.deliveryAddress.isNotEmpty)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.location_on_outlined,
+                                size: 16, color: cs.onSurfaceVariant),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(widget.deliveryAddress,
+                                  style: const TextStyle(fontSize: 14)),
+                            ),
+                          ],
+                        ),
+                      if (widget.deliveryTime.isNotEmpty &&
+                          widget.deliveryTime != 'Flexible') ...[
+                        if (widget.deliveryAddress.isNotEmpty)
+                          const SizedBox(height: 8),
+                        Row(children: [
+                          Icon(Icons.schedule,
+                              size: 16, color: cs.onSurfaceVariant),
+                          const SizedBox(width: 8),
+                          Text('Preferred: ${widget.deliveryTime}',
+                              style: const TextStyle(fontSize: 14)),
+                        ]),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
 
             // Note
             if (widget.note.isNotEmpty) ...[

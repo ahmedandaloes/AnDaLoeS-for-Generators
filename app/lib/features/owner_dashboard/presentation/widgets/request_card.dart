@@ -101,6 +101,32 @@ class OwnerRequestCard extends StatelessWidget {
                 style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
               ),
             ]),
+            // Delivery details (where/when the customer wants the generator)
+            if ((request['delivery_address']?.toString().isNotEmpty ?? false) ||
+                (request['delivery_time']?.toString().isNotEmpty ?? false)) ...[
+              const SizedBox(height: 8),
+              Row(children: [
+                Icon(Icons.local_shipping_outlined,
+                    size: 14, color: cs.primary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    [
+                      if (request['delivery_address']?.toString().isNotEmpty ??
+                          false)
+                        request['delivery_address'].toString(),
+                      if (request['delivery_time']?.toString().isNotEmpty ??
+                          false)
+                        '(${request['delivery_time']})',
+                    ].join(' '),
+                    style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurface),
+                  ),
+                ),
+              ]),
+            ],
             if (request['note'] != null &&
                 request['note'].toString().isNotEmpty) ...[
               const SizedBox(height: 8),

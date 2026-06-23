@@ -139,14 +139,9 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
         endDate: _range!.end,
         days: days,
         totalPrice: total,
-        note: [
-          if (_addressController.text.trim().isNotEmpty)
-            'Delivery address: ${_addressController.text.trim()}',
-          if (_deliveryTime != 'Flexible')
-            'Preferred delivery: $_deliveryTime',
-          if (_noteController.text.trim().isNotEmpty)
-            _noteController.text.trim(),
-        ].join('\n'),
+        deliveryAddress: _addressController.text.trim(),
+        deliveryTime: _deliveryTime,
+        note: _noteController.text.trim(),
       ),
     ));
   }

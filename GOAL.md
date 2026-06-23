@@ -87,7 +87,12 @@ HIGH — real-user auth. DECISION (owner 2026-06-24): **verified email now, phon
 - [ ] Phase 2: phone OTP once owner provisions an SMS provider (Twilio/Vonage) — UI built; keep it.
 - [ ] H3: guest→registered upgrade (linkIdentity) — nice-to-have, after launch.
 
-MEDIUM (polish): digital payment is "coming soon" stub (COD works); delivery address/time stuffed in free-text note; company_documents table unused; verify RLS airtight (hardcoded publishable key).
+MEDIUM (polish):
+- [x] Delivery address/time now structured columns (DB 0025) — captured on request,
+      shown to customer at confirm + to owner on the request card (ops can fulfill).
+- [ ] Digital payment is "coming soon" stub (COD works) — tied to monetization decision
+- [ ] company_documents table unused; verify RLS airtight (hardcoded publishable key)
+- [ ] company onboarding saves city but not governorate
 
 ---
 
