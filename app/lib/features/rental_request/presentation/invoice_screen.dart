@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/config/company_info.dart';
 import '../../../core/config/supabase.dart';
+import '../../../core/config/tax_config_provider.dart';
 import 'doc_widgets.dart';
 
 final _invoiceDataProvider =
@@ -52,7 +53,15 @@ class InvoiceScreen extends ConsumerWidget {
       body: dataAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
-        data: (data) => _InvoiceDocument(data: data, cs: cs),
+        data: (data) {
+          final tax = ref.watch(taxConfigProvider).valueOrNull;
+          return _InvoiceDocument(
+            data: data,
+            cs: cs,
+            taxRate: tax?.rate ?? CompanyInfo.vatRate,
+            taxLabel: tax?.label ?? 'VAT',
+          );
+        },
       ),
     );
   }
@@ -110,7 +119,13 @@ AnDaLoeS for Generators''';
 }
 
 class _InvoiceDocument extends StatelessWidget {
-  const _InvoiceDocument({required this.data, required this.cs});
+  const _InvoiceDocument(
+      {required this.data,
+      required this.cs,
+      this.taxRate = 0.14,
+      this.taxLabel = 'VAT'});
+  final double taxRate;
+  final String taxLabel;
   final Map<String, dynamic> data;
   final ColorScheme cs;
 
@@ -396,9 +411,12 @@ class _InvoiceDocument extends StatelessWidget {
               final t = (total is num)
                   ? total.toDouble()
                   : double.tryParse('$total') ?? 0;
-              if (t <= 0) return const SizedBox.shrink();
-              final vat = CompanyInfo.vatComponentOf(t);
-              final net = t - vat;
+              if (t <= 0 || taxRate <= 0) return const SizedBox.shrink();
+              // Displayed total is tax-inclusive: tax = total − total/(1+rate).
+              final tax = t - t / (1 + taxRate);
+              final net = t - tax;
+              final pctLabel =
+                  (taxRate * 100).toStringAsFixed(taxRate * 100 % 1 == 0 ? 0 : 1);
               final s = TextStyle(fontSize: 12, color: Colors.grey.shade700);
               Widget row(String l, String r) => Padding(
                     padding: const EdgeInsets.only(bottom: 4),
@@ -411,8 +429,9 @@ class _InvoiceDocument extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
                 child: Column(children: [
-                  row('Subtotal (excl. VAT)', 'EGP ${net.toStringAsFixed(2)}'),
-                  row('VAT (14%)', 'EGP ${vat.toStringAsFixed(2)}'),
+                  row('Subtotal (excl. $taxLabel)',
+                      'EGP ${net.toStringAsFixed(2)}'),
+                  row('$taxLabel ($pctLabel%)', 'EGP ${tax.toStringAsFixed(2)}'),
                 ]),
               );
             }),

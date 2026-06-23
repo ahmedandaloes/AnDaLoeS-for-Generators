@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/config/tax_config_provider.dart';
 
 /// Egypt standard VAT rate, applied to the platform's commission (its service
 /// fee) for accounting/reporting. Confirm treatment with an accountant.
@@ -91,6 +92,47 @@ class AdminRevenueTab extends ConsumerWidget {
                   TextButton(
                     onPressed: () => _editRate(context, wRef,
                         rateAsync.valueOrNull),
+                    child: const Text('Edit'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ── Customer tax (editable) ─────────────────────────────────
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(Icons.receipt_long_outlined, color: cs.tertiary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Customer tax (on invoices)',
+                            style: TextStyle(
+                                fontSize: 12, color: cs.onSurfaceVariant)),
+                        const SizedBox(height: 2),
+                        wRef.watch(taxConfigProvider).when(
+                              loading: () => const Text('…'),
+                              error: (_, __) => const Text('—'),
+                              data: (t) => Text(
+                                '${(t.rate * 100).toStringAsFixed(t.rate * 100 % 1 == 0 ? 0 : 1)}% ${t.label}'
+                                '${t.appliesWhen == 'on_invoice_request' ? ' · on invoice request' : ''}',
+                                style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => _editTax(
+                        context, wRef, wRef.read(taxConfigProvider).valueOrNull),
                     child: const Text('Edit'),
                   ),
                 ],
@@ -305,6 +347,91 @@ class AdminRevenueTab extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Could not update the rate. Please try again.')));
+      }
+    }
+  }
+
+  Future<void> _editTax(
+      BuildContext context, WidgetRef wRef, TaxConfig? current) async {
+    final rateC = TextEditingController(
+        text: current != null
+            ? (current.rate * 100).toStringAsFixed(
+                current.rate * 100 % 1 == 0 ? 0 : 1)
+            : '14');
+    final labelC = TextEditingController(text: current?.label ?? 'VAT');
+    var onInvoiceOnly = current?.appliesWhen == 'on_invoice_request';
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setD) => AlertDialog(
+          title: const Text('Customer tax'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: rateC,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                    labelText: 'Rate', suffixText: '%',
+                    border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: labelC,
+                decoration: const InputDecoration(
+                    labelText: 'Label (e.g. VAT, Invoice tax)',
+                    border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 4),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Only when customer requests an invoice',
+                    style: TextStyle(fontSize: 13)),
+                value: onInvoiceOnly,
+                onChanged: (v) => setD(() => onInvoiceOnly = v),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () {
+                final v = double.tryParse(rateC.text.trim());
+                if (v == null || v < 0 || v > 100) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                      content: Text('Enter a percentage between 0 and 100.')));
+                  return;
+                }
+                Navigator.pop(ctx, true);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (saved != true) return;
+    try {
+      await supabase
+          .from('tax_config')
+          .update({'active': false}).eq('active', true);
+      await supabase.from('tax_config').insert({
+        'rate': (double.tryParse(rateC.text.trim()) ?? 14) / 100.0,
+        'label': labelC.text.trim().isEmpty ? 'Tax' : labelC.text.trim(),
+        'applies_when': onInvoiceOnly ? 'on_invoice_request' : 'always',
+        'active': true,
+      });
+      wRef.invalidate(taxConfigProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Customer tax updated.')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Could not update tax. Please try again.')));
       }
     }
   }
