@@ -104,7 +104,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
         'status': 'available',
       }).select('id').single();
 
-      final generatorId = (data as Map<String, dynamic>)['id'].toString();
+      final generatorId = data['id'].toString();
 
       // 2 — upload photos if any
       if (_photos.isNotEmpty) {

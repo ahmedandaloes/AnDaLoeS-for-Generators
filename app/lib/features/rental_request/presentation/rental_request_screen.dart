@@ -11,7 +11,7 @@ final _generatorForRequestProvider =
       .select('id, title, capacity_kva, price_per_day, price_per_week, price_per_month, city, governorate, company_id')
       .eq('id', id)
       .single();
-  return data as Map<String, dynamic>;
+  return data;
 });
 
 /// Greedy best-price calculation.

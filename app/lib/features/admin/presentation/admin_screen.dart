@@ -13,7 +13,7 @@ final _isAdminProvider = FutureProvider.autoDispose<bool>((ref) async {
       .select('role')
       .eq('id', uid)
       .single();
-  return (data as Map<String, dynamic>)['role'] == 'admin';
+  return data['role'] == 'admin';
 });
 
 // ── Data providers ─────────────────────────────────────────────────────────────

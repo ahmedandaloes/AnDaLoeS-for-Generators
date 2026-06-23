@@ -77,7 +77,7 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
 
       if (mounted) {
         setState(() {
-          _companyId = (data as Map<String, dynamic>)['id'].toString();
+          _companyId = data['id'].toString();
           _step = 2;
         });
       }
@@ -127,7 +127,7 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
           .eq('id', cid)
           .single();
       final urls = List<String>.from(
-          (existing as Map<String, dynamic>)['document_urls'] as List? ?? []);
+          existing['document_urls'] as List? ?? []);
       // Replace or append this slot's entry
       urls.removeWhere((u) => u.contains('/$docType'));
       urls.add(remotePath);

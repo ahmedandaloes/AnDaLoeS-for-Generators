@@ -170,7 +170,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                 Row(children: [
                   Expanded(
                       child: Divider(
-                          color: cs.outlineVariant.withOpacity(0.5))),
+                          color: cs.outlineVariant.withValues(alpha: 0.5))),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text('or',
@@ -179,7 +179,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                   ),
                   Expanded(
                       child: Divider(
-                          color: cs.outlineVariant.withOpacity(0.5))),
+                          color: cs.outlineVariant.withValues(alpha: 0.5))),
                 ]),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(

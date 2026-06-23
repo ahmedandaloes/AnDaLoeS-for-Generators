@@ -283,8 +283,8 @@ class _HeroBanner extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            cs.primaryContainer.withOpacity(0.6),
-            cs.secondaryContainer.withOpacity(0.3),
+            cs.primaryContainer.withValues(alpha: 0.6),
+            cs.secondaryContainer.withValues(alpha: 0.3),
           ],
         ),
       ),

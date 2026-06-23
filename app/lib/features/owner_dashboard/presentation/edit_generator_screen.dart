@@ -25,7 +25,7 @@ final _editGeneratorProvider =
       .select('*')
       .eq('id', id)
       .single();
-  return data as Map<String, dynamic>;
+  return data;
 });
 
 class EditGeneratorScreen extends ConsumerStatefulWidget {

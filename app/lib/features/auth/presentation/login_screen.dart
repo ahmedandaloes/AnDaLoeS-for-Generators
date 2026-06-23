@@ -90,8 +90,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      cs.primaryContainer.withOpacity(0.7),
-                      cs.secondaryContainer.withOpacity(0.4),
+                      cs.primaryContainer.withValues(alpha: 0.7),
+                      cs.secondaryContainer.withValues(alpha: 0.4),
                     ],
                   ),
                 ),
@@ -104,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: cs.surface.withOpacity(0.7),
+                          color: cs.surface.withValues(alpha: 0.7),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(Icons.arrow_back_rounded,
@@ -232,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Expanded(
                           child: Divider(
                               color:
-                                  cs.outlineVariant.withOpacity(0.5))),
+                                  cs.outlineVariant.withValues(alpha: 0.5))),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Text('or',
@@ -242,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Expanded(
                           child: Divider(
                               color:
-                                  cs.outlineVariant.withOpacity(0.5))),
+                                  cs.outlineVariant.withValues(alpha: 0.5))),
                     ]),
                     const SizedBox(height: 16),
                     OutlinedButton(
