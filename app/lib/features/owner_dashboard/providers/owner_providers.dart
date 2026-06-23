@@ -1,6 +1,34 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/utils/commission.dart';
+
+/// Active commission rule for a company: its own override if present, else the
+/// platform-wide default (company_id IS NULL). Mirrors the handle_rental_completion
+/// trigger's selection logic so previews match what will actually be charged.
+final commissionConfigProvider =
+    FutureProvider.autoDispose.family<CommissionRule?, String>(
+        (ref, companyId) async {
+  final data = await supabase
+      .from('commission_config')
+      .select('type, value, company_id')
+      .eq('active', true);
+  final list = (data as List).cast<Map<String, dynamic>>();
+  if (list.isEmpty) return null;
+  Map<String, dynamic>? pick;
+  for (final r in list) {
+    if (r['company_id']?.toString() == companyId) {
+      pick = r;
+      break;
+    }
+  }
+  pick ??= list.firstWhere((r) => r['company_id'] == null,
+      orElse: () => list.first);
+  return (
+    type: pick['type']?.toString() ?? 'percentage',
+    value: (pick['value'] as num?)?.toDouble() ?? 0,
+  );
+});
 
 final myCompanyProvider =
     FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {

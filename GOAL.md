@@ -79,10 +79,11 @@ owner paid out ≤3 working days → deposit released/claimed → both RATE.
 (Commission & payments stay server-side via DB triggers, never the client.)
 
 ### NEXT (this loop) — buildable in-app now, no external dependency
-- [ ] **Money model: percentage commission.** Switch `commission_config` default
-      from fixed 50 EGP → ~10% (`percentage` type already supported); show the
-      fee/commission breakdown at request time (customer sees total; owner sees
-      net payout). → rental-workflow-expert + supabase-db-expert
+- [x] **Money model: percentage commission.** commission_config switched fixed
+      50 EGP → 10% (DB 0022, verified live); owner request card now shows
+      projected net payout ("You receive EGP X · 10% platform fee") via
+      commissionConfigProvider + projectCommission helper. Customer still sees
+      the full total (commission is owner-charged).
 - [ ] **Security deposit field** on generators + shown in booking + stored on
       rental_requests (foundation for the trust layer). → data-architect first
 - [ ] **Use-case/segment tags** on generators (events/construction/industrial/

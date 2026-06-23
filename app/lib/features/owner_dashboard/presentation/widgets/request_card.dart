@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/supabase.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/utils/commission.dart';
 import '../../../../core/utils/db_error.dart';
 import '../../../../core/widgets/press_scale.dart';
 import '../../../chat/providers/chat_providers.dart';
 import '../../../ratings/presentation/rate_rental_screen.dart';
-import '../../providers/owner_providers.dart' show ownerRequestsProvider;
+import '../../providers/owner_providers.dart'
+    show ownerRequestsProvider, commissionConfigProvider;
 
 class OwnerRequestCard extends StatelessWidget {
   const OwnerRequestCard({
@@ -44,6 +46,35 @@ class OwnerRequestCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       color: cs.primary)),
             ]),
+            // Projected net payout (rental total minus platform commission).
+            ref.watch(commissionConfigProvider(companyId)).maybeWhen(
+                  data: (rule) {
+                    final total = (request['price_total'] as num?) ?? 0;
+                    final p = projectCommission(total, rule);
+                    if (p.commission <= 0) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Row(children: [
+                        Icon(Icons.account_balance_wallet_outlined,
+                            size: 13, color: Colors.green.shade700),
+                        const SizedBox(width: 4),
+                        Text('You receive EGP ${p.net.toStringAsFixed(0)}',
+                            style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.green.shade700)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text('· ${p.label}',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: cs.onSurfaceVariant)),
+                        ),
+                      ]),
+                    );
+                  },
+                  orElse: () => const SizedBox.shrink(),
+                ),
             const SizedBox(height: 12),
             Text(gen?['title']?.toString() ?? 'Generator',
                 style: const TextStyle(
