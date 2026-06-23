@@ -8,6 +8,7 @@ abstract final class AppRoutes {
   static const map = '/map';
   static const onboarding = '/onboarding';
   static const login = '/login';
+  static const emailAuth = '/email-auth';
   static const devLogin = '/dev-login';
   static const profile = '/profile';
   static const notifications = '/notifications';

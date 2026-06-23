@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -246,10 +247,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                   cs.outlineVariant.withValues(alpha: 0.5))),
                     ]),
                     const SizedBox(height: 16),
-                    OutlinedButton(
-                      onPressed: () => context.push(AppRoutes.devLogin),
-                      child: const Text('Developer sign-in'),
+                    FilledButton.tonalIcon(
+                      onPressed: () => context.push(AppRoutes.emailAuth),
+                      icon: const Icon(Icons.email_outlined, size: 18),
+                      label: const Text('Continue with email'),
                     ),
+                    // Dev-only shortcut (auto sign-up, no email verification).
+                    if (kDebugMode) ...[
+                      const SizedBox(height: 8),
+                      OutlinedButton(
+                        onPressed: () => context.push(AppRoutes.devLogin),
+                        child: const Text('Developer sign-in'),
+                      ),
+                    ],
                   ],
                 ),
               ),

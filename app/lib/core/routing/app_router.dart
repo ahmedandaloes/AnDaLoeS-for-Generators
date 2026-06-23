@@ -8,6 +8,7 @@ import '../config/supabase.dart';
 import 'app_routes.dart';
 import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/auth/presentation/email_login_screen.dart';
+import '../../features/auth/presentation/email_auth_screen.dart';
 import '../../features/auth/presentation/onboarding_screen.dart';
 import '../../features/reports/presentation/report_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
@@ -56,7 +57,10 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
         loc.startsWith('/report');
 
     if (!loggedIn && needsAuth) return AppRoutes.login;
-    if (loggedIn && (loc == AppRoutes.login || loc == AppRoutes.devLogin)) {
+    if (loggedIn &&
+        (loc == AppRoutes.login ||
+            loc == AppRoutes.emailAuth ||
+            loc == AppRoutes.devLogin)) {
       return AppRoutes.home;
     }
     return null;
@@ -66,6 +70,7 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
     GoRoute(path: AppRoutes.map, builder: (_, __) => const MapScreen()),
     GoRoute(path: AppRoutes.onboarding, builder: (_, __) => const OnboardingScreen()),
     GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginScreen()),
+    GoRoute(path: AppRoutes.emailAuth, builder: (_, __) => const EmailAuthScreen()),
     GoRoute(path: AppRoutes.devLogin, builder: (_, __) => const EmailLoginScreen()),
     GoRoute(path: AppRoutes.profile, builder: (_, __) => const ProfileScreen()),
     GoRoute(path: AppRoutes.notifications, builder: (_, __) => const NotificationsScreen()),

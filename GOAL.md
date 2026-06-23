@@ -77,12 +77,15 @@ CRITICAL — marketplace couldn't function end-to-end (DB-layer chain). FIXED:
 - [x] H4: customer-facing raw `Error: $e` → routed through friendlyDbError (booking, company onboarding, rating)
 
 HIGH — real-user auth. DECISION (owner 2026-06-24): **verified email now, phone later.**
-- [ ] H2/launch auth: build verified email + password sign-up/sign-in (Supabase
-      email confirmation, no external setup) as the production front door. IN PROGRESS.
-- [ ] H1: gate `/dev-login` behind kDebugMode (stays for testing, off in release)
-- [ ] Phase 2: phone OTP once owner provisions an SMS provider (Twilio/Vonage) in
-      Supabase Auth — UI already partly built; keep it.
-- [ ] H3: guest→registered upgrade (linkIdentity) — nice-to-have, after email auth
+- [x] Launch auth: EmailAuthScreen (/email-auth) — explicit sign-in/sign-up, email
+      confirmation messaging (Supabase enforces confirmation at sign-in if enabled),
+      friendly auth errors, guest browse. "Continue with email" is now the primary
+      button on the login screen.
+- [x] H1: `/dev-login` gated behind kDebugMode (works in debug for testing, hidden in release).
+- [ ] Verify Supabase project setting: "Confirm email" should be ON for production
+      (so unconfirmed accounts can't sign in). Owner to confirm in Supabase dashboard.
+- [ ] Phase 2: phone OTP once owner provisions an SMS provider (Twilio/Vonage) — UI built; keep it.
+- [ ] H3: guest→registered upgrade (linkIdentity) — nice-to-have, after launch.
 
 MEDIUM (polish): digital payment is "coming soon" stub (COD works); delivery address/time stuffed in free-text note; company_documents table unused; verify RLS airtight (hardcoded publishable key).
 
