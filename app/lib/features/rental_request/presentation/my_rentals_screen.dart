@@ -11,7 +11,7 @@ final myRentalsProvider =
   if (uid == null) return [];
   final data = await supabase
       .from('rental_requests')
-      .select('*, generators(title, capacity_kva, city)')
+      .select('*, generators(title, capacity_kva, city, photos)')
       .eq('customer_id', uid)
       .order('created_at', ascending: false);
   return (data as List).cast<Map<String, dynamic>>();
@@ -149,133 +149,183 @@ class _RentalCard extends StatelessWidget {
     final gen = rental['generators'] as Map<String, dynamic>?;
     final status = rental['status']?.toString() ?? 'pending';
     final statusColor = _statusColor(status, cs);
+    final photos = (gen?['photos'] as List?)?.cast<String>() ?? [];
+    final firstPhoto = photos.isNotEmpty ? photos.first : null;
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => context.push('/generators/${rental['generator_id']}'),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row: thumbnail + status chip + price
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Generator photo thumbnail
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: firstPhoto != null
+                        ? Image.network(
+                            firstPhoto,
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 56,
+                              height: 56,
+                              color: cs.primaryContainer,
+                              child: Icon(Icons.bolt,
+                                  color: cs.primary, size: 24),
+                            ),
+                          )
+                        : Container(
+                            width: 56,
+                            height: 56,
+                            color: cs.primaryContainer,
+                            child: Icon(Icons.bolt,
+                                color: cs.primary, size: 24),
+                          ),
                   ),
-                  child: Text(
-                    _statusLabel(status),
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: statusColor,
-                      letterSpacing: 0.5,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                _statusLabel(status),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: statusColor,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              'EGP ${rental['price_total'] ?? '-'}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: cs.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          gen?['title']?.toString() ?? 'Generator',
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          '${gen?['capacity_kva']} KVA  •  ${gen?['city'] ?? ''}',
+                          style: TextStyle(
+                              fontSize: 12, color: cs.onSurfaceVariant),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const Spacer(),
-                Text(
-                  'EGP ${rental['price_total'] ?? '-'}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: cs.primary,
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Date row
+              Row(
+                children: [
+                  Icon(Icons.calendar_today_outlined,
+                      size: 13, color: cs.onSurfaceVariant),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${_fmt(rental['start_date'])}  →  ${_fmt(rental['end_date'])}',
+                    style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
                   ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${rental['total_days']} day${rental['total_days'] == 1 ? '' : 's'}',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                        fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+              // Action buttons by status
+              if (status == 'pending') ...[
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(40),
+                    foregroundColor: cs.error,
+                    side: BorderSide(color: cs.error.withValues(alpha: 0.4)),
+                  ),
+                  onPressed: () => _cancel(context, rental['id']),
+                  child: const Text('Cancel request'),
                 ),
               ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              gen?['title']?.toString() ?? 'Generator',
-              style: const TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${gen?['capacity_kva']} KVA  •  ${gen?['city'] ?? ''}',
-              style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
-            ),
-            const SizedBox(height: 8),
-            Row(children: [
-              Icon(Icons.calendar_today_outlined,
-                  size: 13, color: cs.onSurfaceVariant),
-              const SizedBox(width: 4),
-              Text(
-                '${_fmt(rental['start_date'])}  →  ${_fmt(rental['end_date'])}',
-                style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${rental['total_days']} day${rental['total_days'] == 1 ? '' : 's'}',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: cs.onSurfaceVariant,
-                    fontWeight: FontWeight.w500),
-              ),
-            ]),
-            if (status == 'pending') ...[
-              const SizedBox(height: 12),
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(40),
-                  foregroundColor: cs.error,
-                  side: BorderSide(color: cs.error.withValues(alpha: 0.4)),
-                ),
-                onPressed: () => _cancel(context, rental['id']),
-                child: const Text('Cancel request'),
-              ),
-            ],
-            if (status == 'accepted') ...[
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Row(children: [
-                  Icon(Icons.check_circle_outline,
-                      size: 16, color: Colors.green),
-                  SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'Accepted — the owner will contact you soon.',
-                      style: TextStyle(fontSize: 12, color: Colors.green),
-                    ),
+              if (status == 'accepted') ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ]),
-              ),
+                  child: const Row(children: [
+                    Icon(Icons.check_circle_outline,
+                        size: 16, color: Colors.green),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Accepted — the owner will contact you soon.',
+                        style: TextStyle(fontSize: 12, color: Colors.green),
+                      ),
+                    ),
+                  ]),
+                ),
+              ],
+              if (status == 'completed') ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(40),
+                  ),
+                  onPressed: () => context.push(
+                    '/rate/${rental['id']}?ratee=${rental['company_id']}&name=Owner',
+                  ),
+                  icon: const Icon(Icons.star_outline, size: 16),
+                  label: const Text('Rate this rental'),
+                ),
+              ],
+              if (status == 'completed' || status == 'active') ...[
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: cs.onSurfaceVariant,
+                    minimumSize: const Size.fromHeight(36),
+                  ),
+                  onPressed: () => context.push(
+                    '/report?type=company&id=${rental['company_id']}&rental=${rental['id']}&name=Owner',
+                  ),
+                  icon: const Icon(Icons.flag_outlined, size: 15),
+                  label: const Text('Report an issue',
+                      style: TextStyle(fontSize: 13)),
+                ),
+              ],
             ],
-            if (status == 'completed') ...[
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(40),
-                ),
-                onPressed: () => context.push(
-                  '/rate/${rental['id']}?ratee=${rental['company_id']}&name=Owner',
-                ),
-                icon: const Icon(Icons.star_outline, size: 16),
-                label: const Text('Rate this rental'),
-              ),
-            ],
-            if (status == 'completed' || status == 'active') ...[
-              const SizedBox(height: 8),
-              TextButton.icon(
-                style: TextButton.styleFrom(
-                  foregroundColor: cs.onSurfaceVariant,
-                  minimumSize: const Size.fromHeight(36),
-                ),
-                onPressed: () => context.push(
-                  '/report?type=company&id=${rental['company_id']}&rental=${rental['id']}&name=Owner',
-                ),
-                icon: const Icon(Icons.flag_outlined, size: 15),
-                label: const Text('Report an issue', style: TextStyle(fontSize: 13)),
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );

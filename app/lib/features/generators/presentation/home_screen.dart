@@ -24,7 +24,7 @@ final generatorsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final data = await supabase
       .from('generators')
-      .select('id, title, capacity_kva, price_per_day, city, governorate, photos')
+      .select('id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count')
       .eq('status', 'available')
       .order('created_at', ascending: false);
   return (data as List).cast<Map<String, dynamic>>();
@@ -396,6 +396,32 @@ class _GeneratorCard extends StatelessWidget {
                         ],
                       ],
                     ),
+                    if ((generator['rating_count'] as num?)?.toInt() != null &&
+                        (generator['rating_count'] as num).toInt() > 0) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.star_rounded,
+                              size: 13, color: Colors.amber.shade600),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${generator['avg_score']}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: cs.onSurface,
+                            ),
+                          ),
+                          Text(
+                            '  (${generator['rating_count']})',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
