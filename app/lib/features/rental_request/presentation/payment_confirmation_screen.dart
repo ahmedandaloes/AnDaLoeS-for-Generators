@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../core/utils/db_error.dart';
 
 class PaymentConfirmationScreen extends ConsumerStatefulWidget {
   const PaymentConfirmationScreen({
@@ -58,7 +59,8 @@ class _PaymentConfirmationScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(friendlyDbError(e,
+                fallback: 'Could not send your request. Please try again.')),
             behavior: SnackBarBehavior.floating,
           ),
         );

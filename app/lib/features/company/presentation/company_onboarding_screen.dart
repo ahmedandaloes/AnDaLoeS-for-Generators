@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../core/utils/db_error.dart';
 
 const _governorates = [
   'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',
@@ -95,7 +96,8 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
         });
       }
     } catch (e) {
-      _snack('Error: $e');
+      _snack(friendlyDbError(e,
+          fallback: 'Could not create your company. Please try again.'));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

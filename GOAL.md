@@ -68,8 +68,20 @@ active → complete → rate. Readiness audit running; blockers land in the
 "Launch blockers" list below as found. Rule for the loop: **fix readiness
 blockers before any new feature.** Money model stays parked (owner decides).
 
-### Launch blockers (fix first — populated by readiness audit)
-- [ ] (pending audit results)
+### Launch blockers (readiness audit 2026-06-24)
+CRITICAL — marketplace couldn't function end-to-end (DB-layer chain). FIXED:
+- [x] C1: companies missing `description` → owner onboarding insert failed (DB 0024 added column)
+- [x] C2: no admin UPDATE policy on companies → "Approve company" silently rejected by RLS → catalog permanently empty (DB 0024 added companies_update_admin + generators_update_admin)
+- [x] C3: was a blocker only if no admin existed — verified an admin profile already exists (not a blocker)
+- [x] C4: owner stuck on "Under review" — downstream of C1–C2, now resolved (approval works)
+- [x] H4: customer-facing raw `Error: $e` → routed through friendlyDbError (booking, company onboarding, rating)
+
+HIGH — real-user auth (still open; needs owner input / Supabase config):
+- [ ] H1: `/dev-login` (auto-signup, no email verification) ships unguarded — gate behind kDebugMode once a real auth path exists
+- [ ] H2: phone OTP likely non-functional (no SMS provider provisioned) — provision SMS, or commit to verified-email signup as launch auth
+- [ ] H3: no guest→registered upgrade (linkIdentity) — guest must restart auth to book
+
+MEDIUM (polish): digital payment is "coming soon" stub (COD works); delivery address/time stuffed in free-text note; company_documents table unused; verify RLS airtight (hardcoded publishable key).
 
 ---
 

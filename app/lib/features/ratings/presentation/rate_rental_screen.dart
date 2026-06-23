@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/utils/db_error.dart';
 
 class RateRentalScreen extends StatefulWidget {
   const RateRentalScreen({
@@ -54,7 +55,8 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
         // Riverpod ref.invalidate — the rating badge updates on next build.
       }
     } catch (e) {
-      _snack('Error: $e');
+      _snack(friendlyDbError(e,
+          fallback: 'Could not submit your rating. Please try again.'));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
