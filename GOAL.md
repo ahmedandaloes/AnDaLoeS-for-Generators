@@ -44,16 +44,19 @@
 - Gallery: swipe-down-to-dismiss with scale/opacity feedback + thumbnail strip
 - GeneratorCard: press-scale animation (97% on tap-down, elastic back)
 - Detail screen fav button: elastic bounce via TweenAnimationBuilder + Curves.elasticOut
+- Similar generators: fix route bug + add price to card
+- My Rentals: swipe-right = offer/invoice, swipe-left = cancel (Dismissible)
+- Admin: Generators tab with approve/reject/toggle, extracted to admin_generators_tab.dart
 
 ---
 
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Referral code system: users get a discount code to share with friends
-- [ ] Generator detail: "Similar generators" section at the bottom (same city or KVA range)
-- [ ] My Rentals: swipe-to-action on rental cards (swipe right = view offer/invoice, swipe left = cancel pending)
-- [ ] Admin: generator approval/rejection from the admin panel
+- [ ] Owner Dashboard: "Quick stats" header card (today's earnings, pending count, active rentals)
+- [ ] Generator detail: "Report a problem" flow with pre-filled type selector
+- [ ] Home screen: "New arrivals" section — generators added in the last 7 days
+- [ ] Profile: logout confirmation dialog with session summary (rental count, joined date)
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -78,9 +81,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: gallery swipe-dismiss, card press animation, elastic fav bounce`
+**Last commit:** `feat: similar gen route fix+price, swipe-to-action rentals, admin generators tab`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** similar generators section, swipe-to-action on My Rentals, admin generator approval
+**Next action:** owner quick-stats card, new arrivals section, profile logout dialog
 
 ---
 
