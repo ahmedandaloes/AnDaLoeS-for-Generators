@@ -22,21 +22,51 @@ final _profileDataProvider =
   return data;
 });
 
-// Customer rental statistics (total, active, completed).
+// Customer rental statistics (total, active, completed, spending).
 final _rentalStatsProvider =
-    FutureProvider.autoDispose<Map<String, int>>((ref) async {
+    FutureProvider.autoDispose<Map<String, num>>((ref) async {
   final uid = supabase.auth.currentUser?.id;
   if (uid == null) return {};
   final data = await supabase
       .from('rental_requests')
-      .select('status')
+      .select('status, price_total, created_at')
       .eq('customer_id', uid);
   final list = (data as List).cast<Map<String, dynamic>>();
+
+  final now = DateTime.now();
+  final thisMonthStart = DateTime(now.year, now.month);
+  final lastMonthStart = DateTime(now.year, now.month - 1);
+
+  num totalSpent = 0;
+  num thisMonthSpent = 0;
+  num lastMonthSpent = 0;
+
+  for (final r in list) {
+    if (r['status'] == 'completed') {
+      final price = (r['price_total'] as num?) ?? 0;
+      totalSpent += price;
+      try {
+        final dt = DateTime.parse(r['created_at'].toString());
+        if (!dt.isBefore(thisMonthStart)) {
+          thisMonthSpent += price;
+        } else if (!dt.isBefore(lastMonthStart)) {
+          lastMonthSpent += price;
+        }
+      } catch (_) {}
+    }
+  }
+
   return {
     'total': list.length,
-    'active': list.where((r) => r['status'] == 'active').length,
-    'completed': list.where((r) => r['status'] == 'completed').length,
-    'pending': list.where((r) => r['status'] == 'pending').length,
+    'active':
+        list.where((r) => r['status'] == 'active').length,
+    'completed':
+        list.where((r) => r['status'] == 'completed').length,
+    'pending':
+        list.where((r) => r['status'] == 'pending').length,
+    'total_spent': totalSpent,
+    'this_month_spent': thisMonthSpent,
+    'last_month_spent': lastMonthSpent,
   };
 });
 
@@ -256,10 +286,27 @@ class ProfileScreen extends ConsumerWidget {
                         if ((stats['total'] ?? 0) == 0) {
                           return const SizedBox.shrink();
                         }
+                        final totalSpent =
+                            (stats['total_spent'] ?? 0).toDouble();
+                        final thisMonth =
+                            (stats['this_month_spent'] ?? 0).toDouble();
+                        final lastMonth =
+                            (stats['last_month_spent'] ?? 0).toDouble();
+                        final hasTrend =
+                            totalSpent > 0 && lastMonth > 0;
+                        final trendPct = hasTrend
+                            ? ((thisMonth - lastMonth) /
+                                    lastMonth *
+                                    100)
+                                .round()
+                            : 0;
+                        final trendUp = trendPct >= 0;
+
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _SectionLabel('Your stats'),
+                            // Rental count row
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
@@ -276,28 +323,110 @@ class ProfileScreen extends ConsumerWidget {
                                     MainAxisAlignment.spaceAround,
                                 children: [
                                   _StatItem(
-                                      value: '${stats['total']}',
+                                      value: '${stats['total']?.toInt()}',
                                       label: 'Total',
                                       cs: cs),
                                   _StatDivider(),
                                   _StatItem(
-                                      value: '${stats['active']}',
+                                      value: '${stats['active']?.toInt()}',
                                       label: 'Active',
                                       cs: cs,
-                                      highlight: (stats['active'] ?? 0) > 0),
+                                      highlight:
+                                          (stats['active'] ?? 0) > 0),
                                   _StatDivider(),
                                   _StatItem(
-                                      value: '${stats['completed']}',
+                                      value:
+                                          '${stats['completed']?.toInt()}',
                                       label: 'Completed',
                                       cs: cs),
                                   _StatDivider(),
                                   _StatItem(
-                                      value: '${stats['pending']}',
+                                      value: '${stats['pending']?.toInt()}',
                                       label: 'Pending',
                                       cs: cs),
                                 ],
                               ),
                             ),
+                            // Spending card (only when there are completed rentals)
+                            if (totalSpent > 0) ...[
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 18, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: cs.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(Icons.payments_outlined,
+                                        size: 18,
+                                        color: Colors.green.shade700),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Total spent',
+                                          style: TextStyle(
+                                              fontSize: 11,
+                                              color: cs.onSurfaceVariant)),
+                                      Text(
+                                        'EGP ${totalSpent.toStringAsFixed(0)}',
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w800,
+                                            color: cs.onSurface,
+                                            letterSpacing: -0.5),
+                                      ),
+                                    ],
+                                  ),
+                                  const Spacer(),
+                                  if (hasTrend)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: trendUp
+                                            ? Colors.red.withValues(alpha: 0.1)
+                                            : Colors.green
+                                                .withValues(alpha: 0.1),
+                                        borderRadius:
+                                            BorderRadius.circular(20),
+                                      ),
+                                      child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              trendUp
+                                                  ? Icons.trending_up
+                                                  : Icons.trending_down,
+                                              size: 13,
+                                              color: trendUp
+                                                  ? Colors.red.shade600
+                                                  : Colors.green.shade700,
+                                            ),
+                                            const SizedBox(width: 3),
+                                            Text(
+                                              '${trendUp ? '+' : ''}$trendPct%',
+                                              style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: trendUp
+                                                      ? Colors.red.shade600
+                                                      : Colors.green.shade700),
+                                            ),
+                                          ]),
+                                    ),
+                                ]),
+                              ),
+                            ],
                             const SizedBox(height: 20),
                           ],
                         );

@@ -33,6 +33,7 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
   // Step 1 — company info
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _descriptionController = TextEditingController();
   String? _city;
   bool _submitting = false;
 
@@ -54,6 +55,7 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -67,10 +69,12 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
 
     setState(() => _submitting = true);
     try {
+      final desc = _descriptionController.text.trim();
       final data = await supabase.from('companies').insert({
         'owner_user_id': supabase.auth.currentUser!.id,
         'name': name,
         'contact_phone': phone.isNotEmpty ? phone : null,
+        'description': desc.isNotEmpty ? desc : null,
         'city': _city,
         'verification_status': 'pending',
       }).select('id').single();
@@ -179,6 +183,7 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
                 key: const ValueKey(1),
                 nameController: _nameController,
                 phoneController: _phoneController,
+                descriptionController: _descriptionController,
                 city: _city,
                 onCityChanged: (v) => setState(() => _city = v),
                 submitting: _submitting,
@@ -203,6 +208,7 @@ class _StepOne extends StatelessWidget {
     super.key,
     required this.nameController,
     required this.phoneController,
+    required this.descriptionController,
     required this.city,
     required this.onCityChanged,
     required this.submitting,
@@ -211,6 +217,7 @@ class _StepOne extends StatelessWidget {
 
   final TextEditingController nameController;
   final TextEditingController phoneController;
+  final TextEditingController descriptionController;
   final String? city;
   final ValueChanged<String?> onCityChanged;
   final bool submitting;
@@ -282,6 +289,22 @@ class _StepOne extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
+          _Label('Description (optional)'),
+          TextField(
+            controller: descriptionController,
+            maxLines: 3,
+            maxLength: 250,
+            decoration: const InputDecoration(
+              hintText:
+                  'Tell customers about your company, experience, coverage area…',
+              prefixIcon: Padding(
+                padding: EdgeInsets.only(bottom: 42),
+                child: Icon(Icons.description_outlined),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
           _Label('City / Governorate'),
           DropdownButtonFormField<String>(
             value: city,
@@ -312,6 +335,125 @@ class _StepOne extends StatelessWidget {
                         strokeWidth: 2, color: cs.onPrimary),
                   )
                 : const Text('Continue to documents →'),
+          ),
+          const SizedBox(height: 24),
+
+          // Live preview card
+          ValueListenableBuilder(
+            valueListenable: nameController,
+            builder: (_, __, ___) => ValueListenableBuilder(
+              valueListenable: descriptionController,
+              builder: (_, __, ___) {
+                final name = nameController.text.trim();
+                final desc = descriptionController.text.trim();
+                if (name.isEmpty && desc.isEmpty && city == null) {
+                  return const SizedBox.shrink();
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Text('Preview',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: cs.onSurfaceVariant)),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: cs.primaryContainer,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text('LIVE',
+                            style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: cs.onPrimaryContainer,
+                                letterSpacing: 0.5)),
+                      ),
+                    ]),
+                    const SizedBox(height: 8),
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                            color: cs.outline.withValues(alpha: 0.2)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: cs.primaryContainer,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  name.isNotEmpty
+                                      ? name[0].toUpperCase()
+                                      : '?',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                      color: cs.primary),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    name.isNotEmpty
+                                        ? name
+                                        : 'Company name',
+                                    style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                  if (city != null) ...[
+                                    const SizedBox(height: 2),
+                                    Row(children: [
+                                      Icon(Icons.location_on_outlined,
+                                          size: 12,
+                                          color: cs.onSurfaceVariant),
+                                      const SizedBox(width: 3),
+                                      Text(city!,
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: cs.onSurfaceVariant)),
+                                    ]),
+                                  ],
+                                  if (desc.isNotEmpty) ...[
+                                    const SizedBox(height: 6),
+                                    Text(desc,
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: cs.onSurfaceVariant,
+                                            height: 1.4),
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),

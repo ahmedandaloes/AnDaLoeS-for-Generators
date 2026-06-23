@@ -91,31 +91,129 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
     super.dispose();
   }
 
+  static const _tabs = ['All', 'Active', 'Pending', 'Done'];
+
+  List<Map<String, dynamic>> _filter(
+      List<Map<String, dynamic>> items, int tabIndex) {
+    return switch (tabIndex) {
+      1 => items
+          .where((r) =>
+              r['status'] == 'accepted' || r['status'] == 'active')
+          .toList(),
+      2 => items.where((r) => r['status'] == 'pending').toList(),
+      3 => items
+          .where((r) =>
+              r['status'] == 'completed' ||
+              r['status'] == 'cancelled' ||
+              r['status'] == 'rejected')
+          .toList(),
+      _ => items,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final rentals = ref.watch(myRentalsProvider);
     final cs = Theme.of(context).colorScheme;
+    final all = rentals.valueOrNull ?? [];
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('My Rentals')),
-      body: rentals.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
-        data: (items) {
-          if (items.isEmpty) {
-            return _EmptyRentals(cs: cs, onBrowse: () => context.go('/'));
-          }
-          return RefreshIndicator(
-            onRefresh: () => ref.refresh(myRentalsProvider.future),
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (ctx, i) =>
-                  _RentalCard(rental: items[i], cs: cs, ref: ref),
+    // Build per-tab counts for badges
+    final counts = [
+      all.length,
+      all
+          .where((r) =>
+              r['status'] == 'accepted' || r['status'] == 'active')
+          .length,
+      all.where((r) => r['status'] == 'pending').length,
+      all
+          .where((r) =>
+              r['status'] == 'completed' ||
+              r['status'] == 'cancelled' ||
+              r['status'] == 'rejected')
+          .length,
+    ];
+
+    return DefaultTabController(
+      length: _tabs.length,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('My Rentals'),
+          bottom: TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            tabs: List.generate(
+              _tabs.length,
+              (i) => Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(_tabs[i]),
+                    if (counts[i] > 0) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: cs.primaryContainer,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${counts[i]}',
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: cs.onPrimaryContainer),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-          );
-        },
+          ),
+        ),
+        body: rentals.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('$e')),
+          data: (items) {
+            if (items.isEmpty) {
+              return _EmptyRentals(cs: cs, onBrowse: () => context.go('/'));
+            }
+            return TabBarView(
+              children: List.generate(_tabs.length, (tabIndex) {
+                final filtered = _filter(items, tabIndex);
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.inbox_outlined,
+                            size: 48,
+                            color: cs.onSurfaceVariant
+                                .withValues(alpha: 0.4)),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No ${_tabs[tabIndex].toLowerCase()} rentals',
+                          style: TextStyle(color: cs.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return RefreshIndicator(
+                  onRefresh: () => ref.refresh(myRentalsProvider.future),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (ctx, i) => _RentalCard(
+                        rental: filtered[i], cs: cs, ref: ref),
+                  ),
+                );
+              }),
+            );
+          },
+        ),
       ),
     );
   }
