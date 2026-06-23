@@ -394,6 +394,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: _RecentlyViewed(ref: ref, cs: cs),
           ),
 
+          // ── Flash deals ──────────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: _FlashDealsSection(ref: ref, cs: cs),
+          ),
+
           // ── Near me ──────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: _NearMeSection(ref: ref, cs: cs),
@@ -1715,6 +1720,165 @@ class _GovernorateChips extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Flash Deals Section ───────────────────────────────────────────────────────
+class _FlashDealsSection extends StatelessWidget {
+  const _FlashDealsSection({required this.ref, required this.cs});
+  final WidgetRef ref;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(flashDealsProvider);
+    return async.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (deals) {
+        if (deals.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Row(children: [
+                const Text('🔥', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 6),
+                Text(
+                  'Flash Deals',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: cs.onSurface,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '≥30% below avg',
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.orange.shade800),
+                  ),
+                ),
+              ]),
+            ),
+            SizedBox(
+              height: 164,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: deals.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (ctx, i) {
+                  final g = deals[i];
+                  final photos =
+                      (g['photos'] as List?)?.cast<String>() ?? [];
+                  final kva = g['capacity_kva'];
+                  final price = g['price_per_day'];
+                  return GestureDetector(
+                    onTap: () => context.push(
+                        AppRoutes.generatorDetail(g['id'].toString())),
+                    child: Container(
+                      width: 144,
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: Colors.orange.shade300
+                                .withValues(alpha: 0.6)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Stack(children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(14)),
+                              child: photos.isNotEmpty
+                                  ? Image.network(photos.first,
+                                      height: 84,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) =>
+                                          _FlashPlaceholder(cs: cs))
+                                  : _FlashPlaceholder(cs: cs),
+                            ),
+                            Positioned(
+                              top: 6,
+                              left: 6,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade600,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text('DEAL',
+                                    style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white)),
+                              ),
+                            ),
+                          ]),
+                          Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  g['title']?.toString() ?? '',
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  '$kva KVA · EGP $price/d',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: cs.primary,
+                                      fontWeight: FontWeight.w700),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _FlashPlaceholder extends StatelessWidget {
+  const _FlashPlaceholder({required this.cs});
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        height: 84,
+        width: double.infinity,
+        color: Colors.orange.shade50,
+        child: Icon(Icons.bolt, color: Colors.orange.shade400, size: 28),
+      );
 }
 
 // ── Near Me Section ───────────────────────────────────────────────────────────

@@ -42,6 +42,47 @@ final autocompleteProvider =
   return ref.read(generatorRepositoryProvider).searchAutocomplete(q);
 });
 
+// Flash deals: generators whose price_per_day is ≤70% of the average for their
+// KVA tier (grouped into <10, 10-50, 50-200, 200+ KVA buckets).
+final flashDealsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final data = await supabase
+      .from('generators')
+      .select(
+          'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, created_at, companies(name)')
+      .eq('status', 'available')
+      .order('price_per_day', ascending: true)
+      .limit(80);
+  final all = (data as List).cast<Map<String, dynamic>>();
+  // Compute average price per KVA bucket
+  int _bucket(num kva) {
+    if (kva < 10) return 0;
+    if (kva < 50) return 1;
+    if (kva < 200) return 2;
+    return 3;
+  }
+  final bucketTotals = <int, double>{};
+  final bucketCounts = <int, int>{};
+  for (final g in all) {
+    final kva = (g['capacity_kva'] as num?) ?? 0;
+    final price = (g['price_per_day'] as num?)?.toDouble() ?? 0;
+    final b = _bucket(kva);
+    bucketTotals[b] = (bucketTotals[b] ?? 0) + price;
+    bucketCounts[b] = (bucketCounts[b] ?? 0) + 1;
+  }
+  final bucketAvg = {
+    for (final k in bucketTotals.keys)
+      k: bucketTotals[k]! / bucketCounts[k]!,
+  };
+  return all.where((g) {
+    final kva = (g['capacity_kva'] as num?) ?? 0;
+    final price = (g['price_per_day'] as num?)?.toDouble() ?? 0;
+    final avg = bucketAvg[_bucket(kva)];
+    if (avg == null || avg == 0) return false;
+    return price <= avg * 0.70;
+  }).take(8).toList();
+});
+
 // Fetches generators in the same governorate as the user's most recent rental.
 // Returns null governorate if user has no rentals (section hidden).
 final nearMeProvider =

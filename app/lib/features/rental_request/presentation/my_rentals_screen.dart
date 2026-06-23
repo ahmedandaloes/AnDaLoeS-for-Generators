@@ -269,19 +269,61 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                   }
                 }
 
+                // Build interleaved list with month header sentinels
+                final grouped = <dynamic>[];
+                String? lastMonth;
+                for (final r in filtered) {
+                  final raw = r['created_at']?.toString();
+                  String monthKey = '';
+                  String monthLabel = '';
+                  if (raw != null) {
+                    try {
+                      final dt = DateTime.parse(raw).toLocal();
+                      monthKey = '${dt.year}-${dt.month}';
+                      const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May',
+                        'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                      final now = DateTime.now();
+                      monthLabel = dt.year == now.year
+                          ? months[dt.month]
+                          : '${months[dt.month]} ${dt.year}';
+                    } catch (_) {}
+                  }
+                  if (monthKey.isNotEmpty && monthKey != lastMonth) {
+                    grouped.add(monthLabel);
+                    lastMonth = monthKey;
+                  }
+                  grouped.add(r);
+                }
+                final extraHeader = header != null ? 1 : 0;
+
                 return RefreshIndicator(
                   onRefresh: () => ref.refresh(myRentalsProvider.future),
                   child: ListView.separated(
                     padding: EdgeInsets.fromLTRB(
                         16, header != null ? 8 : 16, 16, 16),
-                    itemCount:
-                        filtered.length + (header != null ? 1 : 0),
+                    itemCount: grouped.length + extraHeader,
                     separatorBuilder: (_, __) =>
                         const SizedBox(height: 12),
                     itemBuilder: (ctx, i) {
                       if (header != null && i == 0) return header;
-                      final idx = header != null ? i - 1 : i;
-                      final rental = filtered[idx];
+                      final item = grouped[i - extraHeader];
+                      // Month header sentinel
+                      if (item is String) {
+                        return Padding(
+                          padding:
+                              const EdgeInsets.only(top: 8, bottom: 4),
+                          child: Text(
+                            item,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: cs.onSurfaceVariant,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        );
+                      }
+                      final rental = item as Map<String, dynamic>;
                       final status =
                           rental['status']?.toString() ?? '';
                       final rentalId =

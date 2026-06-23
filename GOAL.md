@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Home: "Flash deals" section — generators with price below governorate average
-- [ ] Owner: earnings tab filter by month picker
-- [ ] Generator detail: share with friend button with deep link preview
-- [ ] My Rentals: group by month with sticky month headers
+- [ ] Owner: earnings breakdown filter by month (date picker in history tab)
+- [ ] Profile: "badge" system — show customer tier (Bronze/Silver/Gold by spend)
+- [ ] Generator detail: "Add to wishlist" share card feature
+- [ ] Home search: recent searches tap to re-apply full filter
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: budget filter chips, rental price calculator on generator detail`
+**Last commit:** `feat: flash deals section, My Rentals monthly grouping`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 
