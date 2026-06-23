@@ -155,7 +155,7 @@ nothing actually collects cash commission yet. Re-word the owner label once deci
 - [ ] Accessibility audit (semantic labels, contrast ratios)
 
 ### DONE-WHEN
-- [ ] 80%+ test coverage (current: placeholder only)
+- [~] Test coverage: real unit tests for core business logic (commission, db_error, ICS, sizes, use-cases) — 11 tests passing. More to follow toward 80%.
 - [ ] Web support (currently passkeys SDK error)
 - [ ] macOS desktop support
 - [ ] Accessibility audit (semantic labels, contrast ratios)
