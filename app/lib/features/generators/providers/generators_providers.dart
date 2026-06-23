@@ -49,7 +49,7 @@ final flashDealsProvider =
   final data = await supabase
       .from('generators')
       .select(
-          'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, created_at, companies(name)')
+          'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, use_cases, created_at, companies(name)')
       .eq('status', 'available')
       .order('price_per_day', ascending: true)
       .limit(80);
@@ -103,7 +103,7 @@ final nearMeProvider =
   final data = await supabase
       .from('generators')
       .select(
-          'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, created_at, companies(name)')
+          'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, use_cases, created_at, companies(name)')
       .eq('status', 'available')
       .eq('governorate', gov)
       .order('avg_score', ascending: false)

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/config/supabase.dart';
+import '../../../core/constants/generator_use_cases.dart';
 
 const _governorates = [
   'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',
@@ -34,6 +35,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
   final _cityController = TextEditingController();
   String? _governorate;
   String _fuelType = 'diesel';
+  final Set<String> _useCases = {};
   bool _submitting = false;
 
   // Photos
@@ -103,6 +105,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
           'city': _cityController.text.trim(),
         'governorate': _governorate,
         'fuel_type': _fuelType,
+        'use_cases': _useCases.toList(),
         'status': 'available',
       }).select('id').single();
 
@@ -219,6 +222,27 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                 DropdownMenuItem(value: 'solar', child: Text('Solar')),
               ],
               onChanged: (v) => setState(() => _fuelType = v ?? 'diesel'),
+            ),
+            const SizedBox(height: 12),
+            _Label('Best for (use cases)'),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: kGeneratorUseCases.map((uc) {
+                final selected = _useCases.contains(uc);
+                return FilterChip(
+                  label: Text(useCaseLabel(uc)),
+                  selected: selected,
+                  onSelected: (on) => setState(() {
+                    if (on) {
+                      _useCases.add(uc);
+                    } else {
+                      _useCases.remove(uc);
+                    }
+                  }),
+                );
+              }).toList(),
             ),
             const SizedBox(height: 12),
             _Field('Description', 'Optional details about the generator',

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/generator_use_cases.dart';
+
 // ── Sort enum ─────────────────────────────────────────────────────────────────
 
 enum GeneratorSortBy { newest, priceLow, priceHigh, ratingTop, capacityLow }
@@ -21,6 +23,7 @@ class GeneratorFilter {
   final double? maxKva;
   final double? maxPrice;
   final String? fuelType;
+  final Set<String> useCases;
   final GeneratorSortBy sort;
 
   const GeneratorFilter({
@@ -29,55 +32,49 @@ class GeneratorFilter {
     this.maxKva,
     this.maxPrice,
     this.fuelType,
+    this.useCases = const {},
     this.sort = GeneratorSortBy.newest,
   });
 
   bool get hasActiveFilters =>
-      governorate != null || maxKva != null || maxPrice != null || fuelType != null;
+      governorate != null ||
+      maxKva != null ||
+      maxPrice != null ||
+      fuelType != null ||
+      useCases.isNotEmpty;
 
-  GeneratorFilter withQuery(String q) => GeneratorFilter(
-      query: q,
-      governorate: governorate,
-      maxKva: maxKva,
-      maxPrice: maxPrice,
-      fuelType: fuelType,
-      sort: sort);
-  GeneratorFilter withGovernorate(String? g) => GeneratorFilter(
-      query: query,
-      governorate: g,
-      maxKva: maxKva,
-      maxPrice: maxPrice,
-      fuelType: fuelType,
-      sort: sort);
-  GeneratorFilter withMaxKva(double? k) => GeneratorFilter(
-      query: query,
-      governorate: governorate,
-      maxKva: k,
-      maxPrice: maxPrice,
-      fuelType: fuelType,
-      sort: sort);
-  GeneratorFilter withMaxPrice(double? p) => GeneratorFilter(
-      query: query,
-      governorate: governorate,
-      maxKva: maxKva,
-      maxPrice: p,
-      fuelType: fuelType,
-      sort: sort);
-  GeneratorFilter withFuelType(String? f) => GeneratorFilter(
-      query: query,
-      governorate: governorate,
-      maxKva: maxKva,
-      maxPrice: maxPrice,
-      fuelType: f,
-      sort: sort);
-  GeneratorFilter withSort(GeneratorSortBy s) => GeneratorFilter(
-      query: query,
-      governorate: governorate,
-      maxKva: maxKva,
-      maxPrice: maxPrice,
-      fuelType: fuelType,
-      sort: s);
+  GeneratorFilter _copy({
+    String? query,
+    Object? governorate = _sentinel,
+    Object? maxKva = _sentinel,
+    Object? maxPrice = _sentinel,
+    Object? fuelType = _sentinel,
+    Set<String>? useCases,
+    GeneratorSortBy? sort,
+  }) =>
+      GeneratorFilter(
+        query: query ?? this.query,
+        governorate: governorate == _sentinel
+            ? this.governorate
+            : governorate as String?,
+        maxKva: maxKva == _sentinel ? this.maxKva : maxKva as double?,
+        maxPrice: maxPrice == _sentinel ? this.maxPrice : maxPrice as double?,
+        fuelType:
+            fuelType == _sentinel ? this.fuelType : fuelType as String?,
+        useCases: useCases ?? this.useCases,
+        sort: sort ?? this.sort,
+      );
+
+  GeneratorFilter withQuery(String q) => _copy(query: q);
+  GeneratorFilter withGovernorate(String? g) => _copy(governorate: g);
+  GeneratorFilter withMaxKva(double? k) => _copy(maxKva: k);
+  GeneratorFilter withMaxPrice(double? p) => _copy(maxPrice: p);
+  GeneratorFilter withFuelType(String? f) => _copy(fuelType: f);
+  GeneratorFilter withUseCases(Set<String> u) => _copy(useCases: u);
+  GeneratorFilter withSort(GeneratorSortBy s) => _copy(sort: s);
 }
+
+const Object _sentinel = Object();
 
 final filterProvider =
     StateProvider<GeneratorFilter>((ref) => const GeneratorFilter());
@@ -108,6 +105,7 @@ class _FilterSheetState extends State<FilterSheet> {
   late double? _maxKva;
   late double? _maxPrice;
   late String? _fuelType;
+  late Set<String> _useCases;
 
   static const _fuelOptions = [
     ('diesel', 'Diesel'),
@@ -124,6 +122,7 @@ class _FilterSheetState extends State<FilterSheet> {
     _maxKva = widget.filter.maxKva;
     _maxPrice = widget.filter.maxPrice;
     _fuelType = widget.filter.fuelType;
+    _useCases = Set<String>.from(widget.filter.useCases);
   }
 
   void _apply() {
@@ -131,7 +130,8 @@ class _FilterSheetState extends State<FilterSheet> {
         .withGovernorate(_governorate)
         .withMaxKva(_maxKva)
         .withMaxPrice(_maxPrice)
-        .withFuelType(_fuelType);
+        .withFuelType(_fuelType)
+        .withUseCases(_useCases);
     Navigator.pop(context);
   }
 
@@ -141,12 +141,14 @@ class _FilterSheetState extends State<FilterSheet> {
       _maxKva = null;
       _maxPrice = null;
       _fuelType = null;
+      _useCases = {};
     });
     widget.ref.read(filterProvider.notifier).state = widget.filter
         .withGovernorate(null)
         .withMaxKva(null)
         .withMaxPrice(null)
-        .withFuelType(null);
+        .withFuelType(null)
+        .withUseCases({});
     Navigator.pop(context);
   }
 
@@ -267,6 +269,32 @@ class _FilterSheetState extends State<FilterSheet> {
                 selected: selected,
                 onSelected: (on) =>
                     setState(() => _fuelType = on ? value : null),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+          const Text('USE CASE',
+              style: TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: kGeneratorUseCases.map((uc) {
+              final selected = _useCases.contains(uc);
+              return FilterChip(
+                label: Text(useCaseLabel(uc),
+                    style: const TextStyle(fontSize: 12)),
+                selected: selected,
+                onSelected: (on) => setState(() {
+                  final next = Set<String>.from(_useCases);
+                  if (on) {
+                    next.add(uc);
+                  } else {
+                    next.remove(uc);
+                  }
+                  _useCases = next;
+                }),
               );
             }).toList(),
           ),

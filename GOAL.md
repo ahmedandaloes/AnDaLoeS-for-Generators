@@ -86,9 +86,10 @@ owner paid out ≤3 working days → deposit released/claimed → both RATE.
       the full total (commission is owner-charged).
 - [ ] **Security deposit field** on generators + shown in booking + stored on
       rental_requests (foundation for the trust layer). → data-architect first
-- [ ] **Use-case/segment tags** on generators (events/construction/industrial/
-      telecom/agriculture) + a browse filter — operationalizes the B2B
-      repositioning. → flutter-ui + supabase-db
+- [x] **Use-case/segment tags** on generators (DB 0023 use_cases text[] + GIN
+      index). Owner picks them in add/edit (chips), customer filters by them in
+      the browse filter sheet, shown on the detail screen. Shared
+      kGeneratorUseCases constant. Operationalizes the B2B repositioning.
 - [ ] Commission: admin can edit `commission_config` rate from the panel (currently DB-only)
 - [ ] Status state machine: guard invalid transitions at DB level (e.g. no rejected→active)
 - [x] Double-booking: enforce no overlapping accepted/active rentals per generator (DB 0021)

@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/config/supabase.dart';
+import '../../../core/constants/generator_use_cases.dart';
 
 const _editGovernorates = [
   'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',
@@ -49,6 +50,7 @@ class _EditGeneratorScreenState
 
   String? _governorate;
   String _fuelType = 'diesel';
+  final Set<String> _useCases = {};
   bool _available = true;
   bool _initialised = false;
   bool _saving = false;
@@ -86,6 +88,9 @@ class _EditGeneratorScreenState
     _cityController.text = gen['city']?.toString() ?? '';
     _governorate = gen['governorate']?.toString();
     _fuelType = gen['fuel_type']?.toString() ?? 'diesel';
+    _useCases
+      ..clear()
+      ..addAll((gen['use_cases'] as List?)?.cast<String>() ?? const []);
     _available = gen['status']?.toString() == 'available';
     _existingPhotos =
         (gen['photos'] as List?)?.cast<String>().toList() ?? [];
@@ -170,6 +175,7 @@ class _EditGeneratorScreenState
             : null,
         'governorate': _governorate,
         'fuel_type': _fuelType,
+        'use_cases': _useCases.toList(),
         'status': _available ? 'available' : 'unavailable',
         'photos': finalPhotos,
       }).eq('id', widget.generatorId);
@@ -305,6 +311,27 @@ class _EditGeneratorScreenState
                   ],
                   onChanged: (v) =>
                       setState(() => _fuelType = v ?? 'diesel'),
+                ),
+                const SizedBox(height: 12),
+                _EditLabel('Best for (use cases)'),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: kGeneratorUseCases.map((uc) {
+                    final selected = _useCases.contains(uc);
+                    return FilterChip(
+                      label: Text(useCaseLabel(uc)),
+                      selected: selected,
+                      onSelected: (on) => setState(() {
+                        if (on) {
+                          _useCases.add(uc);
+                        } else {
+                          _useCases.remove(uc);
+                        }
+                      }),
+                    );
+                  }).toList(),
                 ),
                 const SizedBox(height: 12),
                 _EditField(

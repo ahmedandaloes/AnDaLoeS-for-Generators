@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/constants/generator_use_cases.dart';
 import '../providers/detail_providers.dart';
 import 'widgets/detail_sections.dart';
 import 'widgets/photo_carousel.dart';
@@ -348,6 +349,34 @@ class _Body extends ConsumerWidget {
                     ),
                   ],
                 ),
+                // Use-case tags (what this generator is best for)
+                Builder(builder: (_) {
+                  final useCases =
+                      (gen['use_cases'] as List?)?.cast<String>() ?? const [];
+                  if (useCases.isEmpty) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: useCases
+                          .map((uc) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: cs.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(useCaseLabel(uc),
+                                    style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: cs.primary)),
+                              ))
+                          .toList(),
+                    ),
+                  );
+                }),
                 // Contact buttons
                 Builder(builder: (_) {
                   final phone = company?['contact_phone']?.toString();

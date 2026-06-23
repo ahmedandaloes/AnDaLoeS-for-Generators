@@ -106,6 +106,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           }
           if (filter.fuelType != null &&
               (g['fuel_type'] ?? 'diesel') != filter.fuelType) return false;
+          if (filter.useCases.isNotEmpty) {
+            final genUseCases =
+                (g['use_cases'] as List?)?.cast<String>() ?? const [];
+            if (!filter.useCases.any(genUseCases.contains)) return false;
+          }
           return true;
         }).toList()
           ..sort((a, b) => switch (filter.sort) {
