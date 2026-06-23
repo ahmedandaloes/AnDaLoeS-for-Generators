@@ -30,16 +30,19 @@
 - My Rentals: 4-tab bar (All / Active / Pending / Done) with per-tab count badges
 - Profile: total amount spent + month-over-month trend indicator (↑↓)
 - Company onboarding: description field + live preview card (name, city, bio)
+- Generator cards: company name shown below title (storefront icon)
+- Generator detail: avg response time badge (Responds in ~X hr) based on accepted/rejected requests
+- Notifications: layered bell illustration with green checkmark badge for empty state
 
 ---
 
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Generator detail: average response time badge (based on owner acceptance speed)
-- [ ] Generator card: show company name below title
-- [ ] Owner Dashboard: pull-to-refresh on Requests and History tabs
-- [ ] Notifications: empty state illustration when no notifications
+- [ ] Generator detail: share button (share generator name + price + city as text)
+- [ ] Home screen: "Recently viewed" section (last 5 generators tapped, stored in StateProvider)
+- [ ] My Rentals: show total amount spent summary at top of completed tab
+- [ ] Owner Dashboard: earnings tab — add month selector to navigate between months
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
