@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
@@ -54,6 +55,26 @@ final _generatorReviewsProvider =
   return (data as List).cast<Map<String, dynamic>>();
 });
 
+// Similar generators — same governorate, overlapping KVA range, excluding current
+final _similarGeneratorsProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, Map<String, dynamic>>((ref, gen) async {
+  final gov = gen['governorate']?.toString();
+  final kva = (gen['capacity_kva'] as num?)?.toDouble() ?? 0;
+  final id = gen['id']?.toString();
+  if (gov == null || id == null) return [];
+  final data = await supabase
+      .from('generators')
+      .select('id, title, capacity_kva, price_per_day, photos, avg_score')
+      .eq('governorate', gov)
+      .eq('is_available', true)
+      .neq('id', id)
+      .gte('capacity_kva', (kva * 0.5).floor())
+      .lte('capacity_kva', kva * 2)
+      .order('avg_score', ascending: false)
+      .limit(6);
+  return (data as List).cast<Map<String, dynamic>>();
+});
+
 class GeneratorDetailScreen extends ConsumerWidget {
   const GeneratorDetailScreen({super.key, required this.id});
   final String id;
@@ -102,6 +123,7 @@ class _Body extends ConsumerWidget {
     final generatorId = gen['id'].toString();
     final reviewsAsync = ref.watch(_generatorReviewsProvider(generatorId));
     final bookedAsync = ref.watch(_bookedDatesProvider(generatorId));
+    final similarAsync = ref.watch(_similarGeneratorsProvider(gen));
 
     return CustomScrollView(
       slivers: [
@@ -317,6 +339,16 @@ class _Body extends ConsumerWidget {
                   orElse: () => const SizedBox.shrink(),
                 ),
 
+                // Similar generators
+                similarAsync.maybeWhen(
+                  data: (similar) => similar.isEmpty
+                      ? const SizedBox.shrink()
+                      : _SimilarGeneratorsSection(
+                          generators: similar, cs: cs),
+                  orElse: () => const SizedBox.shrink(),
+                ),
+                const SizedBox(height: 16),
+
                 // Info note
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -349,6 +381,129 @@ class _Body extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── Similar generators ────────────────────────────────────────────────────────
+class _SimilarGeneratorsSection extends StatelessWidget {
+  const _SimilarGeneratorsSection(
+      {required this.generators, required this.cs});
+  final List<Map<String, dynamic>> generators;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Similar generators nearby',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+            color: cs.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 140,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.zero,
+            itemCount: generators.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, i) {
+              final g = generators[i];
+              final photo = (g['photos'] as List?)?.isNotEmpty == true
+                  ? g['photos'][0].toString()
+                  : null;
+              final score =
+                  (g['avg_score'] as num?)?.toStringAsFixed(1) ?? '–';
+              return GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  context.push('/generator/${g['id']}');
+                },
+                child: Container(
+                  width: 140,
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: cs.outlineVariant.withValues(alpha: 0.5)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12)),
+                        child: photo != null
+                            ? Image.network(
+                                photo,
+                                height: 80,
+                                width: 140,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    _placeholder(cs),
+                              )
+                            : _placeholder(cs),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              g['title']?.toString() ?? '–',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Text(
+                                  '${g['capacity_kva']} KVA',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: cs.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Icon(Icons.star_rounded,
+                                    size: 10, color: Colors.amber),
+                                const SizedBox(width: 2),
+                                Text(score,
+                                    style: const TextStyle(fontSize: 10)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _placeholder(ColorScheme cs) {
+    return Container(
+      height: 80,
+      width: 140,
+      color: cs.primaryContainer.withValues(alpha: 0.3),
+      child: Icon(Icons.bolt, size: 32, color: cs.primary),
     );
   }
 }
@@ -850,6 +1005,7 @@ class GeneratorDetailWrapper extends ConsumerWidget {
           FloatingActionButton.extended(
             heroTag: 'rent',
             onPressed: () {
+              HapticFeedback.mediumImpact();
               if (!loggedIn) {
                 context.push('/login');
                 return;

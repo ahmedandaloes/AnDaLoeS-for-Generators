@@ -5,28 +5,28 @@
 ---
 
 ## Shipped Features ✅
-- Home: search, governorate chips, KVA + price filters, active filter pills, sort, favorites, unread badge
-- Generator detail: photo carousel, call/WhatsApp, booked dates, ratings
+- Home: search, governorate chips, KVA + price filters, active filter pills, sort, favorites (haptic), unread badge, pull-to-refresh, "Top Rated" badge
+- Generator detail: photo carousel, call/WhatsApp, booked dates, ratings, **similar generators horizontal scroll**, **haptic on Rent Now**
 - Notifications: realtime, mark-all-read, unread badge
-- Profile: rental stats, dark mode (persisted), language toggle (persisted), **avatar photo upload**
-- My Rentals: conflict warning, rating badge, view receipt, pull-to-refresh
+- Profile: rental stats, dark mode (persisted), language toggle (persisted), **avatar photo upload** (FilePicker → Supabase avatars bucket)
+- My Rentals: conflict warning, rating badge, view receipt
 - Rental Receipt: gradient header, copy-as-text
 - Owner Dashboard: requests, history, rate customer, earnings + monthly chart
 - Admin panel: company approval, reports, platform stats
-- Home screen: **pull-to-refresh**, **"Top Rated" badge** on high-rated generators
-- DB migrations 0011–0013 (favorites, notifications, avatar_url)
+- DB migrations 0011–0013 (favorites, notifications, avatar_url + avatars bucket + RLS)
 - CI: flutter.yml with Flutter 3.32.x, analyze+test, APK build job
 - CLAUDE.md agentic guide
+- /goal + /loop skills for self-sustaining development across context windows
 
 ---
 
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] iOS Simulator smoke test — confirm app launches and navigates on iOS
-- [ ] Generator detail: "Similar generators" horizontal scroll (same governorate, same KVA range)
 - [ ] Onboarding splash: 3-page PageView for new installs (how it works for customers)
 - [ ] Company profile public page: show company name, logo, rating, all their generators
+- [ ] Generator detail: favorite/save button on the detail screen itself (not just home card)
+- [ ] Share generator: platform share sheet with title, price, and deep link
 
 ### SOON
 - [ ] Payment flow: COD confirmation screen with digital payment placeholder
@@ -48,8 +48,8 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: avatar upload, pull-to-refresh, top rated badge`
-**Next action:** iOS simulator test + similar generators section + onboarding splash
+**Last commit:** `feat: similar generators, haptic feedback (Apple-level polish), GOAL.md agentic system`
+**Next action:** Onboarding splash (3-page) + company profile page + favorite button on detail screen
 
 ---
 
