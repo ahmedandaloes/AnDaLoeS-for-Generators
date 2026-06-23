@@ -61,27 +61,50 @@
 
 ---
 
-## FOCUS: Business Workflow (owner directive 2026-06-23)
-The loop now prioritizes the rental transaction lifecycle & revenue model
-over UI polish. Core workflow: browse → request → accept → pay → active →
-complete → commission → rate. Harden each transition + the money path.
+## FOCUS: Validated Business Thesis (market research 2026-06-23)
+Full strategy in `docs/BUSINESS_STRATEGY.md` + money model in `docs/MONETIZATION.md`.
 
-### NEXT (this loop)
-- [ ] Pricing transparency: show fee/commission breakdown at request time
+**Thesis:** A trust-based booking marketplace for **B2B/SMB generator rental**
+(events, construction, factories, telecom, agriculture) — NOT consumer
+outage-backup (Egypt ended load-shedding in 2024–25; that demand is fading).
+**Win on the whitespace no incumbent fills:** published day-rates + one-tap
+verified booking + a trust layer. Money model: shift the flat 50 EGP fee → a
+**percentage commission via digital escrow**, phased 8–10% → 12–15% as trust
+features ship. Seed supply in **Cairo + Alexandria** first.
+
+### Target rental workflow (money path)
+browse → instant booking (calendar) → security DEPOSIT held → owner ACCEPTS →
+escrow collects rent+deposit → ACTIVE → COMPLETED → commission auto-deducted,
+owner paid out ≤3 working days → deposit released/claimed → both RATE.
+(Commission & payments stay server-side via DB triggers, never the client.)
+
+### NEXT (this loop) — buildable in-app now, no external dependency
+- [ ] **Money model: percentage commission.** Switch `commission_config` default
+      from fixed 50 EGP → ~10% (`percentage` type already supported); show the
+      fee/commission breakdown at request time (customer sees total; owner sees
+      net payout). → rental-workflow-expert + supabase-db-expert
+- [ ] **Security deposit field** on generators + shown in booking + stored on
+      rental_requests (foundation for the trust layer). → data-architect first
+- [ ] **Use-case/segment tags** on generators (events/construction/industrial/
+      telecom/agriculture) + a browse filter — operationalizes the B2B
+      repositioning. → flutter-ui + supabase-db
+- [ ] Commission: admin can edit `commission_config` rate from the panel (currently DB-only)
 - [ ] Status state machine: guard invalid transitions at DB level (e.g. no rejected→active)
-- [ ] Commission: admin can edit commission_config rate from the panel (currently DB-only)
 - [x] Double-booking: enforce no overlapping accepted/active rentals per generator (DB 0021)
 
-### SOON
-- [ ] Generator approval gate: new generators default to `pending` and require admin approval before going public (PRODUCT DECISION — needs active moderation commitment; enum already supports it. Route to product-strategy-expert.)
-- [ ] Push notifications: FCM integration with Supabase edge function
-- [ ] Referral code system: users get discount for referring friends
-- [ ] Deep linking: share generator page via URL
-- [ ] Advanced search: save search, price history chart
+### SOON — needs external integration / compliance / decision
+- [ ] **Digital escrow payments** (Paymob or Kashier): collect rent to platform
+      account, auto-deduct commission, mass-payout owner ≤3 days. → release-ci + security-architect
+- [ ] **Fawry pay-against-code** for the COD segment (capture "cash" into the platform)
+- [ ] **Damage protection / basic insurance** (justifies raising take rate to 12–15%)
+- [ ] **Anti-leakage**: off-platform-dealing detection (cancellation/contact-share patterns) + penalties
+- [ ] **CBE payment-facilitator compliance review** (escrow account, EGP settlement, June-2025 PSP rules) before holding rent at scale
+- [ ] Generator approval gate: new generators default to `pending` (PRODUCT DECISION — needs active moderation; enum already supports it)
+- [ ] Referral credits (growth lever; coordinate with monetization-expert) + deep linking to listings (WhatsApp-native sharing)
 
-### UI/UX POLISH (ongoing — improve with every loop)
+### UI/UX POLISH (ongoing — clean, Uber-grade)
+- [ ] Price transparency on cards/detail (day-rate always visible — our differentiator)
 - [ ] Rental request: date range conflict chip UX improvements
-- [ ] Admin: better stats charts, CSV export
 - [ ] Accessibility audit (semantic labels, contrast ratios)
 
 ### DONE-WHEN
@@ -97,7 +120,8 @@ complete → commission → rate. Harden each transition + the money path.
 **Working branch:** `development` (main is integration/release)
 **Last commit:** `feat: prevent double-booking (DB 0021 exclusion constraint) + friendly accept errors`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** pricing/commission breakdown at request time; admin-editable commission rate. Delegate via Agent tool to parallelize (investigation + build).
+**Next action:** money-model shift — switch commission_config to ~10% percentage + show fee/payout breakdown at request time (rental-workflow + supabase-db). See docs/BUSINESS_STRATEGY.md + docs/MONETIZATION.md.
+**Strategy:** repositioned to B2B/SMB trust marketplace per market research 2026-06-23 (docs/BUSINESS_STRATEGY.md).
 
 ---
 
