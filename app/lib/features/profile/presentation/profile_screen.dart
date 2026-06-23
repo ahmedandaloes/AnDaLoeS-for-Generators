@@ -8,6 +8,7 @@ import '../../../core/config/supabase.dart';
 import '../../../core/localization/locale_provider.dart';
 import '../../../core/theme/theme_mode_provider.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/routing/app_routes.dart';
 
 // Fetches the user's profile row (full_name, phone, role).
 final _profileDataProvider =
@@ -246,7 +247,7 @@ class ProfileScreen extends ConsumerWidget {
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_rounded),
               onPressed: () =>
-                  context.canPop() ? context.pop() : context.go('/'),
+                  context.canPop() ? context.pop() : context.go(AppRoutes.home),
             ),
             title: Text(l.navProfile),
           ),
@@ -576,7 +577,7 @@ class ProfileScreen extends ConsumerWidget {
                             style: TextStyle(fontWeight: FontWeight.w500)),
                         trailing: Icon(Icons.chevron_right,
                             color: cs.onSurfaceVariant),
-                        onTap: () => context.push('/my-rentals'),
+                        onTap: () => context.push(AppRoutes.myRentals),
                       ),
                       Divider(
                           height: 1,
@@ -610,7 +611,7 @@ class ProfileScreen extends ConsumerWidget {
                               orElse: () => Icon(Icons.chevron_right,
                                   color: cs.onSurfaceVariant),
                             ),
-                        onTap: () => context.push('/owner-dashboard'),
+                        onTap: () => context.push(AppRoutes.ownerDashboard),
                       ),
                     ],
                   ),
@@ -636,7 +637,7 @@ class ProfileScreen extends ConsumerWidget {
                             style: TextStyle(fontSize: 12)),
                         trailing: Icon(Icons.chevron_right,
                             color: cs.onSurfaceVariant),
-                        onTap: () => context.push('/admin'),
+                        onTap: () => context.push(AppRoutes.admin),
                       ),
                     ],
                   ),
@@ -815,7 +816,7 @@ class ProfileScreen extends ConsumerWidget {
 
     if (confirmed == true) {
       await supabase.auth.signOut();
-      if (context.mounted) context.go('/');
+      if (context.mounted) context.go(AppRoutes.home);
     }
   }
 

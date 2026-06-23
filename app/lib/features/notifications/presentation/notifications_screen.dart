@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/routing/app_routes.dart';
 import '../providers/notifications_providers.dart'
     show notificationsProvider, unreadCountProvider;
 
@@ -355,12 +356,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       case 'rental_completed':
       case 'rental_status':
         if (rentalId != null) {
-          context.push('/receipt/$rentalId');
+          context.push(AppRoutes.receipt(rentalId));
         } else {
-          context.push('/my-rentals');
+          context.push(AppRoutes.myRentals);
         }
       case 'new_request':
-        context.push('/owner-dashboard');
+        context.push(AppRoutes.ownerDashboard);
       default:
         break;
     }

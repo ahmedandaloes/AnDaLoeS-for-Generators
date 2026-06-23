@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/routing/app_routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -45,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
         token: _codeController.text.trim(),
         type: OtpType.sms,
       );
-      if (mounted) context.go('/');
+      if (mounted) context.go(AppRoutes.home);
     } on AuthException catch (e) {
       _showError(e.message);
     } finally {
@@ -246,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ]),
                     const SizedBox(height: 16),
                     OutlinedButton(
-                      onPressed: () => context.push('/dev-login'),
+                      onPressed: () => context.push(AppRoutes.devLogin),
                       child: const Text('Developer sign-in'),
                     ),
                   ],

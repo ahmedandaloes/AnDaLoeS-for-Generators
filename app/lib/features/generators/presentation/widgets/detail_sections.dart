@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/routing/app_routes.dart';
 
 class SimilarGeneratorsSection extends StatelessWidget {
   const SimilarGeneratorsSection(
@@ -40,7 +41,7 @@ class SimilarGeneratorsSection extends StatelessWidget {
               return GestureDetector(
                 onTap: () {
                   HapticFeedback.selectionClick();
-                  context.push('/generators/${g['id']}');
+                  context.push(AppRoutes.generatorDetail(g['id'].toString()));
                 },
                 child: Container(
                   width: 140,

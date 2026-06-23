@@ -9,6 +9,7 @@ import '../../../core/config/supabase.dart';
 import '../providers/detail_providers.dart';
 import 'widgets/detail_sections.dart';
 import 'widgets/photo_carousel.dart';
+import '../../../core/routing/app_routes.dart';
 
 class GeneratorDetailScreen extends ConsumerWidget {
   const GeneratorDetailScreen(
@@ -481,10 +482,10 @@ class _GeneratorDetailWrapperState
                 onPressed: () {
                   HapticFeedback.mediumImpact();
                   if (!loggedIn) {
-                    context.push('/login');
+                    context.push(AppRoutes.login);
                     return;
                   }
-                  context.push('/generators/$id/request');
+                  context.push(AppRoutes.generatorRequest(id));
                 },
                 icon: const Icon(Icons.calendar_month_outlined),
                 label: const Text('Rent Now'),

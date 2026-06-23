@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/supabase.dart';
 import '../providers/owner_providers.dart';
 import 'widgets/request_card.dart';
+import '../../../core/routing/app_routes.dart';
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
@@ -114,7 +115,7 @@ class _NoCompanyState extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             FilledButton(
-              onPressed: () => context.push('/company/onboard'),
+              onPressed: () => context.push(AppRoutes.companyOnboard),
               child: const Text('Register your company'),
             ),
           ],
@@ -389,7 +390,7 @@ class _GeneratorsTab extends StatelessWidget {
                   style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(52)),
                   onPressed: () =>
-                      context.push('/owner/generator/add?company=$companyId'),
+                      context.push(AppRoutes.addGenerator(companyId)),
                   icon: const Icon(Icons.add),
                   label: const Text('Add generator'),
                 ),
@@ -440,7 +441,7 @@ class _OwnerGeneratorTile extends StatelessWidget {
               icon: const Icon(Icons.edit_outlined, size: 20),
               tooltip: 'Edit',
               onPressed: () =>
-                  context.push('/owner/generator/${gen['id']}/edit'),
+                  context.push(AppRoutes.editGenerator(gen['id'].toString())),
             ),
             Switch(
               value: isAvailable,

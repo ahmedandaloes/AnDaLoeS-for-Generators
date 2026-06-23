@@ -7,6 +7,7 @@ import '../../../../core/config/supabase.dart';
 import '../../providers/generators_providers.dart'
     show favoritesProvider, recentlyViewedProvider;
 import 'fuel_chip.dart';
+import '../../../../core/routing/app_routes.dart';
 
 class GeneratorCard extends ConsumerStatefulWidget {
   const GeneratorCard({super.key, required this.generator});
@@ -50,7 +51,7 @@ class _GeneratorCardState extends ConsumerState<GeneratorCard> {
             ...current.where((g) => g['id']?.toString() != id),
           ].take(5).toList();
           ref.read(recentlyViewedProvider.notifier).state = updated;
-          context.push('/generators/${generator['id']}');
+          context.push(AppRoutes.generatorDetail(generator['id'].toString()));
         },
         child: Padding(
           padding: const EdgeInsets.all(16),

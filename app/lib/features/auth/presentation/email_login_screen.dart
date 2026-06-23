@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/routing/app_routes.dart';
 
 class EmailLoginScreen extends StatefulWidget {
   const EmailLoginScreen({super.key});
@@ -31,7 +32,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
       } on AuthException {
         await supabase.auth.signUp(email: email, password: password);
       }
-      if (mounted) context.go('/');
+      if (mounted) context.go(AppRoutes.home);
     } on AuthException catch (e) {
       _show(e.message);
     } finally {
@@ -43,7 +44,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
     setState(() => _loading = true);
     try {
       await supabase.auth.signInAnonymously();
-      if (mounted) context.go('/');
+      if (mounted) context.go(AppRoutes.home);
     } on AuthException catch (e) {
       _show(e.message);
     } finally {

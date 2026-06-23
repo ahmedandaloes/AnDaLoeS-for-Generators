@@ -11,6 +11,7 @@ import 'widgets/fuel_chip.dart' show fuelLabel;
 import 'widgets/generator_card.dart';
 import 'widgets/generator_filter.dart';
 import 'widgets/search_autocomplete.dart';
+import '../../../core/routing/app_routes.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -125,13 +126,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               IconButton(
                 icon: const Icon(Icons.map_outlined),
                 tooltip: 'Map view',
-                onPressed: () => context.push('/map'),
+                onPressed: () => context.push(AppRoutes.map),
               ),
               if (loggedIn) ...[
                 IconButton(
                   icon: const Icon(Icons.receipt_long_outlined),
                   tooltip: 'My Rentals',
-                  onPressed: () => context.push('/my-rentals'),
+                  onPressed: () => context.push(AppRoutes.myRentals),
                 ),
                 Consumer(
                   builder: (context, watchRef, _) {
@@ -143,7 +144,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: IconButton(
                         icon: const Icon(Icons.notifications_outlined),
                         tooltip: 'Notifications',
-                        onPressed: () => context.push('/notifications'),
+                        onPressed: () => context.push(AppRoutes.notifications),
                       ),
                     );
                   },
@@ -155,7 +156,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Icon(Icons.person_outline,
                         size: 18, color: cs.onPrimaryContainer),
                   ),
-                  onPressed: () => context.push('/profile'),
+                  onPressed: () => context.push(AppRoutes.profile),
                 ),
               ] else
                 Padding(
@@ -167,7 +168,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20)),
                     ),
-                    onPressed: () => context.push('/login'),
+                    onPressed: () => context.push(AppRoutes.login),
                     child: Text(l.loginTitle,
                         style: const TextStyle(fontSize: 13)),
                   ),
@@ -889,7 +890,7 @@ class _FeaturedCard extends StatelessWidget {
     final id = gen['id'].toString();
 
     return GestureDetector(
-      onTap: () => context.push('/generators/$id'),
+      onTap: () => context.push(AppRoutes.generatorDetail(id)),
       child: Container(
         width: 150,
         decoration: BoxDecoration(
@@ -1085,7 +1086,7 @@ class _NewArrivalCard extends StatelessWidget {
     final age = _timeAgo(gen['created_at']?.toString());
 
     return GestureDetector(
-      onTap: () => context.push('/generators/${gen['id']}'),
+      onTap: () => context.push(AppRoutes.generatorDetail(gen['id'].toString())),
       child: Container(
         width: 140,
         decoration: BoxDecoration(
@@ -1267,7 +1268,7 @@ class _PopularCard extends StatelessWidget {
     final title = gen['title']?.toString() ?? '-';
 
     return GestureDetector(
-      onTap: () => context.push('/generators/${gen['id']}'),
+      onTap: () => context.push(AppRoutes.generatorDetail(gen['id'].toString())),
       child: Container(
         width: 130,
         decoration: BoxDecoration(
@@ -1416,7 +1417,7 @@ class _RecentCard extends StatelessWidget {
     final city = gen['city']?.toString() ?? '';
 
     return GestureDetector(
-      onTap: () => context.push('/generators/${gen['id']}'),
+      onTap: () => context.push(AppRoutes.generatorDetail(gen['id'].toString())),
       child: Container(
         width: 130,
         decoration: BoxDecoration(

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/config/supabase.dart';
+import '../../../core/routing/app_routes.dart';
 
 const _governorates = [
   'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',
@@ -148,7 +149,7 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
   }
 
   Future<void> _finish() async {
-    if (mounted) context.go('/owner-dashboard');
+    if (mounted) context.go(AppRoutes.ownerDashboard);
   }
 
   void _snack(String msg) {

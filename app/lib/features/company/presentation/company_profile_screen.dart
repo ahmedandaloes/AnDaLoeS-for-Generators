@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/routing/app_routes.dart';
 
 final _companyProfileProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>?, String>(
@@ -365,7 +366,7 @@ class _CompanyGeneratorTile extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => context.push('/generators/${gen['id']}'),
+        onTap: () => context.push(AppRoutes.generatorDetail(gen['id'].toString())),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(

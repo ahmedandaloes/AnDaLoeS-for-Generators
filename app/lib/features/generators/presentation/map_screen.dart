@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/routing/app_routes.dart';
 
 // Approximate center coordinates for Egyptian governorates
 const _govCoords = <String, LatLng>{
@@ -213,7 +214,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     generator: _selected!,
                     cs: cs,
                     onClose: () => setState(() => _selected = null),
-                    onView: () => context.push('/generator/${_selected!['id']}'),
+                    onView: () => context.push(AppRoutes.generatorDetail(_selected!['id'].toString())),
                   ),
                 ),
             ],

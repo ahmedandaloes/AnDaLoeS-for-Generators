@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/supabase.dart';
+import 'app_routes.dart';
 import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/auth/presentation/email_login_screen.dart';
 import '../../features/auth/presentation/onboarding_screen.dart';
@@ -37,12 +38,12 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
     final loc = state.matchedLocation;
 
     const protected = {
-      '/profile',
-      '/my-rentals',
-      '/owner-dashboard',
-      '/company/onboard',
-      '/admin',
-      '/notifications',
+      AppRoutes.profile,
+      AppRoutes.myRentals,
+      AppRoutes.ownerDashboard,
+      AppRoutes.companyOnboard,
+      AppRoutes.admin,
+      AppRoutes.notifications,
     };
     final needsAuth = protected.contains(loc) ||
         (loc.startsWith('/generators/') && loc.endsWith('/request')) ||
@@ -54,67 +55,59 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
         loc.startsWith('/invoice/') ||
         loc.startsWith('/report');
 
-    if (!loggedIn && needsAuth) return '/login';
-    if (loggedIn && (loc == '/login' || loc == '/dev-login')) return '/';
+    if (!loggedIn && needsAuth) return AppRoutes.login;
+    if (loggedIn && (loc == AppRoutes.login || loc == AppRoutes.devLogin)) {
+      return AppRoutes.home;
+    }
     return null;
   },
   routes: [
-    GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
-    GoRoute(path: '/map', builder: (_, __) => const MapScreen()),
+    GoRoute(path: AppRoutes.home, builder: (_, __) => const HomeScreen()),
+    GoRoute(path: AppRoutes.map, builder: (_, __) => const MapScreen()),
+    GoRoute(path: AppRoutes.onboarding, builder: (_, __) => const OnboardingScreen()),
+    GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginScreen()),
+    GoRoute(path: AppRoutes.devLogin, builder: (_, __) => const EmailLoginScreen()),
+    GoRoute(path: AppRoutes.profile, builder: (_, __) => const ProfileScreen()),
+    GoRoute(path: AppRoutes.notifications, builder: (_, __) => const NotificationsScreen()),
+    GoRoute(path: AppRoutes.myRentals, builder: (_, __) => const MyRentalsScreen()),
+    GoRoute(path: AppRoutes.admin, builder: (_, __) => const AdminScreen()),
+    GoRoute(path: AppRoutes.ownerDashboard, builder: (_, __) => const OwnerDashboardScreen()),
+    GoRoute(path: AppRoutes.companyOnboard, builder: (_, __) => const CompanyOnboardingScreen()),
     GoRoute(
-        path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
-    GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-    GoRoute(path: '/dev-login', builder: (_, __) => const EmailLoginScreen()),
-    GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
-    GoRoute(
-      path: '/notifications',
-      builder: (_, __) => const NotificationsScreen(),
-    ),
-    GoRoute(path: '/my-rentals', builder: (_, __) => const MyRentalsScreen()),
-    GoRoute(path: '/admin', builder: (_, __) => const AdminScreen()),
-    GoRoute(
-      path: '/owner-dashboard',
-      builder: (_, __) => const OwnerDashboardScreen(),
-    ),
-    GoRoute(
-      path: '/owner/earnings',
+      path: AppRoutes.ownerEarningsPath,
       builder: (_, state) => OwnerEarningsScreen(
         companyId: state.uri.queryParameters['company'] ?? '',
       ),
     ),
     GoRoute(
-      path: '/company/onboard',
-      builder: (_, __) => const CompanyOnboardingScreen(),
-    ),
-    GoRoute(
-      path: '/generators/:id',
+      path: AppRoutes.generatorDetailPath,
       builder: (_, state) =>
           GeneratorDetailWrapper(id: state.pathParameters['id']!),
     ),
     GoRoute(
-      path: '/generators/:id/request',
+      path: AppRoutes.generatorRequestPath,
       builder: (_, state) =>
           RentalRequestScreen(generatorId: state.pathParameters['id']!),
     ),
     GoRoute(
-      path: '/company/:id',
+      path: AppRoutes.companyProfilePath,
       builder: (_, state) =>
           CompanyProfileScreen(companyId: state.pathParameters['id']!),
     ),
     GoRoute(
-      path: '/owner/generator/add',
+      path: AppRoutes.addGeneratorPath,
       builder: (_, state) => AddGeneratorScreen(
         companyId: state.uri.queryParameters['company'] ?? '',
       ),
     ),
     GoRoute(
-      path: '/owner/generator/:id/edit',
+      path: AppRoutes.editGeneratorPath,
       builder: (_, state) => EditGeneratorScreen(
         generatorId: state.pathParameters['id']!,
       ),
     ),
     GoRoute(
-      path: '/rate/:rentalId',
+      path: AppRoutes.ratePath,
       builder: (_, state) {
         final params = state.uri.queryParameters;
         return RateRentalScreen(
@@ -126,32 +119,32 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
       },
     ),
     GoRoute(
-      path: '/receipt/:rentalId',
+      path: AppRoutes.receiptPath,
       builder: (_, state) => RentalReceiptScreen(
         rentalId: state.pathParameters['rentalId']!,
       ),
     ),
     GoRoute(
-      path: '/offer/:rentalId',
+      path: AppRoutes.offerPath,
       builder: (_, state) => RentalOfferScreen(
         rentalId: state.pathParameters['rentalId']!,
       ),
     ),
     GoRoute(
-      path: '/invoice/:rentalId',
+      path: AppRoutes.invoicePath,
       builder: (_, state) => InvoiceScreen(
         rentalId: state.pathParameters['rentalId']!,
       ),
     ),
     GoRoute(
-      path: '/chat/:rentalId',
+      path: AppRoutes.chatPath,
       builder: (_, state) => ChatScreen(
         rentalRequestId: state.pathParameters['rentalId']!,
         otherPartyName: state.uri.queryParameters['name'] ?? 'Chat',
       ),
     ),
     GoRoute(
-      path: '/report',
+      path: AppRoutes.reportPath,
       builder: (_, state) {
         final p = state.uri.queryParameters;
         return ReportScreen(

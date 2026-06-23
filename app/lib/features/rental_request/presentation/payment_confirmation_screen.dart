@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/routing/app_routes.dart';
 
 class PaymentConfirmationScreen extends ConsumerStatefulWidget {
   const PaymentConfirmationScreen({
@@ -126,7 +127,7 @@ class _PaymentConfirmationScreenState
             FilledButton(
               onPressed: () {
                 Navigator.pop(context);
-                context.go('/my-rentals');
+                context.go(AppRoutes.myRentals);
               },
               child: const Text('View my rentals'),
             ),

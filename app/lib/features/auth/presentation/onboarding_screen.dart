@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/routing/app_routes.dart';
 
 const _kOnboardingDone = 'onboarding_done';
 
@@ -57,7 +58,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _finish() async {
     await markOnboardingDone();
-    if (mounted) context.go('/');
+    if (mounted) context.go(AppRoutes.home);
   }
 
   @override

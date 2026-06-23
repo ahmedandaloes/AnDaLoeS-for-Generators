@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../chat/providers/chat_providers.dart';
+import '../../../core/routing/app_routes.dart';
 
 final myRentalsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
@@ -177,7 +178,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
           error: (e, _) => Center(child: Text('$e')),
           data: (items) {
             if (items.isEmpty) {
-              return _EmptyRentals(cs: cs, onBrowse: () => context.go('/'));
+              return _EmptyRentals(cs: cs, onBrowse: () => context.go(AppRoutes.home));
             }
             return TabBarView(
               children: List.generate(_tabs.length, (tabIndex) {
@@ -426,7 +427,7 @@ class _RentalCard extends ConsumerWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => context.push('/generators/${rental['generator_id']}'),
+        onTap: () => context.push(AppRoutes.generatorDetail(rental['generator_id'].toString())),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -608,7 +609,7 @@ class _RentalCard extends ConsumerWidget {
                     foregroundColor: cs.primary,
                   ),
                   onPressed: () =>
-                      context.push('/offer/${rental['id']}'),
+                      context.push(AppRoutes.offer(rental['id'].toString())),
                   icon: const Icon(Icons.description_outlined, size: 15),
                   label: const Text('View Offer',
                       style: TextStyle(fontSize: 13)),
@@ -722,7 +723,7 @@ class _RentalCard extends ConsumerWidget {
                         color: Colors.green.withValues(alpha: 0.4)),
                   ),
                   onPressed: () =>
-                      context.push('/invoice/${rental['id']}'),
+                      context.push(AppRoutes.invoice(rental['id'].toString())),
                   icon: const Icon(Icons.receipt_long_outlined,
                       size: 15),
                   label: const Text('View Invoice',
@@ -735,7 +736,7 @@ class _RentalCard extends ConsumerWidget {
                     foregroundColor: cs.onSurfaceVariant,
                   ),
                   onPressed: () =>
-                      context.push('/receipt/${rental['id']}'),
+                      context.push(AppRoutes.receipt(rental['id'].toString())),
                   icon: const Icon(Icons.receipt_outlined, size: 15),
                   label: const Text('View receipt',
                       style: TextStyle(fontSize: 13)),
