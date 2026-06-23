@@ -1,0 +1,488 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../../../core/config/supabase.dart';
+import 'doc_widgets.dart';
+
+final _invoiceDataProvider =
+    FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
+        (ref, rentalId) async {
+  return await supabase
+      .from('rental_requests')
+      .select('''
+        id, start_date, end_date, total_days, price_total, note,
+        owner_note, status, created_at,
+        generators(title, capacity_kva, city, governorate, fuel_type,
+                   price_per_day),
+        companies(name, phone),
+        profiles!rental_requests_customer_id_fkey(full_name, phone)
+      ''')
+      .eq('id', rentalId)
+      .single();
+});
+
+class InvoiceScreen extends ConsumerWidget {
+  const InvoiceScreen({super.key, required this.rentalId});
+  final String rentalId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dataAsync = ref.watch(_invoiceDataProvider(rentalId));
+    final cs = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      backgroundColor: Colors.grey.shade100,
+      appBar: AppBar(
+        title: const Text('Invoice'),
+        backgroundColor: Colors.grey.shade100,
+        elevation: 0,
+        actions: [
+          dataAsync.maybeWhen(
+            data: (data) => IconButton(
+              icon: const Icon(Icons.share_outlined),
+              tooltip: 'Share invoice',
+              onPressed: () => _shareText(data),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ],
+      ),
+      body: dataAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('$e')),
+        data: (data) => _InvoiceDocument(data: data, cs: cs),
+      ),
+    );
+  }
+
+  void _shareText(Map<String, dynamic> data) {
+    final gen = data['generators'] as Map<String, dynamic>?;
+    final company = data['companies'] as Map<String, dynamic>?;
+    final customer = data['profiles'] as Map<String, dynamic>?;
+    final invId = _invoiceId(data['id'].toString());
+    final perDay = data['generators'] != null
+        ? (data['generators'] as Map)['price_per_day'] ?? 0
+        : 0;
+    final days = data['total_days'] ?? 0;
+    final total = data['price_total'] ?? 0;
+
+    final text = '''
+TAX INVOICE — $invId
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATE: ${_fmt(data['created_at'])}
+
+SUPPLIER: ${company?['name'] ?? 'Owner'}
+CUSTOMER: ${customer?['full_name'] ?? 'Customer'}
+
+DESCRIPTION OF SERVICE
+Generator Rental — ${gen?['title'] ?? '-'}
+Capacity: ${gen?['capacity_kva']} KVA
+Location: ${gen?['city']}, ${gen?['governorate']}
+Period: ${_fmt(data['start_date'])} → ${_fmt(data['end_date'])}
+Duration: $days days × EGP $perDay/day
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+TOTAL: EGP $total
+Payment: Cash on delivery
+Status: PAID ✓
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+AnDaLoeS for Generators''';
+    Share.share(text, subject: 'Invoice $invId');
+  }
+
+  static String _invoiceId(String id) =>
+      'INV-${id.substring(0, 8).toUpperCase()}';
+
+  static String _fmt(dynamic d) {
+    if (d == null) return '-';
+    try {
+      final dt = DateTime.parse(d.toString());
+      return '${dt.day}/${dt.month}/${dt.year}';
+    } catch (_) {
+      return d.toString();
+    }
+  }
+}
+
+class _InvoiceDocument extends StatelessWidget {
+  const _InvoiceDocument({required this.data, required this.cs});
+  final Map<String, dynamic> data;
+  final ColorScheme cs;
+
+  String get _invoiceId =>
+      'INV-${data['id'].toString().substring(0, 8).toUpperCase()}';
+
+  static String _fmt(dynamic d) {
+    if (d == null) return '-';
+    try {
+      final dt = DateTime.parse(d.toString());
+      return '${dt.day}/${dt.month}/${dt.year}';
+    } catch (_) {
+      return d.toString();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gen = data['generators'] as Map<String, dynamic>?;
+    final company = data['companies'] as Map<String, dynamic>?;
+    final customer = data['profiles'] as Map<String, dynamic>?;
+    final days = data['total_days'] ?? 0;
+    final total = data['price_total'] ?? 0;
+    final perDay = gen?['price_per_day'] ?? 0;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Header ───────────────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.green.shade700,
+                    Colors.green.shade500,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(12)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.bolt,
+                          color: Colors.white, size: 22),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('AnDaLoeS',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5)),
+                        Text('for Generators',
+                            style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                fontSize: 10)),
+                      ],
+                    ),
+                    const Spacer(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text('TAX INVOICE',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1)),
+                        const SizedBox(height: 2),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.25),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(_invoiceId,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5)),
+                        ),
+                      ],
+                    ),
+                  ]),
+                  const SizedBox(height: 16),
+                  Row(children: [
+                    Text('Issue date: ${_fmt(data['created_at'])}',
+                        style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 11)),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        const Icon(Icons.check_circle_rounded,
+                            size: 12, color: Colors.green),
+                        const SizedBox(width: 4),
+                        Text('PAID',
+                            style: TextStyle(
+                                color: Colors.green.shade700,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800)),
+                      ]),
+                    ),
+                  ]),
+                ],
+              ),
+            ),
+
+            // ── Bill from / to ────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: DocPartyBox(
+                      label: 'SUPPLIER',
+                      name: company?['name'] ?? 'Owner',
+                      detail: company?['phone']?.toString(),
+                      cs: cs,
+                      color: Colors.green.shade100,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DocPartyBox(
+                      label: 'BILLED TO',
+                      name: customer?['full_name'] ?? 'Customer',
+                      detail: customer?['phone']?.toString(),
+                      cs: cs,
+                      color: cs.secondaryContainer,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Line items table ──────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DocSectionLabel('Services Rendered'),
+                  const SizedBox(height: 8),
+                  // Table header
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(10)),
+                    ),
+                    child: Row(children: [
+                      const Expanded(
+                          flex: 3,
+                          child: Text('Description',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.grey))),
+                      const Expanded(
+                          child: Text('Qty',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.grey))),
+                      const Expanded(
+                          child: Text('Rate',
+                              textAlign: TextAlign.right,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.grey))),
+                      const Expanded(
+                          child: Text('Amount',
+                              textAlign: TextAlign.right,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.grey))),
+                    ]),
+                  ),
+                  // Item row
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade200),
+                      borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(10)),
+                    ),
+                    child: Row(children: [
+                      Expanded(
+                        flex: 3,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              gen?['title']?.toString() ?? 'Generator rental',
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600),
+                              maxLines: 2,
+                            ),
+                            Text(
+                              '${gen?['capacity_kva']} KVA · ${gen?['city']}',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: cs.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          '$days days',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'EGP $perDay',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'EGP $total',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ]),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Total ─────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                  border:
+                      Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                ),
+                child: Row(children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Total Amount Due',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.w600)),
+                      Text('EGP $total',
+                          style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.green.shade700,
+                              letterSpacing: -1)),
+                    ],
+                  ),
+                  const Spacer(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text('Payment method',
+                          style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.green.shade700)),
+                      const SizedBox(height: 2),
+                      const Text('Cash on delivery',
+                          style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ]),
+              ),
+            ),
+
+            // ── Rental details ────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DocSectionLabel('Rental Details'),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Column(
+                      children: [
+                        DocRow('Rental Period',
+                            '${_fmt(data['start_date'])} → ${_fmt(data['end_date'])}'),
+                        DocRow('Duration', '$days days'),
+                        DocRow('Status', 'Completed ✓'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Footer ────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+              child: Column(
+                children: [
+                  Divider(color: Colors.grey.shade200),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Thank you for using AnDaLoeS for Generators.\n'
+                    'This is an official invoice for services rendered.',
+                    style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey.shade500,
+                        height: 1.6),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

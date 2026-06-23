@@ -321,6 +321,18 @@ class _RentalCard extends ConsumerWidget {
               ],
               if (status == 'accepted' || status == 'active') ...[
                 const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(40),
+                    foregroundColor: cs.primary,
+                  ),
+                  onPressed: () =>
+                      context.push('/offer/${rental['id']}'),
+                  icon: const Icon(Icons.description_outlined, size: 15),
+                  label: const Text('View Offer',
+                      style: TextStyle(fontSize: 13)),
+                ),
+                const SizedBox(height: 4),
                 _ChatButton(
                   rentalId: rental['id'].toString(),
                   label: 'Chat with owner',
@@ -421,6 +433,21 @@ class _RentalCard extends ConsumerWidget {
               ],
               if (status == 'completed') ...[
                 const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(40),
+                    foregroundColor: Colors.green.shade700,
+                    side: BorderSide(
+                        color: Colors.green.withValues(alpha: 0.4)),
+                  ),
+                  onPressed: () =>
+                      context.push('/invoice/${rental['id']}'),
+                  icon: const Icon(Icons.receipt_long_outlined,
+                      size: 15),
+                  label: const Text('View Invoice',
+                      style: TextStyle(fontSize: 13)),
+                ),
+                const SizedBox(height: 4),
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(38),

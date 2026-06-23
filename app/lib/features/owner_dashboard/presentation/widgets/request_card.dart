@@ -120,7 +120,35 @@ class OwnerRequestCard extends StatelessWidget {
             ],
             if (status == 'accepted' || status == 'active') ...[
               const SizedBox(height: 8),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(40),
+                  foregroundColor: cs.primary,
+                ),
+                onPressed: () =>
+                    context.push('/offer/${request['id']}'),
+                icon: const Icon(Icons.description_outlined, size: 15),
+                label: const Text('View Offer',
+                    style: TextStyle(fontSize: 13)),
+              ),
+              const SizedBox(height: 4),
               _OwnerChatButton(request: request, ref: ref),
+            ],
+            if (status == 'completed') ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(40),
+                  foregroundColor: Colors.green.shade700,
+                  side: BorderSide(
+                      color: Colors.green.withValues(alpha: 0.4)),
+                ),
+                onPressed: () =>
+                    context.push('/invoice/${request['id']}'),
+                icon: const Icon(Icons.receipt_long_outlined, size: 15),
+                label: const Text('View Invoice',
+                    style: TextStyle(fontSize: 13)),
+              ),
             ],
             if (status == 'accepted') ...[
               const SizedBox(height: 8),

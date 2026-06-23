@@ -26,6 +26,8 @@ import '../../features/rental_request/presentation/my_rentals_screen.dart';
 import '../../features/rental_request/presentation/rental_receipt_screen.dart';
 import '../../features/rental_request/presentation/rental_request_screen.dart';
 import '../../features/chat/presentation/chat_screen.dart';
+import '../../features/rental_request/presentation/rental_offer_screen.dart';
+import '../../features/rental_request/presentation/invoice_screen.dart';
 
 GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
   initialLocation: initialLocation,
@@ -48,6 +50,8 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
         loc.startsWith('/rate/') ||
         loc.startsWith('/receipt/') ||
         loc.startsWith('/chat/') ||
+        loc.startsWith('/offer/') ||
+        loc.startsWith('/invoice/') ||
         loc.startsWith('/report');
 
     if (!loggedIn && needsAuth) return '/login';
@@ -124,6 +128,18 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
     GoRoute(
       path: '/receipt/:rentalId',
       builder: (_, state) => RentalReceiptScreen(
+        rentalId: state.pathParameters['rentalId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/offer/:rentalId',
+      builder: (_, state) => RentalOfferScreen(
+        rentalId: state.pathParameters['rentalId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/invoice/:rentalId',
+      builder: (_, state) => InvoiceScreen(
         rentalId: state.pathParameters['rentalId']!,
       ),
     ),
