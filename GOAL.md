@@ -61,6 +61,18 @@
 
 ---
 
+## 🚀 TOP PRIORITY: Launch Readiness (owner directive 2026-06-23)
+Get the app **ready to use** end-to-end before adding more features. The core
+journey must work with no dead ends: sign up → browse → book → owner accept →
+active → complete → rate. Readiness audit running; blockers land in the
+"Launch blockers" list below as found. Rule for the loop: **fix readiness
+blockers before any new feature.** Money model stays parked (owner decides).
+
+### Launch blockers (fix first — populated by readiness audit)
+- [ ] (pending audit results)
+
+---
+
 ## FOCUS: Validated Business Thesis (market research 2026-06-23)
 Full strategy in `docs/BUSINESS_STRATEGY.md` + money model in `docs/MONETIZATION.md`.
 
