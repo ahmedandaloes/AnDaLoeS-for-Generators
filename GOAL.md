@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Profile: show account creation date and last sign-in time
-- [ ] My Rentals: pull-to-refresh on all tabs
-- [ ] Home: owner greeting card — show today's pending request count
-- [ ] Owner Dashboard: quick stats bar on the header (total earnings, active rentals)
+- [ ] Owner Dashboard: quick stats bar on header (total earnings, active count)
+- [ ] Generator detail: "Similar in this city" section (same governorate, different company)
+- [ ] My Rentals: cancel button confirmation with reason picker (changed mind / found better / price)
+- [ ] Home: "Top Rated Owners" horizontal scroll section
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: admin users tab, auto-promote to owner on company creation`
+**Last commit:** `feat: profile creation date, My Rentals pull-to-refresh, owner pending count on greeting`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 

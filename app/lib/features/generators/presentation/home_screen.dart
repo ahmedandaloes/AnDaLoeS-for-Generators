@@ -21,6 +21,8 @@ import '../providers/generators_providers.dart'
         flashDealsProvider,
         nearMeProvider,
         currentProfileProvider;
+import '../../owner_dashboard/providers/owner_providers.dart'
+    show ownerPendingCountProvider;
 import 'widgets/fuel_chip.dart' show fuelLabel;
 import 'widgets/generator_card.dart';
 import 'widgets/generator_filter.dart';
@@ -250,7 +252,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       'owner' => (
                           Icons.storefront_outlined,
                           '$greeting, $name',
-                          'Check your dashboard for new rental requests.',
+                          '', // dynamically set below for owners
                           cs.secondaryContainer,
                         ),
                       _ => (
@@ -280,7 +282,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           Expanded(child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(greeting.isEmpty ? label : label,
+                              Text(label,
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
@@ -291,16 +293,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                             : cs.onPrimaryContainer,
                                   )),
                               const SizedBox(height: 2),
-                              Text(sub,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: (bg == cs.errorContainer
-                                        ? cs.onErrorContainer
-                                        : bg == cs.secondaryContainer
-                                            ? cs.onSecondaryContainer
-                                            : cs.onPrimaryContainer)
-                                        .withValues(alpha: 0.75),
-                                  )),
+                              if (role == 'owner')
+                                Consumer(builder: (_, wr, __) {
+                                  final pending = wr.watch(ownerPendingCountProvider).valueOrNull ?? 0;
+                                  final txt = pending == 0
+                                      ? 'No pending requests.'
+                                      : '$pending pending request${pending == 1 ? '' : 's'} awaiting you.';
+                                  return Text(txt,
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: cs.onSecondaryContainer.withValues(alpha: 0.8)));
+                                })
+                              else
+                                Text(sub,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: (bg == cs.errorContainer
+                                          ? cs.onErrorContainer
+                                          : bg == cs.secondaryContainer
+                                              ? cs.onSecondaryContainer
+                                              : cs.onPrimaryContainer)
+                                          .withValues(alpha: 0.75),
+                                    )),
                             ],
                           )),
                           if (role == 'owner')

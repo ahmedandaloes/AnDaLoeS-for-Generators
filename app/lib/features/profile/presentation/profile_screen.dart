@@ -302,6 +302,33 @@ class ProfileScreen extends ConsumerWidget {
                           onEdit: () => _editPhone(context, ref, phone ?? ''),
                           cs: cs,
                         ),
+                        Builder(builder: (_) {
+                          final createdAt = user?.createdAt;
+                          if (createdAt == null) return const SizedBox.shrink();
+                          final dt = DateTime.tryParse(createdAt);
+                          if (dt == null) return const SizedBox.shrink();
+                          final label = '${dt.day}/${dt.month}/${dt.year}';
+                          return _InfoRow(
+                              icon: Icons.calendar_today_outlined,
+                              label: 'Member since',
+                              value: label);
+                        }),
+                        Builder(builder: (_) {
+                          final lastSignIn = user?.lastSignInAt;
+                          if (lastSignIn == null) return const SizedBox.shrink();
+                          final dt = DateTime.tryParse(lastSignIn);
+                          if (dt == null) return const SizedBox.shrink();
+                          final diff = DateTime.now().difference(dt);
+                          final ago = diff.inMinutes < 60
+                              ? '${diff.inMinutes}m ago'
+                              : diff.inHours < 24
+                                  ? '${diff.inHours}h ago'
+                                  : '${diff.inDays}d ago';
+                          return _InfoRow(
+                              icon: Icons.login_outlined,
+                              label: 'Last sign in',
+                              value: ago);
+                        }),
                       ],
                     ),
                     const SizedBox(height: 20),

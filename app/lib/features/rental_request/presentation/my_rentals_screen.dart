@@ -186,21 +186,29 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
               children: List.generate(_tabs.length, (tabIndex) {
                 final filtered = _filter(items, tabIndex);
                 if (filtered.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.inbox_outlined,
-                            size: 48,
-                            color: cs.onSurfaceVariant
-                                .withValues(alpha: 0.4)),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No ${_tabs[tabIndex].toLowerCase()} rentals',
-                          style: TextStyle(color: cs.onSurfaceVariant),
+                  return RefreshIndicator(
+                    onRefresh: () => ref.refresh(myRentalsProvider.future),
+                    child: ListView(children: [
+                      SizedBox(
+                        height: 300,
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.inbox_outlined,
+                                  size: 48,
+                                  color: cs.onSurfaceVariant
+                                      .withValues(alpha: 0.4)),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No ${_tabs[tabIndex].toLowerCase()} rentals',
+                                style: TextStyle(color: cs.onSurfaceVariant),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ]),
                   );
                 }
                 // Spending summary at top of Done tab

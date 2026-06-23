@@ -62,6 +62,21 @@ final ownerGeneratorsProvider =
   return (data as List).cast<Map<String, dynamic>>();
 });
 
+// Pending rental request count for the current owner (used by home greeting + profile badge).
+final ownerPendingCountProvider =
+    FutureProvider.autoDispose<int>((ref) async {
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) return 0;
+  final company = await ref.watch(myCompanyProvider.future);
+  if (company == null) return 0;
+  final data = await supabase
+      .from('rental_requests')
+      .select('id')
+      .eq('company_id', company['id'].toString())
+      .eq('status', 'pending');
+  return (data as List).length;
+});
+
 // Maps generator_id → count of active/accepted rentals
 final activeRentalCountsProvider =
     FutureProvider.autoDispose.family<Map<String, int>, String>(
