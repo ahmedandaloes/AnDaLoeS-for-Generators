@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Home: KVA quick filter chips (5 KVA, 10 KVA, 25 KVA, 50 KVA, 100+ KVA)
-- [ ] Owner requests: customer rental history badge on request card
-- [ ] Generator detail: "copy link" share button in appbar actions
-- [ ] My Rentals: summary stats card on the Done tab (avg spend per rental)
+- [ ] Profile: edit full name and phone inline (currently read-only in some places)
+- [ ] Home: "Top in your area" section using user profile governorate field
+- [ ] Rental request: date range conflict warning if generator already booked
+- [ ] Owner generators: sort by rentals count (most rented first)
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: customer tier badge, owner month filter, acceptance rate badge`
+**Last commit:** `feat: copy link, avg spend card, pending badge in owner AppBar`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 

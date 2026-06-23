@@ -547,6 +547,17 @@ class _GeneratorDetailWrapperState
                   child: const Icon(Icons.share_outlined, size: 18),
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: FloatingActionButton.small(
+                  heroTag: 'copy_link',
+                  backgroundColor: cs.surfaceContainerHighest,
+                  foregroundColor: cs.onSurfaceVariant,
+                  tooltip: 'Copy link',
+                  onPressed: () => _copyLink(context, id),
+                  child: const Icon(Icons.link_rounded, size: 18),
+                ),
+              ),
               // Favorite button
               Padding(
                 padding: const EdgeInsets.only(right: 10),
@@ -682,6 +693,20 @@ class _GeneratorDetailWrapperState
         ),
       ),
     );
+  }
+
+  Future<void> _copyLink(BuildContext context, String id) async {
+    final link = 'https://andaloes.app/generator/$id';
+    await Clipboard.setData(ClipboardData(text: link));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Link copied to clipboard'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _shareGenerator(WidgetRef ref, String id) async {

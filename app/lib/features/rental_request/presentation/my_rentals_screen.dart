@@ -214,7 +214,19 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                       (sum, r) =>
                           sum + ((r['price_total'] as num?) ?? 0));
                   if (total > 0) {
-                    header = Container(
+                    final avgSpend = completedOnly.isNotEmpty
+                        ? (total / completedOnly.length)
+                        : 0.0;
+                    final totalDays = completedOnly.fold<num>(
+                        0,
+                        (s, r) =>
+                            s + ((r['total_days'] as num?) ?? 0));
+                    final avgDays = completedOnly.isNotEmpty
+                        ? (totalDays / completedOnly.length)
+                        : 0.0;
+                    header = Column(
+                      children: [
+                      Container(
                       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -265,7 +277,48 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                           ],
                         ),
                       ]),
-                    );
+                    ),
+                    // Avg spend stats row
+                    if (avgSpend > 0)
+                      Container(
+                        margin:
+                            const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.spaceAround,
+                          children: [
+                            _MiniStat(
+                                label: 'Avg spend',
+                                value:
+                                    'EGP ${avgSpend.toStringAsFixed(0)}',
+                                cs: cs),
+                            Container(
+                                width: 1,
+                                height: 32,
+                                color: cs.outlineVariant),
+                            _MiniStat(
+                                label: 'Avg duration',
+                                value:
+                                    '${avgDays.toStringAsFixed(1)} days',
+                                cs: cs),
+                            Container(
+                                width: 1,
+                                height: 32,
+                                color: cs.outlineVariant),
+                            _MiniStat(
+                                label: 'Total days',
+                                value: '$totalDays days',
+                                cs: cs),
+                          ],
+                        ),
+                      ),
+                    ]);
                   }
                 }
 
@@ -1201,6 +1254,31 @@ class _ChatButton extends StatelessWidget {
         icon: const Icon(Icons.chat_outlined, size: 16),
         label: Text(label),
       ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  const _MiniStat(
+      {required this.label, required this.value, required this.cs});
+  final String label;
+  final String value;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(value,
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: cs.onSurface)),
+        const SizedBox(height: 2),
+        Text(label,
+            style:
+                TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+      ],
     );
   }
 }

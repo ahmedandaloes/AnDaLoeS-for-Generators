@@ -67,7 +67,33 @@ class _OwnerDashboardScreenState
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Owner Dashboard')),
+      appBar: AppBar(
+        title: const Text('Owner Dashboard'),
+        actions: [
+          // Pending requests count badge in AppBar
+          companyAsync.maybeWhen(
+            data: (company) {
+              if (company == null) return const SizedBox.shrink();
+              final cid = company['id']?.toString() ?? '';
+              final pending = ref
+                      .watch(ownerRequestsProvider(cid))
+                      .valueOrNull
+                      ?.where((r) => r['status'] == 'pending')
+                      .length ??
+                  0;
+              if (pending == 0) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Badge(
+                  label: Text('$pending'),
+                  child: const Icon(Icons.pending_actions_outlined),
+                ),
+              );
+            },
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ],
+      ),
       body: companyAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
