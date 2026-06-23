@@ -738,18 +738,30 @@ class _GeneratorDetailWrapperState
     final price = cached?['price_per_day'];
     final city = cached?['city']?.toString();
     final gov = cached?['governorate']?.toString();
+    final companyName = (cached?['companies'] as Map?)?['name']?.toString();
+    final avgScore = (cached?['avg_score'] as num?)?.toDouble();
+    final ratingCount = (cached?['rating_count'] as num?)?.toInt() ?? 0;
     final location = [city, gov]
         .where((v) => v != null && v.isNotEmpty)
         .join(', ');
-    final parts = <String>[
-      title,
-      if (kva != null) '$kva KVA',
-      if (price != null) 'EGP $price/day',
-      if (location.isNotEmpty) location,
+    final ratingStr = (avgScore != null && ratingCount > 0)
+        ? '⭐ ${avgScore.toStringAsFixed(1)} ($ratingCount reviews)'
+        : null;
+    final lines = <String>[
+      '🔌 $title',
+      if (kva != null || price != null)
+        [
+          if (kva != null) '$kva KVA',
+          if (price != null) 'EGP $price/day',
+        ].join(' · '),
+      if (location.isNotEmpty) '📍 $location',
+      if (companyName != null) '🏢 $companyName',
+      if (ratingStr != null) ratingStr,
+      '',
+      'Book on AnDaLoeS for Generators',
+      'https://andaloes.app/generator/$id',
     ];
-    final text =
-        '${parts.join(' · ')}\n\nFind it on AnDaLoeS for Generators 🔌';
-    await Share.share(text, subject: title);
+    await Share.share(lines.join('\n'), subject: title);
   }
 
   Future<void> _toggleFav(WidgetRef ref, String id, bool isFav) async {

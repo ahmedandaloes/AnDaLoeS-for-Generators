@@ -423,36 +423,64 @@ class _RequestsTab extends StatelessWidget {
 
               return Dismissible(
                 key: ValueKey('owner_req_$reqId'),
-                direction: DismissDirection.endToStart,
-                confirmDismiss: (_) async {
-                  final confirmed = await showDialog<bool>(
-                    context: ctx,
-                    builder: (_) => AlertDialog(
-                      title: const Text('Reject request?'),
-                      content: const Text(
-                          'The customer will be notified that their request was rejected.'),
-                      actions: [
-                        TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Cancel')),
-                        FilledButton(
-                          style: FilledButton.styleFrom(
-                              backgroundColor: cs.error),
-                          onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text('Reject'),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (confirmed == true) {
+                direction: DismissDirection.horizontal,
+                confirmDismiss: (dir) async {
+                  if (dir == DismissDirection.startToEnd) {
+                    // Swipe right → accept
                     await supabase
                         .from('rental_requests')
-                        .update({'status': 'rejected'}).eq('id', reqId);
+                        .update({'status': 'accepted'}).eq('id', reqId);
                     ref.invalidate(ownerRequestsProvider(companyId));
+                    return false;
+                  } else {
+                    // Swipe left → reject (with confirmation)
+                    final confirmed = await showDialog<bool>(
+                      context: ctx,
+                      builder: (_) => AlertDialog(
+                        title: const Text('Reject request?'),
+                        content: const Text(
+                            'The customer will be notified that their request was rejected.'),
+                        actions: [
+                          TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancel')),
+                          FilledButton(
+                            style: FilledButton.styleFrom(
+                                backgroundColor: cs.error),
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Reject'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed == true) {
+                      await supabase
+                          .from('rental_requests')
+                          .update({'status': 'rejected'}).eq('id', reqId);
+                      ref.invalidate(ownerRequestsProvider(companyId));
+                    }
+                    return false;
                   }
-                  return false; // list refresh handles removal
                 },
+                // Left side (swipe right = accept)
                 background: Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(children: [
+                    Icon(Icons.check_rounded, color: Colors.green.shade700),
+                    const SizedBox(width: 6),
+                    Text('Accept',
+                        style: TextStyle(
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.w700)),
+                  ]),
+                ),
+                // Right side (swipe left = reject)
+                secondaryBackground: Container(
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 20),
                   decoration: BoxDecoration(

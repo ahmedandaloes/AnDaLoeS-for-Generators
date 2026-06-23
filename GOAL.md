@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Generator detail: share now includes company name and rating
 - [ ] Home: search results count animates when filter changes
-- [ ] Owner Dashboard: swipe-to-reject pending requests (left) in Requests tab
-- [ ] Admin stats: add daily active users chart to Stats tab
+- [ ] Generator detail: report button shows current report count (owner can't see)
+- [ ] My Rentals: extend filter to show overdue active rentals separately
+- [ ] Profile: referral code share card (generate code + share link)
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: delivery time chip on rental request, mark-as-received for active rentals`
+**Last commit:** `feat: enriched share, swipe-to-accept/reject, admin conversion funnel`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 

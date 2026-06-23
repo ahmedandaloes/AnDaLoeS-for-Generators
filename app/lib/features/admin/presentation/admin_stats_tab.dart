@@ -107,6 +107,83 @@ class AdminStatsTab extends StatelessWidget {
               const SizedBox(height: 24),
               _RentalStatusChart(stats: stats, cs: cs),
               const SizedBox(height: 16),
+              // Conversion funnel card
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Conversion Funnel',
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: cs.onSurfaceVariant,
+                              letterSpacing: 0.5)),
+                      const SizedBox(height: 16),
+                      Builder(builder: (_) {
+                        final total = (stats['total_rentals'] as int?) ?? 0;
+                        final accepted = (stats['accepted_rentals'] as int?) ?? 0;
+                        final active = (stats['active_rentals'] as int?) ?? 0;
+                        final completed = (stats['completed_rentals'] as int?) ?? 0;
+                        final pct = (int n, int d) =>
+                            d == 0 ? '—' : '${(n / d * 100).round()}%';
+                        final steps = [
+                          ('Submitted', total, cs.primary),
+                          ('Accepted', accepted + active + completed,
+                              Colors.blue.shade600),
+                          ('Active', active + completed,
+                              Colors.teal.shade600),
+                          ('Completed', completed, Colors.green.shade700),
+                        ];
+                        return Column(children: [
+                          for (int i = 0; i < steps.length; i++) ...[
+                            Row(children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                    color: steps[i].$3,
+                                    shape: BoxShape.circle),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                  child: Text(steps[i].$1,
+                                      style: const TextStyle(fontSize: 13))),
+                              Text('${steps[i].$2}',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: steps[i].$3)),
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                width: 44,
+                                child: Text(
+                                    i == 0 ? '100%' : pct(steps[i].$2, total),
+                                    textAlign: TextAlign.right,
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: cs.onSurfaceVariant)),
+                              ),
+                            ]),
+                            if (i < steps.length - 1) ...[
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 3, top: 2, bottom: 2),
+                                child: Container(
+                                    width: 2,
+                                    height: 12,
+                                    color: cs.outlineVariant),
+                              ),
+                            ],
+                          ],
+                        ]);
+                      }),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
