@@ -226,6 +226,12 @@ class _Body extends ConsumerWidget {
                             decorationColor: cs.primary.withValues(alpha: 0.4),
                           ),
                         ),
+                        if (company['verification_status']?.toString() ==
+                            'approved') ...[
+                          const SizedBox(width: 4),
+                          Icon(Icons.verified,
+                              size: 14, color: cs.secondary),
+                        ],
                         const SizedBox(width: 8),
                         ref.watch(companyAvgRatingProvider(companyId)).maybeWhen(
                           data: (r) => r.total == 0 ? const SizedBox.shrink() : Row(
