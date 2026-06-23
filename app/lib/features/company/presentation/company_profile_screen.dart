@@ -106,9 +106,9 @@ class _CompanyBody extends StatelessWidget {
     final name = company['name']?.toString() ?? 'Company';
     final city = company['city']?.toString() ?? '';
     final governorate = company['governorate']?.toString() ?? '';
-    final location = [city, governorate]
-        .where((v) => v.isNotEmpty)
-        .join(', ');
+    // Set dedupes when city == governorate (a governorate-only company).
+    final location =
+        {city, governorate}.where((v) => v.isNotEmpty).join(', ');
     final isVerified =
         company['verification_status']?.toString() == 'approved';
     final generatorsAsync =

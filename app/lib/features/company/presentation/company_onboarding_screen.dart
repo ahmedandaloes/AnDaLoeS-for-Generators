@@ -77,7 +77,10 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
         'name': name,
         'contact_phone': phone.isNotEmpty ? phone : null,
         'description': desc.isNotEmpty ? desc : null,
+        // The picker is a governorate selector; store it as governorate (and
+        // city for back-compat) so company location + filtering work.
         'city': _city,
+        'governorate': _city,
         'verification_status': 'pending',
       }).select('id').single();
 
