@@ -470,6 +470,8 @@ class _OwnerGeneratorTile extends StatelessWidget {
     final isAvailable = gen['status']?.toString() == 'available';
     final countsAsync = ref.watch(activeRentalCountsProvider(companyId));
     final activeCount = countsAsync.valueOrNull?[gen['id']?.toString()] ?? 0;
+    final photos = (gen['photos'] as List?)?.cast<String>() ?? [];
+    final firstPhoto = photos.isNotEmpty ? photos.first : null;
 
     return Card(
       child: ListTile(
@@ -478,17 +480,18 @@ class _OwnerGeneratorTile extends StatelessWidget {
         leading: Stack(
           clipBehavior: Clip.none,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isAvailable
-                    ? cs.primaryContainer
-                    : cs.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(Icons.bolt,
-                  color: isAvailable ? cs.primary : cs.onSurfaceVariant,
-                  size: 22),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: firstPhoto != null
+                  ? Image.network(
+                      firstPhoto,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _GenIcon(
+                          isAvailable: isAvailable, cs: cs),
+                    )
+                  : _GenIcon(isAvailable: isAvailable, cs: cs),
             ),
             if (activeCount > 0)
               Positioned(
@@ -552,6 +555,23 @@ class _OwnerGeneratorTile extends StatelessWidget {
             .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
+  }
+}
+
+class _GenIcon extends StatelessWidget {
+  const _GenIcon({required this.isAvailable, required this.cs});
+  final bool isAvailable;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 48,
+      height: 48,
+      color: isAvailable ? cs.primaryContainer : cs.surfaceContainerHighest,
+      child: Icon(Icons.bolt,
+          color: isAvailable ? cs.primary : cs.onSurfaceVariant, size: 22),
+    );
   }
 }
 

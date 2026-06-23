@@ -844,7 +844,9 @@ class _FeaturedCarousel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final featuredAsync = ref.watch(featuredGeneratorsProvider);
-    return featuredAsync.maybeWhen(
+    return featuredAsync.when(
+      loading: () => _FeaturedSkeleton(cs: cs),
+      error: (_, __) => const SizedBox.shrink(),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
         return Column(
@@ -878,7 +880,80 @@ class _FeaturedCarousel extends StatelessWidget {
           ],
         );
       },
-      orElse: () => const SizedBox.shrink(),
+    );
+  }
+}
+
+// ── Featured carousel skeleton ────────────────────────────────────────────────
+class _FeaturedSkeleton extends StatefulWidget {
+  const _FeaturedSkeleton({required this.cs});
+  final ColorScheme cs;
+
+  @override
+  State<_FeaturedSkeleton> createState() => _FeaturedSkeletonState();
+}
+
+class _FeaturedSkeletonState extends State<_FeaturedSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _anim = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1100))
+      ..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = widget.cs;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
+          child: AnimatedBuilder(
+            animation: _anim,
+            builder: (_, __) => Container(
+              width: 90,
+              height: 14,
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest
+                    .withValues(alpha: 0.4 + 0.4 * _anim.value),
+                borderRadius: BorderRadius.circular(7),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 170,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            itemCount: 4,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, __) => AnimatedBuilder(
+              animation: _anim,
+              builder: (_, __) => Container(
+                width: 150,
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest
+                      .withValues(alpha: 0.3 + 0.35 * _anim.value),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+      ],
     );
   }
 }
