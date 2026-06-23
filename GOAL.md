@@ -189,7 +189,7 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 - [ ] [LATER] Seasonal summer-demand campaign hooks; repeat/re-book loop for telecom/agri; listing-quality score
 
 ### Monetization (revenue path forward)
-- [ ] [NOW] Owner balance/statement view over the commission ledger (re-word provisional "platform fee")
+- [x] [NOW] Owner balance: Owner Earnings shows "Platform fees owed (all time)" — cumulative unsettled commission to settle (accrued vs settled from commissions). Makes the cash ledger real for owners.
 - [ ] [NOW] Owner subscription + featured-listing fees — leakage-proof, collectable without a gateway (Med; needs a digital charge endpoint)
 - [ ] [NOW] Unpaid-balance listing-suspension rule (anti-churn for the cash ledger)
 - [ ] [SOON] Fawry pay-against-code — turn cash into platform-collected funds so % auto-deducts (High; owner = payout recipient)

@@ -31,6 +31,12 @@ final _earningsProvider =
       0, (s, r) => s + (double.tryParse(r['price_total']?.toString() ?? '0') ?? 0));
   final totalCommissions = commissionList.fold<double>(
       0, (s, c) => s + (double.tryParse(c['commission_amount']?.toString() ?? '0') ?? 0));
+  // What the owner still owes the platform vs already settled.
+  final commissionOwed = commissionList
+      .where((c) => c['status'] != 'settled')
+      .fold<double>(0,
+          (s, c) => s + (double.tryParse(c['commission_amount']?.toString() ?? '0') ?? 0));
+  final commissionSettled = totalCommissions - commissionOwed;
 
   // Group net revenue by month (YYYY-MM)
   final monthlyMap = <String, double>{};
@@ -52,6 +58,8 @@ final _earningsProvider =
     'commission_map': commissionMap,
     'total_revenue': totalRevenue,
     'total_commissions': totalCommissions,
+    'commission_owed': commissionOwed,
+    'commission_settled': commissionSettled,
     'net_payout': totalRevenue - totalCommissions,
     'monthly_net': {for (final m in sortedMonths) m: monthlyMap[m]!},
   };
@@ -84,6 +92,8 @@ class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
               (data['rentals'] as List).cast<Map<String, dynamic>>();
           final commissionMap =
               data['commission_map'] as Map<String, dynamic>;
+          final commissionOwed =
+              (data['commission_owed'] as num?)?.toDouble() ?? 0;
           final monthlyNet = data['monthly_net'] as Map<String, double>;
           final months = monthlyNet.keys.toList();
 
@@ -181,6 +191,44 @@ class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
                   color: Colors.green.shade700,
                   large: true,
                 ),
+                if (commissionOwed > 0) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: Colors.orange.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(children: [
+                      Icon(Icons.receipt_long_outlined,
+                          size: 18, color: Colors.orange.shade800),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Platform fees owed (all time)',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: cs.onSurfaceVariant)),
+                            const SizedBox(height: 2),
+                            Text('EGP ${commissionOwed.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.orange.shade900)),
+                          ],
+                        ),
+                      ),
+                      Text('to settle',
+                          style: TextStyle(
+                              fontSize: 11, color: cs.onSurfaceVariant)),
+                    ]),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 // Rental count badge
                 Container(
