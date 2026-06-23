@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Owner Dashboard: auto-set profile role to 'owner' on first company creation
-- [ ] Admin Panel: user management tab showing all users with role badges and actions
 - [ ] Profile: show account creation date and last sign-in time
 - [ ] My Rentals: pull-to-refresh on all tabs
+- [ ] Home: owner greeting card — show today's pending request count
+- [ ] Owner Dashboard: quick stats bar on the header (total earnings, active rentals)
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: personalized home greeting card by role, shared currentProfileProvider`
+**Last commit:** `feat: admin users tab, auto-promote to owner on company creation`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 

@@ -80,6 +80,14 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
         'verification_status': 'pending',
       }).select('id').single();
 
+      // Promote user to owner role on first company creation
+      final uid = supabase.auth.currentUser!.id;
+      await supabase
+          .from('profiles')
+          .update({'role': 'owner'})
+          .eq('id', uid)
+          .eq('role', 'customer'); // only if still customer (don't demote admin)
+
       if (mounted) {
         setState(() {
           _companyId = data['id'].toString();

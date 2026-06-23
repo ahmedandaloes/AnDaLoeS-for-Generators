@@ -6,6 +6,7 @@ import 'admin_companies_tab.dart';
 import 'admin_generators_tab.dart';
 import 'admin_reports_tab.dart' show AdminReportsTab, openReportsProvider;
 import 'admin_stats_tab.dart';
+import 'admin_users_tab.dart';
 
 final _isAdminProvider = FutureProvider.autoDispose<bool>((ref) async {
   final uid = supabase.auth.currentUser?.id;
@@ -74,10 +75,13 @@ class AdminScreen extends ConsumerWidget {
             );
           }
           return DefaultTabController(
-            length: 4,
+            length: 5,
             child: Column(
               children: [
-                TabBar(tabs: [
+                TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  tabs: [
                   const Tab(text: 'Companies'),
                   const Tab(text: 'Generators'),
                   Tab(
@@ -116,6 +120,7 @@ class AdminScreen extends ConsumerWidget {
                     }),
                   ),
                   const Tab(text: 'Stats'),
+                  const Tab(text: 'Users'),
                 ]),
                 Expanded(
                   child: TabBarView(
@@ -124,6 +129,7 @@ class AdminScreen extends ConsumerWidget {
                       AdminGeneratorsTab(ref: ref),
                       AdminReportsTab(ref: ref),
                       AdminStatsTab(ref: ref),
+                      AdminUsersTab(ref: ref),
                     ],
                   ),
                 ),
