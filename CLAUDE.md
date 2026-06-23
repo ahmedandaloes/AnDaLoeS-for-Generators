@@ -96,7 +96,20 @@ Key tables (all have RLS):
 - `mcp__claude_ai_Context7__*` — query-docs for Flutter, Riverpod, GoRouter, Supabase docs
 
 ## Available Agents
-Use these proactively — don't just code, orchestrate:
+Use these proactively — don't just code, orchestrate.
+
+### Project agent team (`.claude/agents/` — see its README)
+For any non-trivial task, delegate to the **`master-orchestrator`**, which routes
+work across the full team and enforces quality gates. It is backed by
+`delivery-coordinator` (planning/tracking/git/loop) and `qa-gatekeeper` (final
+analyze/test/review/DB gate). Specialists:
+- Architecture: `code-architect`, `security-architect`, `data-architect`
+- Build: `flutter-ui-expert`, `riverpod-state-expert`, `supabase-db-expert`, `rental-workflow-expert`
+- Platform: `flutter-ios-expert`, `flutter-android-expert`, `release-ci-expert`
+- Quality/Security: `flutter-security-expert`, `security-rls-auditor`, `flutter-test-expert`
+- Product/Business (own GOAL.md): `product-strategy-expert`, `marketplace-growth-expert`, `monetization-expert`
+
+### Global agents (`~/.claude/agents/`)
 - `planner` — before any multi-file feature
 - `code-reviewer` — after every change
 - `tdd-guide` — for new features (write tests first)
