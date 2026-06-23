@@ -84,12 +84,30 @@ class GeneratorRepository {
     final gov = gen['governorate']?.toString();
     final kva = (gen['capacity_kva'] as num?)?.toDouble() ?? 0;
     final id = gen['id']?.toString();
+    final companyId = gen['company_id']?.toString();
     if (gov == null || id == null) return [];
+    // Try same governorate + different company first
+    if (companyId != null) {
+      final d1 = await supabase
+          .from('generators')
+          .select('id, title, capacity_kva, price_per_day, photos, avg_score, city, companies(name)')
+          .eq('governorate', gov)
+          .eq('status', 'available')
+          .neq('id', id)
+          .neq('company_id', companyId)
+          .gte('capacity_kva', (kva * 0.5).floor())
+          .lte('capacity_kva', kva * 2)
+          .order('avg_score', ascending: false)
+          .limit(6);
+      final list = (d1 as List).cast<Map<String, dynamic>>();
+      if (list.isNotEmpty) return list;
+    }
+    // Fallback: any company in same governorate
     final data = await supabase
         .from('generators')
-        .select('id, title, capacity_kva, price_per_day, photos, avg_score')
+        .select('id, title, capacity_kva, price_per_day, photos, avg_score, city, companies(name)')
         .eq('governorate', gov)
-        .eq('is_available', true)
+        .eq('status', 'available')
         .neq('id', id)
         .gte('capacity_kva', (kva * 0.5).floor())
         .lte('capacity_kva', kva * 2)

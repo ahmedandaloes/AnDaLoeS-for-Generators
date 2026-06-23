@@ -920,26 +920,57 @@ class _RentalCard extends ConsumerWidget {
   }
 
   Future<void> _cancel(BuildContext context, String id) async {
+    const reasons = [
+      'Changed my mind',
+      'Found a better option',
+      'Price too high',
+      'Dates no longer available',
+      'Other',
+    ];
+    String? selectedReason;
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Cancel request'),
-        content: const Text('Are you sure you want to cancel this rental request?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('No')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Yes, cancel')),
-        ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: const Text('Cancel request'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Why are you cancelling?',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 12),
+              for (final reason in reasons)
+                RadioListTile<String>(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(reason, style: const TextStyle(fontSize: 14)),
+                  value: reason,
+                  groupValue: selectedReason,
+                  onChanged: (v) => setS(() => selectedReason = v),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Keep request')),
+            FilledButton(
+                onPressed: selectedReason == null
+                    ? null
+                    : () => Navigator.pop(ctx, true),
+                child: const Text('Cancel request')),
+          ],
+        ),
       ),
     );
     if (confirmed != true || !context.mounted) return;
     try {
-      await supabase
-          .from('rental_requests')
-          .update({'status': 'cancelled'}).eq('id', id);
+      await supabase.from('rental_requests').update({
+        'status': 'cancelled',
+        if (selectedReason != null) 'note': 'Cancelled: $selectedReason',
+      }).eq('id', id);
       ref.invalidate(myRentalsProvider);
     } catch (e) {
       if (context.mounted) {
