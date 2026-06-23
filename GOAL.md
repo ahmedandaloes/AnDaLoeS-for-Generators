@@ -102,11 +102,35 @@ complete → commission → rate. Harden each transition + the money path.
 ---
 
 ## How the Loop Works
-Each loop:
-1. Read GOAL.md → pick top unchecked items from NEXT
-2. Implement → `flutter analyze` → fix errors
-3. Commit → push
-4. Move items from NEXT to Shipped ✅
-5. Replenish NEXT from SOON
-6. Update "Loop State" section
-7. `ScheduleWakeup(600s)` to continue
+Pattern: **Continuous-PR loop + De-Sloppify + Verification gate** (see the
+autonomous-loops skill). GOAL.md is the cross-iteration context bridge
+(`SHARED_TASK_NOTES.md` role). Each loop:
+1. Read GOAL.md → pick top unchecked item(s) from NEXT
+2. (non-trivial) Delegate via the Agent tool — investigate/build in PARALLEL
+   through the project agent team; reviewer ≠ author
+3. Implement → **de-sloppify** (remove dead code, over-defensive checks, raw
+   error leaks) → `flutter analyze --no-fatal-infos` (zero errors AND warnings)
+4. Verify (qa-gatekeeper): tests/build + live-DB check for any migration
+5. Commit (conventional) → push to `development`
+6. Move items NEXT → Shipped ✅; replenish NEXT from SOON
+7. Update "Loop State"
+8. `ScheduleWakeup(600s)` to continue — UNLESS an exit condition is met
+
+### Exit conditions (don't loop forever — anti-pattern #1)
+- **Completion:** NEXT is empty AND nothing remains to replenish from SOON →
+  stop scheduling, report done.
+- **Blocked:** a step needs a human decision (product call, secret, external
+  access) → stop and ask rather than spin.
+- **Safety bound:** if the same item fails its gate 3 iterations running →
+  stop, capture the failure context in Loop State, ask for input.
+
+### Quality gates (a change is NOT done until all pass)
+- `flutter analyze --no-fatal-infos`: zero errors, zero warnings.
+- Any DB change: numbered migration, applied + verified against the live DB
+  (constraint/enum/trigger inspected; no new errors in logs).
+- Money/notification logic stays server-side (DB triggers), never client.
+- Feature-first structure honored (feature-structure-guardian).
+
+### CI gate (risky changes)
+For schema/auth/money changes, prefer a PR into `main` and wait for the
+`flutter.yml` checks before merge, instead of pushing straight through.
