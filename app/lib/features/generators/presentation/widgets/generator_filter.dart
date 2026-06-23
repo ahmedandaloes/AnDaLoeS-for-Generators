@@ -1,0 +1,279 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// ── Sort enum ─────────────────────────────────────────────────────────────────
+
+enum GeneratorSortBy { newest, priceLow, priceHigh, ratingTop, capacityLow }
+
+const sortLabels = {
+  GeneratorSortBy.newest: 'Newest first',
+  GeneratorSortBy.priceLow: 'Price: low → high',
+  GeneratorSortBy.priceHigh: 'Price: high → low',
+  GeneratorSortBy.ratingTop: 'Top rated',
+  GeneratorSortBy.capacityLow: 'Capacity: low → high',
+};
+
+// ── Filter model ──────────────────────────────────────────────────────────────
+
+class GeneratorFilter {
+  final String query;
+  final String? governorate;
+  final double? maxKva;
+  final double? maxPrice;
+  final String? fuelType;
+  final GeneratorSortBy sort;
+
+  const GeneratorFilter({
+    this.query = '',
+    this.governorate,
+    this.maxKva,
+    this.maxPrice,
+    this.fuelType,
+    this.sort = GeneratorSortBy.newest,
+  });
+
+  bool get hasActiveFilters =>
+      governorate != null || maxKva != null || maxPrice != null || fuelType != null;
+
+  GeneratorFilter withQuery(String q) => GeneratorFilter(
+      query: q,
+      governorate: governorate,
+      maxKva: maxKva,
+      maxPrice: maxPrice,
+      fuelType: fuelType,
+      sort: sort);
+  GeneratorFilter withGovernorate(String? g) => GeneratorFilter(
+      query: query,
+      governorate: g,
+      maxKva: maxKva,
+      maxPrice: maxPrice,
+      fuelType: fuelType,
+      sort: sort);
+  GeneratorFilter withMaxKva(double? k) => GeneratorFilter(
+      query: query,
+      governorate: governorate,
+      maxKva: k,
+      maxPrice: maxPrice,
+      fuelType: fuelType,
+      sort: sort);
+  GeneratorFilter withMaxPrice(double? p) => GeneratorFilter(
+      query: query,
+      governorate: governorate,
+      maxKva: maxKva,
+      maxPrice: p,
+      fuelType: fuelType,
+      sort: sort);
+  GeneratorFilter withFuelType(String? f) => GeneratorFilter(
+      query: query,
+      governorate: governorate,
+      maxKva: maxKva,
+      maxPrice: maxPrice,
+      fuelType: f,
+      sort: sort);
+  GeneratorFilter withSort(GeneratorSortBy s) => GeneratorFilter(
+      query: query,
+      governorate: governorate,
+      maxKva: maxKva,
+      maxPrice: maxPrice,
+      fuelType: fuelType,
+      sort: s);
+}
+
+final filterProvider =
+    StateProvider<GeneratorFilter>((ref) => const GeneratorFilter());
+
+// ── Egypt governorates ────────────────────────────────────────────────────────
+
+const egyptGovernorates = [
+  'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',
+  'Fayoum', 'Gharbia', 'Ismailia', 'Menofia', 'Minya', 'Qaliubiya',
+  'New Valley', 'Suez', 'Aswan', 'Assiut', 'Beni Suef', 'Port Said',
+  'Damietta', 'Sharqia', 'South Sinai', 'Kafr El Sheikh', 'Matrouh',
+  'Luxor', 'Qena', 'North Sinai', 'Sohag',
+];
+
+// ── Filter bottom sheet ───────────────────────────────────────────────────────
+
+class FilterSheet extends StatefulWidget {
+  const FilterSheet({super.key, required this.filter, required this.ref});
+  final GeneratorFilter filter;
+  final WidgetRef ref;
+
+  @override
+  State<FilterSheet> createState() => _FilterSheetState();
+}
+
+class _FilterSheetState extends State<FilterSheet> {
+  late String? _governorate;
+  late double? _maxKva;
+  late double? _maxPrice;
+  late String? _fuelType;
+
+  static const _fuelOptions = [
+    ('diesel', 'Diesel'),
+    ('petrol', 'Petrol'),
+    ('gas', 'Gas'),
+    ('natural_gas', 'Natural Gas'),
+    ('solar', 'Solar'),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _governorate = widget.filter.governorate;
+    _maxKva = widget.filter.maxKva;
+    _maxPrice = widget.filter.maxPrice;
+    _fuelType = widget.filter.fuelType;
+  }
+
+  void _apply() {
+    widget.ref.read(filterProvider.notifier).state = widget.filter
+        .withGovernorate(_governorate)
+        .withMaxKva(_maxKva)
+        .withMaxPrice(_maxPrice)
+        .withFuelType(_fuelType);
+    Navigator.pop(context);
+  }
+
+  void _clear() {
+    setState(() {
+      _governorate = null;
+      _maxKva = null;
+      _maxPrice = null;
+      _fuelType = null;
+    });
+    widget.ref.read(filterProvider.notifier).state = widget.filter
+        .withGovernorate(null)
+        .withMaxKva(null)
+        .withMaxPrice(null)
+        .withFuelType(null);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+          20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Text('Filter',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              const Spacer(),
+              TextButton(onPressed: _clear, child: const Text('Clear all')),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text('Governorate',
+              style: TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: _governorate,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: cs.surfaceContainerLowest,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              prefixIcon: const Icon(Icons.location_on_outlined),
+            ),
+            hint: const Text('Any governorate'),
+            items: [
+              const DropdownMenuItem(value: null, child: Text('Any')),
+              ...egyptGovernorates
+                  .map((g) => DropdownMenuItem(value: g, child: Text(g))),
+            ],
+            onChanged: (v) => setState(() => _governorate = v),
+          ),
+          const SizedBox(height: 20),
+          Row(children: [
+            const Text('Max capacity (KVA)',
+                style: TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+            const Spacer(),
+            Text(
+              _maxKva == null ? 'Any' : '≤ ${_maxKva!.toInt()} KVA',
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+            ),
+          ]),
+          Slider(
+            value: _maxKva ?? 1000,
+            min: 10,
+            max: 1000,
+            divisions: 99,
+            label: _maxKva == null ? 'Any' : '${_maxKva!.toInt()} KVA',
+            onChanged: (v) => setState(() => _maxKva = v),
+          ),
+          if (_maxKva != null && _maxKva == 1000)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => setState(() => _maxKva = null),
+                child: const Text('Remove limit'),
+              ),
+            ),
+          const SizedBox(height: 16),
+          Row(children: [
+            const Text('Max daily price (EGP)',
+                style: TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+            const Spacer(),
+            Text(
+              _maxPrice == null ? 'Any' : '≤ ${_maxPrice!.toInt()} EGP',
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+            ),
+          ]),
+          Slider(
+            value: _maxPrice ?? 5000,
+            min: 100,
+            max: 5000,
+            divisions: 49,
+            label: _maxPrice == null ? 'Any' : '${_maxPrice!.toInt()} EGP',
+            onChanged: (v) => setState(() => _maxPrice = v < 5000 ? v : null),
+          ),
+          if (_maxPrice != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => setState(() => _maxPrice = null),
+                child: const Text('Remove limit'),
+              ),
+            ),
+          const SizedBox(height: 20),
+          const Text('FUEL TYPE',
+              style: TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _fuelOptions.map((opt) {
+              final (value, label) = opt;
+              final selected = _fuelType == value;
+              return FilterChip(
+                avatar: Icon(Icons.local_gas_station_outlined,
+                    size: 12,
+                    color: selected
+                        ? cs.onSecondaryContainer
+                        : cs.onSurfaceVariant),
+                label: Text(label, style: const TextStyle(fontSize: 12)),
+                selected: selected,
+                onSelected: (on) =>
+                    setState(() => _fuelType = on ? value : null),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(onPressed: _apply, child: const Text('Apply filters')),
+        ],
+      ),
+    );
+  }
+}

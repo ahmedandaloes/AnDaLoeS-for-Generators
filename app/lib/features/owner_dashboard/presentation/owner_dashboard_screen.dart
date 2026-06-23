@@ -4,69 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
-import '../../../features/ratings/presentation/rate_rental_screen.dart';
-
-// ── Providers ──────────────────────────────────────────────────────────────────
-
-final _myCompanyProvider =
-    FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {
-  final uid = supabase.auth.currentUser?.id;
-  if (uid == null) return null;
-  final data = await supabase
-      .from('companies')
-      .select()
-      .eq('owner_user_id', uid)
-      .maybeSingle();
-  return data;
-});
-
-final _ownerRequestsProvider =
-    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
-        (ref, companyId) async {
-  final data = await supabase
-      .from('rental_requests')
-      .select('*, generators(title, capacity_kva), profiles(full_name, phone)')
-      .eq('company_id', companyId)
-      .inFilter('status', ['pending', 'accepted', 'active'])
-      .order('created_at', ascending: false);
-  return (data as List).cast<Map<String, dynamic>>();
-});
-
-final _ownerHistoryProvider =
-    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
-        (ref, companyId) async {
-  final data = await supabase
-      .from('rental_requests')
-      .select('*, generators(title, capacity_kva), profiles(full_name, phone)')
-      .eq('company_id', companyId)
-      .inFilter('status', ['completed', 'rejected', 'cancelled'])
-      .order('updated_at', ascending: false)
-      .limit(50);
-  return (data as List).cast<Map<String, dynamic>>();
-});
-
-// Rental IDs the owner (current user) has already submitted a rating for.
-final _ownerRatedRentalIdsProvider =
-    FutureProvider.autoDispose<Set<String>>((ref) async {
-  final uid = supabase.auth.currentUser?.id;
-  if (uid == null) return {};
-  final data = await supabase
-      .from('ratings')
-      .select('rental_request_id')
-      .eq('rater_id', uid);
-  return {for (final r in (data as List)) r['rental_request_id'].toString()};
-});
-
-final _ownerGeneratorsProvider =
-    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
-        (ref, companyId) async {
-  final data = await supabase
-      .from('generators')
-      .select('id, title, capacity_kva, price_per_day, city, status')
-      .eq('company_id', companyId)
-      .order('created_at', ascending: false);
-  return (data as List).cast<Map<String, dynamic>>();
-});
+import '../providers/owner_providers.dart';
+import 'widgets/request_card.dart';
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
@@ -99,7 +38,7 @@ class _OwnerDashboardScreenState
             value: companyId,
           ),
           callback: (_) {
-            ref.invalidate(_ownerRequestsProvider(companyId));
+            ref.invalidate(ownerRequestsProvider(companyId));
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text('New rental request received!'),
@@ -119,7 +58,7 @@ class _OwnerDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
-    final companyAsync = ref.watch(_myCompanyProvider);
+    final companyAsync = ref.watch(myCompanyProvider);
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -354,7 +293,7 @@ class _RequestsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final requestsAsync = ref.watch(_ownerRequestsProvider(companyId));
+    final requestsAsync = ref.watch(ownerRequestsProvider(companyId));
 
     return requestsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -375,13 +314,13 @@ class _RequestsTab extends StatelessWidget {
         }
         return RefreshIndicator(
           onRefresh: () =>
-              ref.refresh(_ownerRequestsProvider(companyId).future),
+              ref.refresh(ownerRequestsProvider(companyId).future),
           child: ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: items.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (ctx, i) =>
-                _OwnerRequestCard(request: items[i], cs: cs, ref: ref, companyId: companyId),
+                OwnerRequestCard(request: items[i], ref: ref, companyId: companyId),
           ),
         );
       },
@@ -389,276 +328,7 @@ class _RequestsTab extends StatelessWidget {
   }
 }
 
-class _OwnerRequestCard extends StatelessWidget {
-  const _OwnerRequestCard(
-      {required this.request, required this.cs, required this.ref, required this.companyId});
-  final Map<String, dynamic> request;
-  final ColorScheme cs;
-  final WidgetRef ref;
-  final String companyId;
-
-  @override
-  Widget build(BuildContext context) {
-    final gen = request['generators'] as Map<String, dynamic>?;
-    final customer = request['profiles'] as Map<String, dynamic>?;
-    final status = request['status']?.toString() ?? 'pending';
-    final isPending = status == 'pending';
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _StatusChip(status: status, cs: cs),
-                const Spacer(),
-                Text('EGP ${request['price_total'] ?? '-'}',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: cs.primary)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(gen?['title']?.toString() ?? 'Generator',
-                style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Row(children: [
-              Icon(Icons.person_outline, size: 13, color: cs.onSurfaceVariant),
-              const SizedBox(width: 4),
-              Text(
-                customer?['full_name'] ??
-                    customer?['phone'] ??
-                    'Customer',
-                style:
-                    TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
-              ),
-            ]),
-            const SizedBox(height: 4),
-            Row(children: [
-              Icon(Icons.calendar_today_outlined,
-                  size: 13, color: cs.onSurfaceVariant),
-              const SizedBox(width: 4),
-              Text(
-                '${_fmt(request['start_date'])}  →  ${_fmt(request['end_date'])}  (${request['total_days']} days)',
-                style:
-                    TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
-              ),
-            ]),
-            if (request['note'] != null &&
-                request['note'].toString().isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: cs.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.notes, size: 14, color: cs.onSurfaceVariant),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(request['note'].toString(),
-                          style: TextStyle(
-                              fontSize: 12, color: cs.onSurfaceVariant)),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            if (isPending) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: cs.error,
-                        side: BorderSide(color: cs.error.withValues(alpha: 0.4)),
-                        minimumSize: const Size.fromHeight(40),
-                      ),
-                      onPressed: () => _rejectWithNote(
-                          context, request['id'].toString()),
-                      child: const Text('Reject'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(40)),
-                      onPressed: () => _acceptWithNote(
-                          context, request['id'].toString()),
-                      child: const Text('Accept'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            if (status == 'accepted') ...[
-              const SizedBox(height: 12),
-              FilledButton.tonal(
-                style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40)),
-                onPressed: () =>
-                    _updateStatus(context, request['id'].toString(), 'active'),
-                child: const Text('Mark as started'),
-              ),
-            ],
-            if (status == 'active') ...[
-              const SizedBox(height: 12),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40)),
-                onPressed: () =>
-                    _updateStatus(context, request['id'].toString(), 'completed'),
-                child: const Text('Mark as completed'),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _acceptWithNote(
-      BuildContext context, String requestId) async {
-    final noteController = TextEditingController();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Accept request'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-                'Add an optional message to the customer:',
-                style: TextStyle(fontSize: 13)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: noteController,
-              maxLines: 3,
-              maxLength: 200,
-              decoration: const InputDecoration(
-                hintText: 'e.g. I will arrive at 9am. Please ensure access.',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Accept')),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      final note = noteController.text.trim();
-      await _updateStatus(context, requestId, 'accepted',
-          ownerNote: note.isNotEmpty ? note : null);
-    }
-  }
-
-  Future<void> _rejectWithNote(
-      BuildContext context, String requestId) async {
-    final noteController = TextEditingController();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Reject request'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Let the customer know why (optional):',
-                style: TextStyle(fontSize: 13)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: noteController,
-              maxLines: 3,
-              maxLength: 200,
-              decoration: const InputDecoration(
-                hintText: 'e.g. Generator is already booked for those dates.',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
-          FilledButton(
-            style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reject'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      final note = noteController.text.trim();
-      await _updateStatus(context, requestId, 'rejected',
-          ownerNote: note.isNotEmpty ? note : null);
-    }
-  }
-
-  Future<void> _updateStatus(
-      BuildContext context, String requestId, String newStatus,
-      {String? ownerNote}) async {
-    try {
-      final update = <String, dynamic>{'status': newStatus};
-      if (ownerNote != null) update['owner_note'] = ownerNote;
-      await supabase
-          .from('rental_requests')
-          .update(update).eq('id', requestId);
-      ref.invalidate(_ownerRequestsProvider(companyId));
-      // Prompt owner to rate the customer after completion
-      if (newStatus == 'completed' && context.mounted) {
-        final customerId = request['customer_id']?.toString() ?? '';
-        final customerName =
-            (request['profiles'] as Map<String, dynamic>?)?['full_name'] ??
-                (request['profiles'] as Map<String, dynamic>?)?['phone'] ??
-                'Customer';
-        await Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => RateRentalScreen(
-            rentalRequestId: requestId,
-            rateeId: customerId,
-            rateeName: customerName.toString(),
-            isOwnerRating: true,
-          ),
-        ));
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
-      }
-    }
-  }
-
-  String _fmt(dynamic d) {
-    if (d == null) return '-';
-    try {
-      final dt = DateTime.parse(d.toString());
-      return '${dt.day}/${dt.month}/${dt.year}';
-    } catch (_) {
-      return d.toString();
-    }
-  }
-}
-
+// _OwnerRequestCard moved to widgets/request_card.dart
 // ── Generators tab ────────────────────────────────────────────────────────────
 class _GeneratorsTab extends StatelessWidget {
   const _GeneratorsTab(
@@ -669,7 +339,7 @@ class _GeneratorsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final generatorsAsync = ref.watch(_ownerGeneratorsProvider(companyId));
+    final generatorsAsync = ref.watch(ownerGeneratorsProvider(companyId));
 
     return generatorsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -677,7 +347,7 @@ class _GeneratorsTab extends StatelessWidget {
       data: (items) {
         return RefreshIndicator(
           onRefresh: () =>
-              ref.refresh(_ownerGeneratorsProvider(companyId).future),
+              ref.refresh(ownerGeneratorsProvider(companyId).future),
           child: Column(
             children: [
               Expanded(
@@ -785,7 +455,7 @@ class _OwnerGeneratorTile extends StatelessWidget {
       await supabase.from('generators').update(
           {'status': available ? 'available' : 'unavailable'}).eq(
           'id', gen['id'].toString());
-      ref.invalidate(_ownerGeneratorsProvider(companyId));
+      ref.invalidate(ownerGeneratorsProvider(companyId));
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
@@ -805,7 +475,7 @@ class _HistoryTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final historyAsync = ref.watch(_ownerHistoryProvider(companyId));
+    final historyAsync = ref.watch(ownerHistoryProvider(companyId));
 
     return historyAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -829,7 +499,7 @@ class _HistoryTab extends StatelessWidget {
         }
         return RefreshIndicator(
           onRefresh: () =>
-              ref.refresh(_ownerHistoryProvider(companyId).future),
+              ref.refresh(ownerHistoryProvider(companyId).future),
           child: ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: items.length,
@@ -923,7 +593,7 @@ class _HistoryTab extends StatelessWidget {
                         Builder(builder: (context) {
                           final rentalId = r['id']?.toString() ?? '';
                           final ratedIds = ref
-                              .watch(_ownerRatedRentalIdsProvider)
+                              .watch(ownerRatedRentalIdsProvider)
                               .valueOrNull;
                           final alreadyRated =
                               ratedIds?.contains(rentalId) == true;
@@ -973,37 +643,6 @@ class _HistoryTab extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-// ── Status chip ───────────────────────────────────────────────────────────────
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status, required this.cs});
-  final String status;
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = switch (status) {
-      'pending' => Colors.orange,
-      'accepted' => Colors.green,
-      'active' => cs.primary,
-      'completed' => Colors.green.shade700,
-      'rejected' => cs.error,
-      _ => cs.onSurfaceVariant,
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        status.toUpperCase(),
-        style: TextStyle(
-            fontSize: 11, fontWeight: FontWeight.w700, color: color),
-      ),
     );
   }
 }

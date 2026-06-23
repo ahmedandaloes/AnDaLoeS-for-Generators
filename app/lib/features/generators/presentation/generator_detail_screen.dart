@@ -6,88 +6,9 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/supabase.dart';
-
-final _generatorDetailProvider =
-    FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, id) async {
-  final data = await supabase
-      .from('generators')
-      .select('*, companies(name, city, verification_status, contact_phone)')
-      .eq('id', id)
-      .single();
-  return data;
-});
-
-// Upcoming accepted/active bookings for this generator (next 90 days).
-final _bookedDatesProvider =
-    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
-        (ref, generatorId) async {
-  final today = DateTime.now().toIso8601String().substring(0, 10);
-  final data = await supabase
-      .from('rental_requests')
-      .select('start_date, end_date, status')
-      .eq('generator_id', generatorId)
-      .inFilter('status', ['accepted', 'active'])
-      .gte('end_date', today)
-      .order('start_date');
-  return (data as List).cast<Map<String, dynamic>>();
-});
-
-final _generatorReviewsProvider =
-    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
-        (ref, generatorId) async {
-  // Step 1: get rental_request IDs for this generator
-  final rrData = await supabase
-      .from('rental_requests')
-      .select('id')
-      .eq('generator_id', generatorId);
-  final ids =
-      (rrData as List).map((r) => r['id'].toString()).toList();
-  if (ids.isEmpty) return [];
-
-  // Step 2: fetch ratings with comments for those requests
-  final data = await supabase
-      .from('ratings')
-      .select('score, comment, created_at')
-      .filter('rental_request_id', 'in', '(${ids.join(',')})')
-      .not('comment', 'is', null)
-      .order('created_at', ascending: false)
-      .limit(10);
-  return (data as List).cast<Map<String, dynamic>>();
-});
-
-// Whether this generator is in the current user's favorites
-final _isFavProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, id) async {
-  final uid = supabase.auth.currentUser?.id;
-  if (uid == null) return false;
-  final data = await supabase
-      .from('user_favorites')
-      .select('generator_id')
-      .eq('user_id', uid)
-      .eq('generator_id', id)
-      .maybeSingle();
-  return data != null;
-});
-
-// Similar generators — same governorate, overlapping KVA range, excluding current
-final _similarGeneratorsProvider = FutureProvider.autoDispose
-    .family<List<Map<String, dynamic>>, Map<String, dynamic>>((ref, gen) async {
-  final gov = gen['governorate']?.toString();
-  final kva = (gen['capacity_kva'] as num?)?.toDouble() ?? 0;
-  final id = gen['id']?.toString();
-  if (gov == null || id == null) return [];
-  final data = await supabase
-      .from('generators')
-      .select('id, title, capacity_kva, price_per_day, photos, avg_score')
-      .eq('governorate', gov)
-      .eq('is_available', true)
-      .neq('id', id)
-      .gte('capacity_kva', (kva * 0.5).floor())
-      .lte('capacity_kva', kva * 2)
-      .order('avg_score', ascending: false)
-      .limit(6);
-  return (data as List).cast<Map<String, dynamic>>();
-});
+import '../providers/detail_providers.dart';
+import 'widgets/detail_sections.dart';
+import 'widgets/photo_carousel.dart';
 
 class GeneratorDetailScreen extends ConsumerWidget {
   const GeneratorDetailScreen({super.key, required this.id});
@@ -95,7 +16,7 @@ class GeneratorDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final detail = ref.watch(_generatorDetailProvider(id));
+    final detail = ref.watch(generatorDetailProvider(id));
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -112,7 +33,7 @@ class GeneratorDetailScreen extends ConsumerWidget {
                 Text('$e'),
                 const SizedBox(height: 16),
                 FilledButton(
-                  onPressed: () => ref.invalidate(_generatorDetailProvider(id)),
+                  onPressed: () => ref.invalidate(generatorDetailProvider(id)),
                   child: const Text('Retry'),
                 ),
               ],
@@ -135,9 +56,9 @@ class _Body extends ConsumerWidget {
     final company = gen['companies'] as Map<String, dynamic>?;
     final photos = (gen['photos'] as List?)?.cast<String>() ?? [];
     final generatorId = gen['id'].toString();
-    final reviewsAsync = ref.watch(_generatorReviewsProvider(generatorId));
-    final bookedAsync = ref.watch(_bookedDatesProvider(generatorId));
-    final similarAsync = ref.watch(_similarGeneratorsProvider(gen));
+    final reviewsAsync = ref.watch(generatorReviewsProvider(generatorId));
+    final bookedAsync = ref.watch(bookedDatesProvider(generatorId));
+    final similarAsync = ref.watch(similarGeneratorsProvider(gen));
 
     return CustomScrollView(
       slivers: [
@@ -170,7 +91,7 @@ class _Body extends ConsumerWidget {
                       ),
                     ),
                   )
-                : _PhotoCarousel(photos: photos),
+                : PhotoCarousel(photos: photos),
           ),
         ),
 
@@ -313,7 +234,7 @@ class _Body extends ConsumerWidget {
                 const SizedBox(height: 16),
 
                 // Pricing card
-                _PricingCard(gen: gen, cs: cs),
+                PricingCard(gen: gen, cs: cs),
                 const SizedBox(height: 20),
 
                 // Description
@@ -340,7 +261,7 @@ class _Body extends ConsumerWidget {
                 bookedAsync.maybeWhen(
                   data: (bookings) => bookings.isEmpty
                       ? const SizedBox.shrink()
-                      : _BookedDatesSection(bookings: bookings, cs: cs),
+                      : BookedDatesSection(bookings: bookings, cs: cs),
                   orElse: () => const SizedBox.shrink(),
                 ),
                 const SizedBox(height: 8),
@@ -349,7 +270,7 @@ class _Body extends ConsumerWidget {
                 reviewsAsync.maybeWhen(
                   data: (reviews) => reviews.isEmpty
                       ? const SizedBox.shrink()
-                      : _ReviewsSection(reviews: reviews, cs: cs),
+                      : ReviewsSection(reviews: reviews, cs: cs),
                   orElse: () => const SizedBox.shrink(),
                 ),
 
@@ -357,7 +278,7 @@ class _Body extends ConsumerWidget {
                 similarAsync.maybeWhen(
                   data: (similar) => similar.isEmpty
                       ? const SizedBox.shrink()
-                      : _SimilarGeneratorsSection(
+                      : SimilarGeneratorsSection(
                           generators: similar, cs: cs),
                   orElse: () => const SizedBox.shrink(),
                 ),
@@ -400,580 +321,6 @@ class _Body extends ConsumerWidget {
 }
 
 // ── Similar generators ────────────────────────────────────────────────────────
-class _SimilarGeneratorsSection extends StatelessWidget {
-  const _SimilarGeneratorsSection(
-      {required this.generators, required this.cs});
-  final List<Map<String, dynamic>> generators;
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Similar generators nearby',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-            color: cs.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 140,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.zero,
-            itemCount: generators.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, i) {
-              final g = generators[i];
-              final photo = (g['photos'] as List?)?.isNotEmpty == true
-                  ? g['photos'][0].toString()
-                  : null;
-              final score =
-                  (g['avg_score'] as num?)?.toStringAsFixed(1) ?? '–';
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  context.push('/generator/${g['id']}');
-                },
-                child: Container(
-                  width: 140,
-                  decoration: BoxDecoration(
-                    color: cs.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: cs.outlineVariant.withValues(alpha: 0.5)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(12)),
-                        child: photo != null
-                            ? Image.network(
-                                photo,
-                                height: 80,
-                                width: 140,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    _placeholder(cs),
-                              )
-                            : _placeholder(cs),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              g['title']?.toString() ?? '–',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Text(
-                                  '${g['capacity_kva']} KVA',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: cs.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Icon(Icons.star_rounded,
-                                    size: 10, color: Colors.amber),
-                                const SizedBox(width: 2),
-                                Text(score,
-                                    style: const TextStyle(fontSize: 10)),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _placeholder(ColorScheme cs) {
-    return Container(
-      height: 80,
-      width: 140,
-      color: cs.primaryContainer.withValues(alpha: 0.3),
-      child: Icon(Icons.bolt, size: 32, color: cs.primary),
-    );
-  }
-}
-
-// ── Reviews section ───────────────────────────────────────────────────────────
-// ── Booked dates section ───────────────────────────────────────────────────────
-class _BookedDatesSection extends StatelessWidget {
-  const _BookedDatesSection(
-      {required this.bookings, required this.cs});
-  final List<Map<String, dynamic>> bookings;
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Already booked',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-            color: cs.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: cs.errorContainer.withValues(alpha: 0.25),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-                color: cs.error.withValues(alpha: 0.2), width: 1),
-          ),
-          child: Column(
-            children: bookings.map((b) {
-              final status = b['status']?.toString() ?? '';
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(children: [
-                  Icon(
-                    status == 'active'
-                        ? Icons.circle
-                        : Icons.calendar_today_outlined,
-                    size: 12,
-                    color: status == 'active'
-                        ? cs.error
-                        : cs.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${b['start_date']}  →  ${b['end_date']}',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: cs.onSurface,
-                        fontWeight: status == 'active'
-                            ? FontWeight.w600
-                            : FontWeight.normal),
-                  ),
-                  if (status == 'active') ...[
-                    const SizedBox(width: 6),
-                    Text('(active)',
-                        style: TextStyle(
-                            fontSize: 11,
-                            color: cs.error,
-                            fontWeight: FontWeight.w600)),
-                  ],
-                ]),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-}
-
-class _ReviewsSection extends StatelessWidget {
-  const _ReviewsSection({required this.reviews, required this.cs});
-  final List<Map<String, dynamic>> reviews;
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) {
-    final avg = reviews.fold<double>(
-            0, (s, r) => s + ((r['score'] as num?)?.toDouble() ?? 0)) /
-        reviews.length;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            Text(
-              'Reviews',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
-                color: cs.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(Icons.star_rounded, size: 16, color: Colors.amber.shade600),
-            const SizedBox(width: 2),
-            Text(
-              avg.toStringAsFixed(1),
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-            Text(
-              '  (${reviews.length})',
-              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ...reviews.map((r) => _ReviewCard(review: r, cs: cs)),
-        const SizedBox(height: 8),
-      ],
-    );
-  }
-}
-
-class _ReviewCard extends StatelessWidget {
-  const _ReviewCard({required this.review, required this.cs});
-  final Map<String, dynamic> review;
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) {
-    final score = (review['score'] as num?)?.toInt() ?? 0;
-    final comment = review['comment']?.toString() ?? '';
-    final date = review['created_at'] != null
-        ? DateTime.tryParse(review['created_at'].toString())
-        : null;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Row(
-                  children: List.generate(
-                    5,
-                    (i) => Icon(
-                      i < score ? Icons.star_rounded : Icons.star_outline_rounded,
-                      size: 16,
-                      color: i < score
-                          ? Colors.amber.shade600
-                          : cs.outlineVariant,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                if (date != null)
-                  Text(
-                    '${date.day}/${date.month}/${date.year}',
-                    style: TextStyle(
-                        fontSize: 11, color: cs.onSurfaceVariant),
-                  ),
-              ],
-            ),
-            if (comment.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(comment,
-                  style: const TextStyle(fontSize: 13, height: 1.5)),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Pricing card ─────────────────────────────────────────────────────────────
-class _PricingCard extends StatelessWidget {
-  const _PricingCard({required this.gen, required this.cs});
-  final Map<String, dynamic> gen;
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Pricing',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: cs.onSurfaceVariant,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _PriceRow(
-              label: 'Per day (8 hrs)',
-              value: gen['price_per_day'],
-              cs: cs,
-              highlight: true,
-            ),
-            if (gen['price_per_week'] != null) ...[
-              const SizedBox(height: 8),
-              _PriceRow(
-                  label: 'Per week', value: gen['price_per_week'], cs: cs),
-            ],
-            if (gen['price_per_month'] != null) ...[
-              const SizedBox(height: 8),
-              _PriceRow(
-                  label: 'Per month',
-                  value: gen['price_per_month'],
-                  cs: cs),
-            ],
-            const SizedBox(height: 8),
-            Text(
-              '1 rental day = 8 operating hours. Best rate is applied automatically.',
-              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PriceRow extends StatelessWidget {
-  const _PriceRow(
-      {required this.label,
-      required this.value,
-      required this.cs,
-      this.highlight = false});
-  final String label;
-  final dynamic value;
-  final ColorScheme cs;
-  final bool highlight;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(label,
-            style: TextStyle(
-                fontSize: 14,
-                color: cs.onSurface,
-                fontWeight:
-                    highlight ? FontWeight.w600 : FontWeight.normal)),
-        const Spacer(),
-        Text(
-          'EGP ${value ?? '-'}',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: highlight ? cs.primary : cs.onSurface,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ── Photo carousel ────────────────────────────────────────────────────────────
-class _PhotoCarousel extends StatefulWidget {
-  const _PhotoCarousel({required this.photos});
-  final List<String> photos;
-
-  @override
-  State<_PhotoCarousel> createState() => _PhotoCarouselState();
-}
-
-class _PhotoCarouselState extends State<_PhotoCarousel> {
-  int _current = 0;
-
-  void _openGallery(BuildContext context, int index) {
-    Navigator.of(context).push(PageRouteBuilder(
-      opaque: false,
-      barrierColor: Colors.black87,
-      barrierDismissible: true,
-      pageBuilder: (_, __, ___) => _FullScreenGallery(
-        photos: widget.photos,
-        initialIndex: index,
-      ),
-    ));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        PageView.builder(
-          itemCount: widget.photos.length,
-          onPageChanged: (i) => setState(() => _current = i),
-          itemBuilder: (ctx, i) => GestureDetector(
-            onTap: () => _openGallery(ctx, i),
-            child: Image.network(
-              widget.photos[i],
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: Theme.of(context)
-                    .colorScheme
-                    .surfaceContainerHighest,
-                child: const Icon(Icons.bolt, size: 64),
-              ),
-            ),
-          ),
-        ),
-        // Tap hint
-        Positioned(
-          top: 12,
-          right: 12,
-          child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.45),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.zoom_in, size: 13, color: Colors.white),
-              const SizedBox(width: 4),
-              Text(
-                '${widget.photos.length} photo${widget.photos.length > 1 ? 's' : ''}',
-                style: const TextStyle(fontSize: 11, color: Colors.white),
-              ),
-            ]),
-          ),
-        ),
-        if (widget.photos.length > 1)
-          Positioned(
-            bottom: 12,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                widget.photos.length,
-                (i) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: _current == i ? 16 : 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: _current == i
-                        ? Colors.white
-                        : Colors.white.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _FullScreenGallery extends StatefulWidget {
-  const _FullScreenGallery(
-      {required this.photos, required this.initialIndex});
-  final List<String> photos;
-  final int initialIndex;
-
-  @override
-  State<_FullScreenGallery> createState() => _FullScreenGalleryState();
-}
-
-class _FullScreenGalleryState extends State<_FullScreenGallery> {
-  late final PageController _ctrl;
-  late int _current;
-
-  @override
-  void initState() {
-    super.initState();
-    _current = widget.initialIndex;
-    _ctrl = PageController(initialPage: widget.initialIndex);
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          PageView.builder(
-            controller: _ctrl,
-            itemCount: widget.photos.length,
-            onPageChanged: (i) => setState(() => _current = i),
-            itemBuilder: (_, i) => InteractiveViewer(
-              minScale: 0.5,
-              maxScale: 4,
-              child: Center(
-                child: Image.network(
-                  widget.photos[i],
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(
-                      Icons.broken_image,
-                      size: 64,
-                      color: Colors.white54),
-                ),
-              ),
-            ),
-          ),
-          // Top bar
-          SafeArea(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.black38,
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Spacer(),
-                  if (widget.photos.length > 1)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${_current + 1} / ${widget.photos.length}',
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 13),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ── Rent Now FAB — added by the scaffold wrapper in the router ────────────────
 class GeneratorDetailWrapper extends ConsumerWidget {
@@ -984,7 +331,7 @@ class GeneratorDetailWrapper extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final loggedIn = supabase.auth.currentSession != null;
-    final isFavAsync = ref.watch(_isFavProvider(id));
+    final isFavAsync = ref.watch(isFavProvider(id));
     final isFav = isFavAsync.valueOrNull ?? false;
 
     return Scaffold(
@@ -1063,7 +410,7 @@ class GeneratorDetailWrapper extends ConsumerWidget {
   }
 
   Future<void> _shareGenerator(WidgetRef ref, String id) async {
-    final cached = ref.read(_generatorDetailProvider(id)).valueOrNull;
+    final cached = ref.read(generatorDetailProvider(id)).valueOrNull;
     final title = cached?['title']?.toString() ?? 'a generator';
     final kva = cached?['capacity_kva'];
     final text = kva != null
@@ -1087,6 +434,6 @@ class GeneratorDetailWrapper extends ConsumerWidget {
           .from('user_favorites')
           .upsert({'user_id': uid, 'generator_id': id});
     }
-    ref.invalidate(_isFavProvider(id));
+    ref.invalidate(isFavProvider(id));
   }
 }
