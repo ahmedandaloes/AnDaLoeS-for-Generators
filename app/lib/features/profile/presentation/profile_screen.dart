@@ -260,7 +260,7 @@ class ProfileScreen extends ConsumerWidget {
                 children: [
                   const SizedBox(height: 8),
                   // Account info card
-                  if (!isAnon && (email != null || phone != null)) ...[
+                  if (!isAnon) ...[
                     _SectionLabel('Account'),
                     _Card(
                       children: [
@@ -269,11 +269,12 @@ class ProfileScreen extends ConsumerWidget {
                               icon: Icons.email_outlined,
                               label: 'Email',
                               value: email),
-                        if (phone != null)
-                          _InfoRow(
-                              icon: Icons.phone_outlined,
-                              label: 'Phone',
-                              value: phone),
+                        _EditablePhoneRow(
+                          phone: phone,
+                          isAnon: isAnon,
+                          onEdit: () => _editPhone(context, ref, phone ?? ''),
+                          cs: cs,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -771,6 +772,48 @@ class ProfileScreen extends ConsumerWidget {
         .update({'full_name': newName}).eq('id', uid);
     ref.invalidate(_profileDataProvider);
   }
+
+  Future<void> _editPhone(
+      BuildContext context, WidgetRef ref, String current) async {
+    final controller = TextEditingController(text: current);
+    final newPhone = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Phone number'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.phone,
+          decoration: const InputDecoration(
+            labelText: 'Phone',
+            hintText: '01XXXXXXXXX',
+            prefixIcon: Icon(Icons.phone_outlined),
+          ),
+          onSubmitted: (v) => Navigator.pop(context, v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.pop(context, controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (newPhone == null) return;
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+    await supabase
+        .from('profiles')
+        .update({'phone': newPhone.isEmpty ? null : newPhone})
+        .eq('id', uid);
+    ref.invalidate(_profileDataProvider);
+  }
 }
 
 class _StatItem extends StatelessWidget {
@@ -814,6 +857,59 @@ class _StatDivider extends StatelessWidget {
         color: Theme.of(context).colorScheme.outlineVariant,
         width: 1,
       ),
+    );
+  }
+}
+
+class _EditablePhoneRow extends StatelessWidget {
+  const _EditablePhoneRow(
+      {required this.phone,
+      required this.isAnon,
+      required this.onEdit,
+      required this.cs});
+  final String? phone;
+  final bool isAnon;
+  final VoidCallback onEdit;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPhone = phone != null && phone!.isNotEmpty;
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(Icons.phone_outlined,
+            size: 18, color: cs.onSurfaceVariant),
+      ),
+      title: Text('Phone',
+          style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+      subtitle: Text(
+        hasPhone ? phone! : 'Tap to add phone number',
+        style: TextStyle(
+            fontSize: hasPhone ? 15 : 13,
+            fontWeight:
+                hasPhone ? FontWeight.w500 : FontWeight.normal,
+            color: hasPhone
+                ? cs.onSurface
+                : cs.onSurfaceVariant.withValues(alpha: 0.6),
+            height: 1.3),
+      ),
+      trailing: !isAnon
+          ? IconButton(
+              icon: Icon(
+                hasPhone ? Icons.edit_outlined : Icons.add_rounded,
+                size: 18,
+                color: cs.primary,
+              ),
+              onPressed: onEdit,
+              tooltip: hasPhone ? 'Edit phone' : 'Add phone',
+            )
+          : null,
+      onTap: isAnon ? null : onEdit,
     );
   }
 }

@@ -265,8 +265,9 @@ class _MiniCalendarMonth extends StatelessWidget {
         bg = null;
         textColor = cs.onSurface.withValues(alpha: 0.3);
       } else {
-        bg = null;
-        textColor = cs.onSurface;
+        // Available future day — subtle green tint
+        bg = Colors.green.withValues(alpha: 0.12);
+        textColor = Colors.green.shade800;
       }
 
       cells.add(

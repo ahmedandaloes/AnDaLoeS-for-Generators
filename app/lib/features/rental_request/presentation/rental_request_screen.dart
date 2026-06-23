@@ -210,47 +210,97 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                 // Booked dates warning
                 if (bookedRanges.isNotEmpty) ...[
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
-                      color: cs.errorContainer.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      color: cs.errorContainer.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                          color: cs.error.withValues(alpha: 0.2)),
+                          color: cs.error.withValues(alpha: 0.25)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(children: [
-                          Icon(Icons.event_busy_outlined,
-                              size: 15, color: cs.error),
-                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: cs.error.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Icon(Icons.event_busy_outlined,
+                                size: 14, color: cs.error),
+                          ),
+                          const SizedBox(width: 8),
                           Text(
-                            'Already booked — avoid these dates',
+                            'Unavailable periods',
                             style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: cs.error),
                           ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: cs.error.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${bookedRanges.length} booking${bookedRanges.length > 1 ? 's' : ''}',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: cs.error),
+                            ),
+                          ),
                         ]),
-                        const SizedBox(height: 8),
-                        ...bookedRanges.map((r) => Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 2),
-                              child: Row(children: [
-                                Icon(Icons.remove,
-                                    size: 12,
-                                    color:
-                                        cs.onSurfaceVariant),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '${_fmt(r.start)}  →  ${_fmt(r.end)}',
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: cs.onSurface),
-                                ),
-                              ]),
-                            )),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: bookedRanges.map((r) {
+                            final overlaps = _range != null &&
+                                r.start.isBefore(_range!.end
+                                    .add(const Duration(days: 1))) &&
+                                r.end.isAfter(_range!.start
+                                    .subtract(const Duration(days: 1)));
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: overlaps
+                                    ? cs.error
+                                    : cs.error.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                    color: cs.error
+                                        .withValues(alpha: 0.3)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (overlaps) ...[
+                                    Icon(Icons.warning_rounded,
+                                        size: 11,
+                                        color: cs.onError),
+                                    const SizedBox(width: 4),
+                                  ],
+                                  Text(
+                                    '${_fmt(r.start)} → ${_fmt(r.end)}',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: overlaps
+                                            ? cs.onError
+                                            : cs.error),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ],
                     ),
                   ),

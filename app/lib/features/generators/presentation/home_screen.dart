@@ -331,6 +331,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: _FeaturedCarousel(ref: ref, cs: cs),
           ),
 
+          // ── Popular in your area ─────────────────────────────────────
+          SliverToBoxAdapter(
+            child: generators.maybeWhen(
+              data: (items) => _PopularInArea(
+                  items: items, cs: cs, ref: ref),
+              orElse: () => const SizedBox.shrink(),
+            ),
+          ),
+
           // ── Recently viewed ───────────────────────────────────────────
           SliverToBoxAdapter(
             child: _RecentlyViewed(ref: ref, cs: cs),
@@ -954,6 +963,176 @@ class _FeaturedCard extends StatelessWidget {
         color: cs.primaryContainer,
         child: Icon(Icons.bolt, size: 36, color: cs.primary),
       );
+}
+
+// ── Popular In Area Section ───────────────────────────────────────────────────
+class _PopularInArea extends StatelessWidget {
+  const _PopularInArea(
+      {required this.items, required this.cs, required this.ref});
+  final List<Map<String, dynamic>> items;
+  final ColorScheme cs;
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    // Find most common city
+    final cityCount = <String, int>{};
+    for (final g in items) {
+      final city = g['city']?.toString() ?? '';
+      if (city.isNotEmpty) cityCount[city] = (cityCount[city] ?? 0) + 1;
+    }
+    if (cityCount.isEmpty) return const SizedBox.shrink();
+
+    final topCity = cityCount.entries
+        .reduce((a, b) => a.value >= b.value ? a : b)
+        .key;
+    final cityItems = items
+        .where((g) => g['city']?.toString() == topCity)
+        .take(6)
+        .toList();
+    if (cityItems.length < 2) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
+          child: Row(children: [
+            Icon(Icons.location_city_rounded,
+                size: 16, color: cs.secondary),
+            const SizedBox(width: 6),
+            Text('Popular in $topCity',
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: cs.onSurface)),
+            const SizedBox(width: 6),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: cs.secondaryContainer,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text('${cityItems.length}',
+                  style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onSecondaryContainer)),
+            ),
+          ]),
+        ),
+        SizedBox(
+          height: 160,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            itemCount: cityItems.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, i) =>
+                _PopularCard(gen: cityItems[i], cs: cs),
+          ),
+        ),
+        const SizedBox(height: 4),
+      ],
+    );
+  }
+}
+
+class _PopularCard extends StatelessWidget {
+  const _PopularCard({required this.gen, required this.cs});
+  final Map<String, dynamic> gen;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final photos = (gen['photos'] as List?)?.cast<String>() ?? [];
+    final photo = photos.isNotEmpty ? photos.first : null;
+    final kva = gen['capacity_kva'];
+    final price = gen['price_per_day'];
+    final score = gen['avg_score'];
+    final title = gen['title']?.toString() ?? '-';
+
+    return GestureDetector(
+      onTap: () => context.push('/generators/${gen['id']}'),
+      child: Container(
+        width: 130,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+              color: cs.outlineVariant.withValues(alpha: 0.4)),
+          color: cs.surface,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Photo
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(13)),
+              child: photo != null
+                  ? Image.network(photo,
+                      height: 80, width: 130, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                            height: 80,
+                            color: cs.primaryContainer,
+                            child: Icon(Icons.bolt,
+                                size: 28, color: cs.primary),
+                          ))
+                  : Container(
+                      height: 80,
+                      color: cs.primaryContainer,
+                      child:
+                          Icon(Icons.bolt, size: 28, color: cs.primary),
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 3),
+                  Row(children: [
+                    if (kva != null) ...[
+                      Text('$kva KVA',
+                          style: TextStyle(
+                              fontSize: 10,
+                              color: cs.onSurfaceVariant)),
+                      const SizedBox(width: 6),
+                    ],
+                    if (score != null)
+                      Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.star_rounded,
+                            size: 10, color: Colors.amber.shade600),
+                        Text('$score',
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: cs.onSurfaceVariant)),
+                      ]),
+                  ]),
+                  if (price != null) ...[
+                    const SizedBox(height: 2),
+                    Text('EGP $price/day',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: cs.primary)),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ── Recently Viewed Section ───────────────────────────────────────────────────
