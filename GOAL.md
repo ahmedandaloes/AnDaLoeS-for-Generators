@@ -5,35 +5,36 @@
 ---
 
 ## Shipped Features ✅
-- Home: search, governorate chips, KVA + price filters, fuel type filter, search autocomplete, active filter pills, sort, favorites (haptic), unread badge, pull-to-refresh, "Top Rated" badge, fuel type chip on cards
-- Generator detail: photo carousel, call/WhatsApp, booked dates, ratings, similar generators horizontal scroll, haptic on Rent Now, favorite FAB
-- Notifications: realtime, mark-all-read, unread badge
+- Home: search, governorate chips, KVA + price filters, fuel type filter, search autocomplete, active filter pills, sort, favorites (haptic), unread badge, pull-to-refresh, "Top Rated" badge, fuel type chip on cards, skeleton loading cards, map icon
+- Generator detail: photo carousel, call/WhatsApp, mini availability calendar, ratings, similar generators horizontal scroll, haptic on Rent Now, favorite FAB
+- Notifications: realtime, mark-all-read, unread badge, grouped by day, swipe-to-dismiss, individual mark-as-read, rich icon colors per type
 - Profile: rental stats, dark mode (persisted), language toggle (persisted), avatar photo upload (FilePicker → Supabase avatars bucket)
-- My Rentals: conflict warning, rating badge, view receipt, owner accept/reject note shown to customer, chat button
+- My Rentals: conflict warning, rating badge, view receipt, owner accept/reject note shown to customer, chat button, empty state illustration
 - Rental Receipt: gradient header, copy-as-text
-- Owner Dashboard: requests, history, rate customer, earnings + monthly chart, accept/reject with optional message dialog, chat button
+- Owner Dashboard: requests, history, rate customer, earnings + monthly chart, accept/reject with optional message dialog, chat button, summary stats chips (Pending/Active/Done)
 - Add Generator + Edit Generator: fuel type dropdown (diesel/petrol/gas/natural_gas/solar)
 - Admin panel: company approval, reports, platform stats
 - Company profile: stat chips (generator count, completed rentals)
-- DB migrations 0011–0016 (favorites, notifications, avatar, fuel_type, owner_note, messages)
+- DB migrations 0011–0017 (favorites, notifications, avatar, fuel_type, owner_note, messages, status-change trigger)
 - CI: flutter.yml with Flutter 3.32.x, analyze+test, APK build job
 - CLAUDE.md agentic guide
 - /goal + /loop skills for self-sustaining development across context windows
 - Onboarding splash: 3-page PageView, SharedPreferences flag, first-launch only
 - Rental request: booked dates shown before date picker; review & confirm flow
 - Payment: COD confirmation screen with digital payment placeholder ("Soon")
-- Chat: owner ↔ customer real-time thread per rental request (Supabase stream)
+- Chat: owner ↔ customer real-time thread per rental request (Supabase stream), unread message badges
 - Architecture: feature-based structure — providers/ and widgets/ per feature; all files under 800 lines
+- Map view: OpenStreetMap (flutter_map, no API key) with 27 Egyptian governorate pins, tap-to-preview card, View Details CTA
 
 ---
 
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Generator detail: booked dates shown as mini calendar with highlighted unavailable days
-- [ ] Unread message badge on chat buttons (My Rentals + Owner Dashboard)
-- [ ] DB trigger: auto-notify customer when owner accepts/rejects their rental request
-- [ ] Map view: generators plotted on Google Maps / map picker on add-generator
+- [ ] My Rentals: status timeline instead of plain chip (pending → accepted → active → completed progress steps)
+- [ ] Chat: send on Enter key, typing indicator
+- [ ] Rental request: animated confirmation when dates are selected (progress micro-animation)
+- [ ] Generator detail: sticky "Rent Now" FAB animates in/out on scroll
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -42,15 +43,11 @@
 - [ ] Advanced search: save search, price history chart
 
 ### UI/UX POLISH (ongoing — improve with every loop)
-- [ ] Home: skeleton loading cards instead of spinner
-- [ ] Generator detail: sticky "Rent Now" FAB animation on scroll, better hero image aspect ratio
-- [ ] My Rentals: empty state illustration, status timeline instead of plain chip
-- [ ] Owner Dashboard: summary stats cards at top (pending count, active count, total earned this month)
-- [ ] Rental request: animated date selection confirmation, smarter conflict UX
-- [ ] Chat: typing indicator, message read receipts, send on Enter key
-- [ ] Global: haptic feedback on all primary actions, micro-animations on state transitions
-- [ ] Global: pull-to-refresh on every list screen
-- [ ] Notifications: grouped by day, swipe-to-dismiss, mark individual as read
+- [ ] Generator detail: better hero image aspect ratio, share button
+- [ ] Rental request: smarter conflict UX with exact blocked date ranges
+- [ ] Global: micro-animations on state transitions (card tap, button press feedback)
+- [ ] Global: pull-to-refresh on Owner Dashboard list views
+- [ ] Admin: better stats charts, export CSV
 
 ### DONE-WHEN
 - [ ] 80%+ test coverage (current: placeholder only)
@@ -62,9 +59,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: UX polish — mini calendar, skeleton loader, empty state, stats + auto-notifications`
+**Last commit:** `feat: map view + notifications UX overhaul`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** Map view (generators on Google Maps) + more UI/UX polish from checklist
+**Next action:** Status timeline in My Rentals + chat UX improvements + sticky FAB on generator detail
 
 ---
 
