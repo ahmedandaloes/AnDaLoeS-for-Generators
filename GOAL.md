@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Generator detail: "Ask owner" button opens WhatsApp/call sheet
-- [ ] Home: "Near you" section using stored governorate from profile
-- [ ] Rental request: estimated cost preview updates live as dates change
-- [ ] My Rentals: swipe-to-cancel on pending cards (with confirm dialog)
+- [ ] My Rentals: rental status timeline visual stepper (pending → accepted → active → completed)
+- [ ] Generator detail: report issue shortcut with pre-filled reason chips
+- [ ] Admin companies tab: pagination (currently loads all pending at once)
+- [ ] Profile: edit phone number inline without full profile modal
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -212,6 +214,10 @@ class _OfferDocument extends StatelessWidget {
                 ],
               ),
             ),
+
+            // ── 24-hour freshness countdown ───────────────────────────────
+            if (data['status'] == 'accepted')
+              _OfferCountdown(createdAt: data['created_at']?.toString()),
 
             // ── From / To ────────────────────────────────────────────────
             Padding(
@@ -435,4 +441,96 @@ class _OfferDocument extends StatelessWidget {
         _ => 'Diesel',
       };
 }
+
+// ── 24-hour offer countdown ───────────────────────────────────────────────────
+class _OfferCountdown extends StatefulWidget {
+  const _OfferCountdown({required this.createdAt});
+  final String? createdAt;
+
+  @override
+  State<_OfferCountdown> createState() => _OfferCountdownState();
+}
+
+class _OfferCountdownState extends State<_OfferCountdown> {
+  Timer? _timer;
+  Duration _remaining = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _update();
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) setState(_update);
+    });
+  }
+
+  void _update() {
+    if (widget.createdAt == null) return;
+    try {
+      final created = DateTime.parse(widget.createdAt!);
+      final expiry = created.add(const Duration(hours: 24));
+      final diff = expiry.difference(DateTime.now());
+      _remaining = diff.isNegative ? Duration.zero : diff;
+    } catch (_) {
+      _remaining = Duration.zero;
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hours = _remaining.inHours;
+    final mins = _remaining.inMinutes % 60;
+    final expired = _remaining == Duration.zero;
+    final urgent = hours < 2;
+
+    final color = expired
+        ? Colors.grey.shade400
+        : urgent
+            ? Colors.red.shade600
+            : Colors.green.shade700;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(children: [
+        Icon(
+          expired
+              ? Icons.timer_off_outlined
+              : urgent
+                  ? Icons.timer_outlined
+                  : Icons.check_circle_outline,
+          size: 18,
+          color: color,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            expired
+                ? 'Offer window has passed — contact the owner to re-confirm'
+                : urgent
+                    ? 'Offer expires soon: ${hours}h ${mins}m remaining'
+                    : 'Offer accepted — ${hours}h ${mins}m remaining',
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+                height: 1.4),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
 
