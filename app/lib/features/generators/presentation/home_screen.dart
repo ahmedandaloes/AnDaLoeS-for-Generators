@@ -27,6 +27,7 @@ class _Filter {
   final String? governorate;
   final double? maxKva;
   final double? maxPrice;
+  final String? fuelType;
   final _SortBy sort;
 
   const _Filter({
@@ -34,22 +35,45 @@ class _Filter {
     this.governorate,
     this.maxKva,
     this.maxPrice,
+    this.fuelType,
     this.sort = _SortBy.newest,
   });
 
   _Filter withQuery(String q) =>
-      _Filter(query: q, governorate: governorate, maxKva: maxKva, maxPrice: maxPrice, sort: sort);
+      _Filter(query: q, governorate: governorate, maxKva: maxKva, maxPrice: maxPrice, fuelType: fuelType, sort: sort);
   _Filter withGovernorate(String? g) =>
-      _Filter(query: query, governorate: g, maxKva: maxKva, maxPrice: maxPrice, sort: sort);
+      _Filter(query: query, governorate: g, maxKva: maxKva, maxPrice: maxPrice, fuelType: fuelType, sort: sort);
   _Filter withMaxKva(double? k) =>
-      _Filter(query: query, governorate: governorate, maxKva: k, maxPrice: maxPrice, sort: sort);
+      _Filter(query: query, governorate: governorate, maxKva: k, maxPrice: maxPrice, fuelType: fuelType, sort: sort);
   _Filter withMaxPrice(double? p) =>
-      _Filter(query: query, governorate: governorate, maxKva: maxKva, maxPrice: p, sort: sort);
+      _Filter(query: query, governorate: governorate, maxKva: maxKva, maxPrice: p, fuelType: fuelType, sort: sort);
+  _Filter withFuelType(String? f) =>
+      _Filter(query: query, governorate: governorate, maxKva: maxKva, maxPrice: maxPrice, fuelType: f, sort: sort);
   _Filter withSort(_SortBy s) =>
-      _Filter(query: query, governorate: governorate, maxKva: maxKva, maxPrice: maxPrice, sort: s);
+      _Filter(query: query, governorate: governorate, maxKva: maxKva, maxPrice: maxPrice, fuelType: fuelType, sort: s);
 }
 
 final _filterProvider = StateProvider<_Filter>((ref) => const _Filter());
+
+// Autocomplete suggestions based on partial query (min 2 chars).
+final _autocompleteProvider =
+    FutureProvider.autoDispose.family<List<String>, String>((ref, q) async {
+  if (q.length < 2) return [];
+  final data = await supabase
+      .from('generators')
+      .select('title, city, governorate')
+      .or('title.ilike.%$q%,city.ilike.%$q%')
+      .eq('is_available', true)
+      .limit(8);
+  final suggestions = <String>{};
+  for (final g in (data as List)) {
+    final title = g['title']?.toString() ?? '';
+    final city = g['city']?.toString() ?? '';
+    if (title.toLowerCase().contains(q.toLowerCase())) suggestions.add(title);
+    if (city.toLowerCase().contains(q.toLowerCase())) suggestions.add(city);
+  }
+  return suggestions.take(6).toList();
+});
 
 // Tracks recent non-empty search terms within the current session (max 5).
 final _recentSearchesProvider =
@@ -164,6 +188,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             double.tryParse(g['price_per_day']?.toString() ?? '0') ?? 0;
         if (price > filter.maxPrice!) return false;
       }
+      if (filter.fuelType != null &&
+          (g['fuel_type'] ?? 'diesel') != filter.fuelType) {
+        return false;
+      }
       return true;
     }).toList()
       ..sort((a, b) {
@@ -189,7 +217,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final hasFilter = filter.query.isNotEmpty ||
         filter.governorate != null ||
         filter.maxKva != null ||
-        filter.maxPrice != null;
+        filter.maxPrice != null ||
+        filter.fuelType != null;
 
     return Scaffold(
       body: RefreshIndicator(
@@ -270,32 +299,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: _SearchAutocomplete(
                       controller: _searchController,
-                      onChanged: (v) => ref
-                          .read(_filterProvider.notifier)
-                          .state = filter.withQuery(v),
-                      onSubmitted: (v) {
-                        if (v.trim().isNotEmpty) _saveRecentSearch(v);
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Search generators, city…',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: filter.query.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  if (filter.query.trim().isNotEmpty) {
-                                    _saveRecentSearch(filter.query);
-                                  }
-                                  _searchController.clear();
-                                  ref
-                                      .read(_filterProvider.notifier)
-                                      .state = filter.withQuery('');
-                                },
-                              )
-                            : null,
-                      ),
+                      filter: filter,
+                      ref: ref,
+                      onSaveRecent: _saveRecentSearch,
+                      cs: cs,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -365,6 +374,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           onDeleted: () => ref
                               .read(_filterProvider.notifier)
                               .state = filter.withMaxPrice(null),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                    if (filter.fuelType != null)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: InputChip(
+                          avatar: const Icon(Icons.local_gas_station_outlined,
+                              size: 12),
+                          label: Text(
+                              _fuelLabel(filter.fuelType!),
+                              style: const TextStyle(fontSize: 12)),
+                          onDeleted: () => ref
+                              .read(_filterProvider.notifier)
+                              .state = filter.withFuelType(null),
                           visualDensity: VisualDensity.compact,
                         ),
                       ),
@@ -735,6 +759,124 @@ class _HeroBanner extends StatelessWidget {
     );
   }
 }
+
+// ── Search autocomplete ───────────────────────────────────────────────────────
+class _SearchAutocomplete extends ConsumerStatefulWidget {
+  const _SearchAutocomplete({
+    required this.controller,
+    required this.filter,
+    required this.ref,
+    required this.onSaveRecent,
+    required this.cs,
+  });
+  final TextEditingController controller;
+  final _Filter filter;
+  final WidgetRef ref;
+  final void Function(String) onSaveRecent;
+  final ColorScheme cs;
+
+  @override
+  ConsumerState<_SearchAutocomplete> createState() =>
+      _SearchAutocompleteState();
+}
+
+class _SearchAutocompleteState extends ConsumerState<_SearchAutocomplete> {
+  final _focusNode = FocusNode();
+  bool _showSuggestions = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      setState(() => _showSuggestions = _focusNode.hasFocus);
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _selectSuggestion(String value) {
+    widget.controller.text = value;
+    widget.controller.selection =
+        TextSelection.collapsed(offset: value.length);
+    widget.ref.read(_filterProvider.notifier).state =
+        widget.filter.withQuery(value);
+    widget.onSaveRecent(value);
+    _focusNode.unfocus();
+    setState(() => _showSuggestions = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = widget.filter.query;
+    final suggestionsAsync =
+        ref.watch(_autocompleteProvider(query));
+    final suggestions = suggestionsAsync.valueOrNull ?? [];
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: widget.controller,
+          focusNode: _focusNode,
+          onChanged: (v) {
+            widget.ref.read(_filterProvider.notifier).state =
+                widget.filter.withQuery(v);
+          },
+          onSubmitted: (v) {
+            if (v.trim().isNotEmpty) widget.onSaveRecent(v);
+            setState(() => _showSuggestions = false);
+          },
+          decoration: InputDecoration(
+            hintText: 'Search generators, city…',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: query.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      if (query.trim().isNotEmpty) widget.onSaveRecent(query);
+                      widget.controller.clear();
+                      widget.ref.read(_filterProvider.notifier).state =
+                          widget.filter.withQuery('');
+                    },
+                  )
+                : null,
+          ),
+        ),
+        if (_showSuggestions && suggestions.isNotEmpty)
+          Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: suggestions.map((s) {
+                return ListTile(
+                  dense: true,
+                  leading: Icon(Icons.search,
+                      size: 16, color: widget.cs.onSurfaceVariant),
+                  title: Text(s, style: const TextStyle(fontSize: 14)),
+                  onTap: () => _selectSuggestion(s),
+                );
+              }).toList(),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+String _fuelLabel(String fuel) => switch (fuel) {
+      'diesel' => 'Diesel',
+      'gas' => 'Gas',
+      'natural_gas' => 'Natural Gas',
+      'solar' => 'Solar',
+      'petrol' => 'Petrol',
+      _ => fuel,
+    };
 
 // ── Generator card ───────────────────────────────────────────────────────────
 class _GeneratorCard extends ConsumerWidget {
@@ -1108,6 +1250,15 @@ class _FilterSheetState extends State<_FilterSheet> {
   late String? _governorate;
   late double? _maxKva;
   late double? _maxPrice;
+  late String? _fuelType;
+
+  static const _fuelOptions = [
+    ('diesel', 'Diesel'),
+    ('petrol', 'Petrol'),
+    ('gas', 'Gas'),
+    ('natural_gas', 'Natural Gas'),
+    ('solar', 'Solar'),
+  ];
 
   @override
   void initState() {
@@ -1115,13 +1266,15 @@ class _FilterSheetState extends State<_FilterSheet> {
     _governorate = widget.filter.governorate;
     _maxKva = widget.filter.maxKva;
     _maxPrice = widget.filter.maxPrice;
+    _fuelType = widget.filter.fuelType;
   }
 
   void _apply() {
     widget.ref.read(_filterProvider.notifier).state = widget.filter
         .withGovernorate(_governorate)
         .withMaxKva(_maxKva)
-        .withMaxPrice(_maxPrice);
+        .withMaxPrice(_maxPrice)
+        .withFuelType(_fuelType);
     Navigator.pop(context);
   }
 
@@ -1130,11 +1283,13 @@ class _FilterSheetState extends State<_FilterSheet> {
       _governorate = null;
       _maxKva = null;
       _maxPrice = null;
+      _fuelType = null;
     });
     widget.ref.read(_filterProvider.notifier).state = widget.filter
         .withGovernorate(null)
         .withMaxKva(null)
-        .withMaxPrice(null);
+        .withMaxPrice(null)
+        .withFuelType(null);
     Navigator.pop(context);
   }
 
@@ -1251,6 +1406,35 @@ class _FilterSheetState extends State<_FilterSheet> {
                 child: const Text('Remove limit'),
               ),
             ),
+          const SizedBox(height: 20),
+          const Text(
+            'FUEL TYPE',
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _fuelOptions.map((opt) {
+              final (value, label) = opt;
+              final selected = _fuelType == value;
+              return FilterChip(
+                avatar: Icon(Icons.local_gas_station_outlined,
+                    size: 12,
+                    color: selected
+                        ? widget.cs.onSecondaryContainer
+                        : widget.cs.onSurfaceVariant),
+                label: Text(label,
+                    style: const TextStyle(fontSize: 12)),
+                selected: selected,
+                onSelected: (on) => setState(
+                    () => _fuelType = on ? value : null),
+              );
+            }).toList(),
+          ),
           const SizedBox(height: 16),
           FilledButton(
               onPressed: _apply, child: const Text('Apply filters')),

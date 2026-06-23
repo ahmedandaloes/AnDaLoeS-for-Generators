@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'core/config/supabase.dart';
 import 'core/localization/locale_provider.dart';
@@ -27,12 +28,25 @@ Future<void> main() async {
   ));
 }
 
-class AndaloesApp extends ConsumerWidget {
+class AndaloesApp extends ConsumerStatefulWidget {
   const AndaloesApp({super.key, this.initialLocation = '/'});
   final String initialLocation;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AndaloesApp> createState() => _AndaloesAppState();
+}
+
+class _AndaloesAppState extends ConsumerState<AndaloesApp> {
+  late final GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+    _router = buildAppRouter(widget.initialLocation);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final themeMode = ref.watch(themeModeProvider);
 
@@ -42,7 +56,7 @@ class AndaloesApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
-      routerConfig: buildAppRouter(initialLocation),
+      routerConfig: _router,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
