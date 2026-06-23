@@ -55,6 +55,8 @@
 - Owner Dashboard: response-time goal chip (avg vs 2hr target, green ✓ / red ⚠)
 - Notifications: tap routes to correct screen per type (accepted→offer, completed→invoice, message→chat, rating→rate)
 - Global: PressScale widget; micro-animations on Accept + Review & Confirm CTAs
+- DB fix 0019: accept/reject crash — dropped duplicate broken status-notification trigger (was inserting into a nonexistent notifications.rental_request_id column, rolling back every status change)
+- DB fix 0020: generator_status enum gained `pending`+`rejected` — admin Generators tab no longer crashes; admins can reject/take down listings
 
 ---
 
@@ -71,6 +73,7 @@ complete → commission → rate. Harden each transition + the money path.
 - [ ] Pricing transparency: show fee/commission breakdown at request time
 
 ### SOON
+- [ ] Generator approval gate: new generators default to `pending` and require admin approval before going public (PRODUCT DECISION — needs active moderation commitment; enum already supports it. Route to product-strategy-expert.)
 - [ ] Push notifications: FCM integration with Supabase edge function
 - [ ] Referral code system: users get discount for referring friends
 - [ ] Deep linking: share generator page via URL
@@ -91,9 +94,10 @@ complete → commission → rate. Harden each transition + the money path.
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: animated result count, overdue banner, days-remaining chip on active rentals`
+**Working branch:** `development` (main is integration/release)
+**Last commit:** `fix: generator_status enum (0020) — unblock admin Generators tab`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
+**Next action:** double-booking DB enforcement (exclusion constraint) + commission breakdown at request time. Use master-orchestrator to drive.
 
 ---
 
