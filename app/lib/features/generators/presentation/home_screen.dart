@@ -332,15 +332,10 @@ class _GeneratorCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // Icon accent
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.bolt, color: cs.primary, size: 28),
+              // Photo thumbnail or icon accent
+              _CardPhoto(
+                photos: (generator['photos'] as List?)?.cast<String>() ?? [],
+                cs: cs,
               ),
               const SizedBox(width: 14),
               // Content
@@ -679,6 +674,43 @@ class _FilterSheetState extends State<_FilterSheet> {
           FilledButton(
               onPressed: _apply, child: const Text('Apply filters')),
         ],
+      ),
+    );
+  }
+}
+
+// ── Card photo thumbnail ──────────────────────────────────────────────────────
+class _CardPhoto extends StatelessWidget {
+  const _CardPhoto({required this.photos, required this.cs});
+  final List<String> photos;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    if (photos.isEmpty) {
+      return Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: cs.primaryContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(Icons.bolt, color: cs.primary, size: 28),
+      );
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image.network(
+        photos.first,
+        width: 52,
+        height: 52,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          width: 52,
+          height: 52,
+          color: cs.primaryContainer,
+          child: Icon(Icons.bolt, color: cs.primary, size: 28),
+        ),
       ),
     );
   }
