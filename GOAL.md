@@ -41,16 +41,19 @@
 - Conflict UX: booked range chips turn red/filled when selected dates overlap
 - Home screen: "Popular in [City]" horizontal section (top city auto-detected)
 - Profile: inline phone number edit/add via dialog
+- Gallery: swipe-down-to-dismiss with scale/opacity feedback + thumbnail strip
+- GeneratorCard: press-scale animation (97% on tap-down, elastic back)
+- Detail screen fav button: elastic bounce via TweenAnimationBuilder + Curves.elasticOut
 
 ---
 
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Push notifications: FCM integration with Supabase edge function (or in-app only banner)
-- [ ] Global: pull-to-refresh on Owner Dashboard and My Rentals lists
-- [ ] Generator detail: photo gallery swipe (tap photo → full-screen swipe)
-- [ ] Global: micro-animations on state transitions (card tap, button press feedback)
+- [ ] Referral code system: users get a discount code to share with friends
+- [ ] Generator detail: "Similar generators" section at the bottom (same city or KVA range)
+- [ ] My Rentals: swipe-to-action on rental cards (swipe right = view offer/invoice, swipe left = cancel pending)
+- [ ] Admin: generator approval/rejection from the admin panel
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -75,9 +78,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: calendar green days, conflict chips, popular-in-area, phone edit`
+**Last commit:** `feat: gallery swipe-dismiss, card press animation, elastic fav bounce`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** pull-to-refresh, photo gallery swipe, micro-animations
+**Next action:** similar generators section, swipe-to-action on My Rentals, admin generator approval
 
 ---
 
