@@ -122,6 +122,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             stretch: true,
             backgroundColor: cs.surface,
             actions: [
+              IconButton(
+                icon: const Icon(Icons.map_outlined),
+                tooltip: 'Map view',
+                onPressed: () => context.push('/map'),
+              ),
               if (loggedIn) ...[
                 IconButton(
                   icon: const Icon(Icons.receipt_long_outlined),

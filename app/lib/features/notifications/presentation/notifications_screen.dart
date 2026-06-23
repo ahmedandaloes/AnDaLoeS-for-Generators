@@ -17,15 +17,13 @@ class NotificationsScreen extends ConsumerStatefulWidget {
       _NotificationsScreenState();
 }
 
-class _NotificationsScreenState
-    extends ConsumerState<NotificationsScreen> {
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   RealtimeChannel? _channel;
 
   @override
   void initState() {
     super.initState();
     _subscribeRealtime();
-    _markAllRead();
   }
 
   void _subscribeRealtime() {
@@ -58,6 +56,22 @@ class _NotificationsScreenState
         .update({'is_read': true})
         .eq('user_id', uid)
         .eq('is_read', false);
+    ref.invalidate(notificationsProvider);
+    ref.invalidate(unreadCountProvider);
+  }
+
+  Future<void> _markOneRead(String id) async {
+    await supabase
+        .from('notifications')
+        .update({'is_read': true})
+        .eq('id', id);
+    ref.invalidate(notificationsProvider);
+    ref.invalidate(unreadCountProvider);
+  }
+
+  Future<void> _dismiss(String id) async {
+    await supabase.from('notifications').delete().eq('id', id);
+    ref.invalidate(notificationsProvider);
     ref.invalidate(unreadCountProvider);
   }
 
@@ -88,124 +102,163 @@ class _NotificationsScreenState
         error: (e, _) => Center(child: Text('$e')),
         data: (items) {
           if (items.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(40),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.notifications_none_outlined,
-                        size: 56, color: cs.onSurfaceVariant),
-                    const SizedBox(height: 16),
-                    const Text('No notifications yet',
-                        style: TextStyle(
-                            fontSize: 17, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Rental updates and owner alerts will appear here.',
-                      style: TextStyle(color: cs.onSurfaceVariant),
-                      textAlign: TextAlign.center,
+            return RefreshIndicator(
+              onRefresh: () => ref.refresh(notificationsProvider.future),
+              child: ListView(
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(40),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: cs.primaryContainer,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.notifications_none_outlined,
+                                  size: 40, color: cs.primary),
+                            ),
+                            const SizedBox(height: 20),
+                            const Text('All caught up',
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Rental updates and owner alerts will appear here.',
+                              style: TextStyle(color: cs.onSurfaceVariant),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             );
           }
 
+          // Group by day
+          final groups = _groupByDay(items);
+          // Flatten into a mixed list of headers + items
+          final rows = <_Row>[];
+          for (final entry in groups.entries) {
+            rows.add(_Row.header(entry.key));
+            for (final n in entry.value) {
+              rows.add(_Row.item(n));
+            }
+          }
+
           return RefreshIndicator(
-            onRefresh: () =>
-                ref.refresh(notificationsProvider.future),
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: items.length,
-              separatorBuilder: (_, __) =>
-                  Divider(height: 1, color: cs.outlineVariant),
+            onRefresh: () => ref.refresh(notificationsProvider.future),
+            child: ListView.builder(
+              padding: const EdgeInsets.only(bottom: 24),
+              itemCount: rows.length,
               itemBuilder: (_, i) {
-                final n = items[i];
+                final row = rows[i];
+                if (row.isHeader) {
+                  return _DayHeader(label: row.label!, cs: cs);
+                }
+                final n = row.item!;
+                final id = n['id']?.toString() ?? '';
                 final isRead = n['is_read'] == true;
                 final type = n['type']?.toString() ?? '';
-                final data = n['data'] as Map<String, dynamic>? ?? {};
+                final rentalId = n['rental_request_id']?.toString();
 
-                return InkWell(
-                  onTap: () => _onNotificationTap(context, type, data),
-                  child: Container(
-                    color: isRead
-                        ? null
-                        : cs.primaryContainer.withValues(alpha: 0.18),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Icon
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: _iconBg(type, cs),
-                            shape: BoxShape.circle,
+                return Dismissible(
+                  key: ValueKey(id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    color: cs.errorContainer,
+                    child: Icon(Icons.delete_outline, color: cs.onErrorContainer),
+                  ),
+                  onDismissed: (_) => _dismiss(id),
+                  child: InkWell(
+                    onTap: () {
+                      if (!isRead) _markOneRead(id);
+                      _navigate(context, type, rentalId);
+                    },
+                    child: Container(
+                      color: isRead
+                          ? null
+                          : cs.primaryContainer.withValues(alpha: 0.15),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: _iconBg(type, cs),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(_iconFor(type),
+                                size: 20, color: _iconColor(type, cs)),
                           ),
-                          child: Icon(
-                            _iconFor(type),
-                            size: 20,
-                            color: _iconColor(type, cs),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Content
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(children: [
-                                Expanded(
-                                  child: Text(
-                                    n['title']?.toString() ?? '',
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(children: [
+                                  Expanded(
+                                    child: Text(
+                                      n['title']?.toString() ?? '',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: isRead
+                                            ? FontWeight.w500
+                                            : FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  if (!isRead)
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: cs.primary,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                ]),
+                                if (n['body'] != null) ...[
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    n['body'].toString(),
                                     style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: isRead
-                                          ? FontWeight.w500
-                                          : FontWeight.w700,
+                                      fontSize: 13,
+                                      color: cs.onSurfaceVariant,
+                                      height: 1.4,
                                     ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                                if (!isRead)
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: cs.primary,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                              ]),
-                              if (n['body'] != null) ...[
-                                const SizedBox(height: 3),
+                                ],
+                                const SizedBox(height: 4),
                                 Text(
-                                  n['body'].toString(),
+                                  _timeAgo(DateTime.tryParse(
+                                          n['created_at']?.toString() ?? '') ??
+                                      DateTime.now()),
                                   style: TextStyle(
-                                    fontSize: 13,
-                                    color: cs.onSurfaceVariant,
-                                    height: 1.4,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                                      fontSize: 11,
+                                      color: cs.onSurfaceVariant),
                                 ),
                               ],
-                              const SizedBox(height: 4),
-                              Text(
-                                _timeAgo(
-                                    DateTime.tryParse(
-                                        n['created_at']?.toString() ?? '') ??
-                                        DateTime.now()),
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: cs.onSurfaceVariant),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -217,11 +270,43 @@ class _NotificationsScreenState
     );
   }
 
-  void _onNotificationTap(
-      BuildContext context, String type, Map<String, dynamic> data) {
+  // Group notifications into Today / Yesterday / date buckets
+  Map<String, List<Map<String, dynamic>>> _groupByDay(
+      List<Map<String, dynamic>> items) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final groups = <String, List<Map<String, dynamic>>>{};
+
+    for (final n in items) {
+      final ts = DateTime.tryParse(n['created_at']?.toString() ?? '');
+      if (ts == null) continue;
+      final day = DateTime(ts.year, ts.month, ts.day);
+      String label;
+      if (day == today) {
+        label = 'Today';
+      } else if (day == yesterday) {
+        label = 'Yesterday';
+      } else {
+        label = '${day.day}/${day.month}/${day.year}';
+      }
+      groups.putIfAbsent(label, () => []).add(n);
+    }
+    return groups;
+  }
+
+  void _navigate(BuildContext context, String type, String? rentalId) {
     switch (type) {
+      case 'request_accepted':
+      case 'request_rejected':
+      case 'rental_started':
+      case 'rental_completed':
       case 'rental_status':
-        context.push('/my-rentals');
+        if (rentalId != null) {
+          context.push('/receipt/$rentalId');
+        } else {
+          context.push('/my-rentals');
+        }
       case 'new_request':
         context.push('/owner-dashboard');
       default:
@@ -230,20 +315,29 @@ class _NotificationsScreenState
   }
 
   IconData _iconFor(String type) => switch (type) {
-        'rental_status' => Icons.receipt_long_outlined,
+        'request_accepted' => Icons.check_circle_outline,
+        'request_rejected' => Icons.cancel_outlined,
+        'rental_started' => Icons.bolt_outlined,
+        'rental_completed' => Icons.verified_outlined,
         'new_request' => Icons.notifications_active_outlined,
+        'rental_status' => Icons.receipt_long_outlined,
         _ => Icons.info_outline,
       };
 
   Color _iconBg(String type, ColorScheme cs) => switch (type) {
-        'rental_status' => cs.secondaryContainer,
-        'new_request' => cs.primaryContainer,
+        'request_accepted' || 'rental_completed' =>
+          Colors.green.withValues(alpha: 0.12),
+        'request_rejected' => cs.errorContainer,
+        'rental_started' => cs.primaryContainer,
+        'new_request' => cs.secondaryContainer,
         _ => cs.surfaceContainerHighest,
       };
 
   Color _iconColor(String type, ColorScheme cs) => switch (type) {
-        'rental_status' => cs.onSecondaryContainer,
-        'new_request' => cs.onPrimaryContainer,
+        'request_accepted' || 'rental_completed' => Colors.green.shade700,
+        'request_rejected' => cs.error,
+        'rental_started' => cs.primary,
+        'new_request' => cs.onSecondaryContainer,
         _ => cs.onSurfaceVariant,
       };
 
@@ -254,5 +348,42 @@ class _NotificationsScreenState
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+}
+
+class _Row {
+  const _Row.header(String label)
+      : isHeader = true,
+        label = label,
+        item = null;
+  const _Row.item(Map<String, dynamic> item)
+      : isHeader = false,
+        label = null,
+        item = item;
+
+  final bool isHeader;
+  final String? label;
+  final Map<String, dynamic>? item;
+}
+
+class _DayHeader extends StatelessWidget {
+  const _DayHeader({required this.label, required this.cs});
+  final String label;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: cs.onSurfaceVariant,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
   }
 }

@@ -13,6 +13,7 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/company/presentation/company_onboarding_screen.dart';
 import '../../features/generators/presentation/generator_detail_screen.dart';
 import '../../features/generators/presentation/home_screen.dart';
+import '../../features/generators/presentation/map_screen.dart';
 import '../../features/company/presentation/company_profile_screen.dart';
 import '../../features/owner_dashboard/presentation/add_generator_screen.dart';
 import '../../features/owner_dashboard/presentation/edit_generator_screen.dart';
@@ -55,6 +56,7 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
   },
   routes: [
     GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
+    GoRoute(path: '/map', builder: (_, __) => const MapScreen()),
     GoRoute(
         path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
     GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
