@@ -45,6 +45,30 @@ final generatorReviewsProvider =
   return (data as List).cast<Map<String, dynamic>>();
 });
 
+// Avg hours an owner takes to respond (accept/reject) — computed client-side
+// from updated_at - created_at for non-pending requests.
+final avgResponseTimeProvider =
+    FutureProvider.autoDispose.family<int?, String>((ref, companyId) async {
+  if (companyId.isEmpty) return null;
+  final data = await supabase
+      .from('rental_requests')
+      .select('created_at, updated_at, status')
+      .eq('company_id', companyId)
+      .inFilter('status', ['accepted', 'rejected'])
+      .limit(50);
+  final list = (data as List).cast<Map<String, dynamic>>();
+  if (list.isEmpty) return null;
+  int totalMinutes = 0;
+  for (final r in list) {
+    try {
+      final created = DateTime.parse(r['created_at'].toString());
+      final updated = DateTime.parse(r['updated_at'].toString());
+      totalMinutes += updated.difference(created).inMinutes;
+    } catch (_) {}
+  }
+  return (totalMinutes / list.length).round(); // avg minutes
+});
+
 final isFavProvider =
     FutureProvider.autoDispose.family<bool, String>((ref, id) async {
   final uid = supabase.auth.currentUser?.id;

@@ -8,7 +8,7 @@ final generatorsProvider =
   final data = await supabase
       .from('generators')
       .select(
-          'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type')
+          'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, companies(name)')
       .eq('status', 'available')
       .order('created_at', ascending: false);
   return (data as List).cast<Map<String, dynamic>>();
@@ -42,7 +42,7 @@ final featuredGeneratorsProvider =
   final data = await supabase
       .from('generators')
       .select(
-          'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type')
+          'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, companies(name)')
       .eq('status', 'available')
       .gte('avg_score', 4.0)
       .order('avg_score', ascending: false)

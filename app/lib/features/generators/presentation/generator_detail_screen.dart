@@ -61,7 +61,9 @@ class _Body extends ConsumerWidget {
     final company = gen['companies'] as Map<String, dynamic>?;
     final photos = (gen['photos'] as List?)?.cast<String>() ?? [];
     final generatorId = gen['id'].toString();
+    final companyId = gen['company_id']?.toString() ?? '';
     final reviewsAsync = ref.watch(generatorReviewsProvider(generatorId));
+    final responseTimeAsync = ref.watch(avgResponseTimeProvider(companyId));
     final bookedAsync = ref.watch(bookedDatesProvider(generatorId));
     final similarAsync = ref.watch(similarGeneratorsProvider(gen));
 
@@ -168,6 +170,45 @@ class _Body extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
+                  // Avg response time badge
+                  responseTimeAsync.maybeWhen(
+                    data: (mins) {
+                      if (mins == null || mins <= 0) {
+                        return const SizedBox.shrink();
+                      }
+                      final label = mins < 60
+                          ? '~$mins min'
+                          : mins < 1440
+                              ? '~${(mins / 60).round()} hr'
+                              : '~${(mins / 1440).round()} day';
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: Colors.green.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            Icon(Icons.timer_outlined,
+                                size: 11, color: Colors.green.shade700),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Responds in $label',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.green.shade700),
+                            ),
+                          ]),
+                        ),
+                      );
+                    },
+                    orElse: () => const SizedBox.shrink(),
+                  ),
                 ],
                 Row(
                   children: [

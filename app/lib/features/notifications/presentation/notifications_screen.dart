@@ -107,22 +107,74 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               child: ListView(
                 children: [
                   SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.6,
+                    height: MediaQuery.of(context).size.height * 0.65,
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.all(40),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: cs.primaryContainer,
-                                shape: BoxShape.circle,
+                            // Layered bell illustration
+                            SizedBox(
+                              width: 100,
+                              height: 100,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // Outer glow ring
+                                  Container(
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: cs.primaryContainer
+                                          .withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  // Mid ring
+                                  Container(
+                                    width: 76,
+                                    height: 76,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: cs.primaryContainer
+                                          .withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                  // Inner circle
+                                  Container(
+                                    width: 56,
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: cs.primaryContainer,
+                                    ),
+                                    child: Icon(
+                                      Icons.notifications_none_outlined,
+                                      size: 28,
+                                      color: cs.primary,
+                                    ),
+                                  ),
+                                  // Small checkmark badge
+                                  Positioned(
+                                    bottom: 8,
+                                    right: 8,
+                                    child: Container(
+                                      width: 22,
+                                      height: 22,
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.shade500,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                            color: cs.surface, width: 2),
+                                      ),
+                                      child: const Icon(Icons.check,
+                                          size: 12,
+                                          color: Colors.white),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              child: Icon(Icons.notifications_none_outlined,
-                                  size: 40, color: cs.primary),
                             ),
                             const SizedBox(height: 20),
                             const Text('All caught up',

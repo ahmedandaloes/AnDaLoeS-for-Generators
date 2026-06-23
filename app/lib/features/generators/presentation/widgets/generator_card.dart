@@ -19,6 +19,7 @@ class GeneratorCard extends ConsumerWidget {
     final location = [generator['city'], generator['governorate']]
         .where((v) => v != null && v.toString().isNotEmpty)
         .join(', ');
+    final companyName = (generator['companies'] as Map<String, dynamic>?)?['name']?.toString();
 
     return Card(
       child: InkWell(
@@ -77,6 +78,26 @@ class GeneratorCard extends ConsumerWidget {
                           ),
                         ),
                     ]),
+                    if (companyName != null) ...[
+                      const SizedBox(height: 2),
+                      Row(children: [
+                        Icon(Icons.storefront_outlined,
+                            size: 11,
+                            color: cs.onSurfaceVariant.withValues(alpha: 0.7)),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            companyName,
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: cs.onSurfaceVariant
+                                    .withValues(alpha: 0.8)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ]),
+                    ],
                     const SizedBox(height: 4),
                     Row(children: [
                       GeneratorAttributeChip(
