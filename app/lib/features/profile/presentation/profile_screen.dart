@@ -6,6 +6,19 @@ import '../../../core/config/supabase.dart';
 import '../../../core/localization/locale_provider.dart';
 import '../../../l10n/app_localizations.dart';
 
+// Fetches the user's profile row (full_name, phone, role).
+final _profileDataProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) return null;
+  final data = await supabase
+      .from('profiles')
+      .select('full_name, phone, role')
+      .eq('id', uid)
+      .maybeSingle();
+  return data;
+});
+
 // Counts pending rental requests across all generators the user owns.
 final _pendingRequestsCountProvider =
     FutureProvider.autoDispose<int>((ref) async {
@@ -27,15 +40,22 @@ class ProfileScreen extends ConsumerWidget {
     final l = AppLocalizations.of(context)!;
     final user = supabase.auth.currentUser;
     final cs = Theme.of(context).colorScheme;
+    final profileAsync = ref.watch(_profileDataProvider);
 
     final email = user?.email;
     final phone = user?.phone;
     final isAnon = user?.isAnonymous ?? false;
-    final initial = email?.isNotEmpty == true
-        ? email![0].toUpperCase()
-        : phone?.isNotEmpty == true
-            ? phone![0]
-            : '?';
+    final fullName = profileAsync.valueOrNull?['full_name']?.toString();
+    final displayName = fullName?.isNotEmpty == true
+        ? fullName!
+        : (email ?? phone ?? (isAnon ? 'Guest' : 'User'));
+    final initial = fullName?.isNotEmpty == true
+        ? fullName![0].toUpperCase()
+        : email?.isNotEmpty == true
+            ? email![0].toUpperCase()
+            : phone?.isNotEmpty == true
+                ? phone![0]
+                : '?';
 
     return Scaffold(
       body: CustomScrollView(
@@ -90,15 +110,28 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        isAnon
-                            ? 'Guest user'
-                            : (email ?? phone ?? 'User'),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: cs.onSurface,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            isAnon ? 'Guest user' : displayName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: cs.onSurface,
+                            ),
+                          ),
+                          if (!isAnon) ...[
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () =>
+                                  _editName(context, ref, fullName ?? ''),
+                              child: Icon(Icons.edit_outlined,
+                                  size: 16,
+                                  color: cs.onSurface.withValues(alpha: 0.5)),
+                            ),
+                          ],
+                        ],
                       ),
                       if (isAnon)
                         Container(
@@ -328,6 +361,46 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _editName(
+      BuildContext context, WidgetRef ref, String current) async {
+    final controller = TextEditingController(text: current);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Display name'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Your name',
+            hintText: 'e.g. Ahmed Mostafa',
+          ),
+          textCapitalization: TextCapitalization.words,
+          onSubmitted: (v) => Navigator.pop(context, v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.pop(context, controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (newName == null || newName.isEmpty) return;
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+    await supabase
+        .from('profiles')
+        .update({'full_name': newName}).eq('id', uid);
+    ref.invalidate(_profileDataProvider);
   }
 }
 
