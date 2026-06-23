@@ -163,6 +163,50 @@ nothing actually collects cash commission yet. Re-word the owner label once deci
 
 ---
 
+## 🏆 Market-Readiness Roadmap (business experts 2026-06-24)
+Story + market-challenge analysis in `docs/PRODUCT_STORY.md`. Synthesized from
+product-strategy + marketplace-growth + monetization experts. Theme tags; effort
+in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
+
+### Fulfillment & Trust (on-time + confidence — the core promise)
+- [ ] [NOW] Owner SLA acceptance clock — auto-expire requests ignored past a window (e.g. 4h)
+- [ ] [NOW] Delivery confirmation — owner "out for delivery" → customer "received" (opt. photo) → ACTIVE, timestamped
+- [ ] [NOW] Security deposit field (generator → rental_request; record-only now, hold later) — foundation of the trust layer
+- [ ] [NOW] Verified-owner badge from company-approval state on cards/detail (wire the unused company_documents)
+- [ ] [SOON] Fulfillment status timeline on the ticket (accepted→preparing→en route→delivered→active→returned)
+- [ ] [SOON] Owner reliability score (on-time %, acceptance, cancellation) shown on listings
+- [ ] [SOON] Two-sided dispute/claim flow (extend reports: damage/no-show/wrong-spec + evidence + admin adjudication)
+- [ ] [SOON] Cancellation policy + penalties (windows, strikes, auto-suspend repeat offenders)
+- [ ] [LATER] Backup-fulfillment fallback — suggest nearest equivalent when an accepted owner cancels late
+
+### Growth (supply, demand, liquidity)
+- [ ] [NOW] Public web listing pages (no-auth, SEO/Arabic URLs) per generator/company — organic discovery
+- [ ] [NOW] WhatsApp deep-link sharing with rich preview (photo+kVA+rate+city), app/web fallback
+- [ ] [NOW] Cairo+Alexandria supply-liquidity tracker (listings/city, %cities ≥N, request-without-match rate)
+- [ ] [SOON] Owner quick-add / bulk listing flow (migrate OLX/Facebook owners with low friction)
+- [ ] [SOON] Saved searches + "new match" alerts (reuse notifications + use_cases)
+- [ ] [SOON] Two-sided referral invites with deep links (attribution; credit value = monetization)
+- [ ] [SOON] First-booking nudge sequence (browse→request drop-off, segment-aware copy)
+- [ ] [LATER] Seasonal summer-demand campaign hooks; repeat/re-book loop for telecom/agri; listing-quality score
+
+### Monetization (revenue path forward)
+- [ ] [NOW] Owner balance/statement view over the commission ledger (re-word provisional "platform fee")
+- [ ] [NOW] Owner subscription + featured-listing fees — leakage-proof, collectable without a gateway (Med; needs a digital charge endpoint)
+- [ ] [NOW] Unpaid-balance listing-suspension rule (anti-churn for the cash ledger)
+- [ ] [SOON] Fawry pay-against-code — turn cash into platform-collected funds so % auto-deducts (High; owner = payout recipient)
+- [ ] [SOON] Paymob/Kashier escrow — collect rent, auto-deduct, mass-payout ≤3 days (High; owner merchant acct)
+- [ ] [SOON] Anti-leakage detection + penalty tiers; tiered/per-company rates (commission_config already supports override)
+- [ ] [LATER] Damage protection/insurance add-on (justifies 12–15% take); CBE payment-facilitator compliance review (gates escrow)
+
+### Tax & Compliance (Egypt — like Uber; get professional advice first)
+- [ ] [NOW] VAT (14%) line + company tax-registration number on the Tax Invoice screen
+- [ ] [NOW] Sequential immutable invoice/receipt numbers
+- [ ] [NOW] Accounting export from Revenue tab (date-range CSV: commissions, payments, VAT collected)
+- [ ] [SOON] Owner payout statements (for owner income reporting; WHT if required)
+- [ ] [LATER] ETA e-invoicing integration (needs tax registration + ETA onboarding); confirm corporate tax/WHT with an Egyptian accountant
+
+---
+
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
 **Working branch:** `development` (main is integration/release)
