@@ -202,7 +202,16 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 - [x] [NOW] Sequential immutable invoice numbers (DB 0028: invoice_seq + invoice_no stamped on completion via BEFORE trigger; invoice shows INV-001001…)
 - [ ] [NOW] Accounting export from Revenue tab (date-range CSV: commissions, payments, VAT collected)
 - [ ] [SOON] Owner payout statements (for owner income reporting; WHT if required)
+- [x] [NOW] Commission + VAT accounting export from Revenue tab (CSV)
+- [x] [NOW] Configurable customer tax (tax_config: rate/label/when; admin-editable) — owner sets dad's real % (e.g. 2% on invoice). Confirm with accountant.
+- [ ] [SOON] Owner payout statements (for owner income reporting; WHT if required)
 - [ ] [LATER] ETA e-invoicing integration (needs tax registration + ETA onboarding); confirm corporate tax/WHT with an Egyptian accountant
+
+### Owner directives (2026-06-24) — to schedule
+- [ ] [NOW] Role separation hardening — customer actions only for customers, owner actions only for owners: audit RLS + UI gating end-to-end (security-rls-auditor). Verify no role can invoke another's actions.
+- [ ] [SOON] Admin: multiple support dashboards — ops/health views to handle problems (e.g. stuck rentals, overdue active, unmatched requests, failed payments, flagged users, system health) beyond the current 6 tabs.
+- [ ] [SOON] Calendar access — add a rental's dates to the device calendar (add_2_calendar / ICS); reminders for start/return.
+- [ ] [SOON] Notification access — device push notifications (FCM + flutter_local_notifications) with permission request; currently only in-app realtime. Needs native config (android/ios gitignored) + FCM setup.
 
 ---
 
