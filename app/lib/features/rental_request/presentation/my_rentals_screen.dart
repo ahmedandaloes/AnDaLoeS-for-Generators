@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
 
@@ -16,11 +17,66 @@ final myRentalsProvider =
   return (data as List).cast<Map<String, dynamic>>();
 });
 
-class MyRentalsScreen extends ConsumerWidget {
+const _statusLabels = {
+  'accepted': 'Rental accepted',
+  'rejected': 'Rental rejected',
+  'active': 'Rental is now active',
+  'completed': 'Rental completed',
+  'cancelled': 'Rental cancelled',
+};
+
+class MyRentalsScreen extends ConsumerStatefulWidget {
   const MyRentalsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyRentalsScreen> createState() => _MyRentalsScreenState();
+}
+
+class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
+  RealtimeChannel? _channel;
+
+  @override
+  void initState() {
+    super.initState();
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+    _channel = supabase
+        .channel('my-rentals-$uid')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'rental_requests',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'customer_id',
+            value: uid,
+          ),
+          callback: (payload) {
+            ref.invalidate(myRentalsProvider);
+            final newStatus =
+                (payload.newRecord['status'] as String?) ?? '';
+            final label = _statusLabels[newStatus];
+            if (label != null && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(label),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ));
+            }
+          },
+        )
+        .subscribe();
+  }
+
+  @override
+  void dispose() {
+    _channel?.unsubscribe();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final rentals = ref.watch(myRentalsProvider);
     final cs = Theme.of(context).colorScheme;
 
