@@ -34,6 +34,13 @@ define new agents when a durable capability gap appears.
 | `code-architect` | System design, module boundaries, layering, scalability, refactors. |
 | `security-architect` | Threat modeling, trust boundaries, authz model, defense-in-depth. |
 | `data-architect` | Schema/data modeling, integrity constraints, indexing, migration safety. |
+| `feature-structure-guardian` | Enforces feature-first structure — correct file placement, no cross-feature coupling, ≤800-line files. Prevents "wrong code." |
+
+## Design (UI/UX — clean, Uber-grade)
+| Agent | Expertise |
+|-------|-----------|
+| `ui-ux-design-expert` | UX flows + visual review toward a minimal, Uber-clean aesthetic. Specifies improvements. |
+| `design-system-expert` | Owns the Material 3 theme + tokens (spacing/type/color/radius/elevation) + shared primitives for app-wide consistency. |
 
 ## Build (domain experts)
 | Agent | Expertise |
