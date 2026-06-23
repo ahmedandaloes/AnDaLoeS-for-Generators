@@ -168,7 +168,7 @@ product-strategy + marketplace-growth + monetization experts. Theme tags; effort
 in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 
 ### Fulfillment & Trust (on-time + confidence — the core promise)
-- [ ] [NOW] Owner SLA acceptance clock — auto-expire requests ignored past a window (e.g. 4h)
+- [~] [NOW] Owner SLA: pending requests show "requested Xh ago" urgency chip (green<1h→amber<4h→red) nudging fast accept. Auto-expire (needs cron/edge fn) → SOON.
 - [ ] [NOW] Delivery confirmation — owner "out for delivery" → customer "received" (opt. photo) → ACTIVE, timestamped
 - [x] [NOW] Security deposit field (generator + rental_request, DB 0027) — owner sets it, shown to customer at booking, stored on the request
 - [ ] [NOW] Verified-owner badge from company-approval state on cards/detail (wire the unused company_documents)
