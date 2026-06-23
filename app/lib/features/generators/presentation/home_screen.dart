@@ -191,7 +191,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         filter.maxPrice != null;
 
     return Scaffold(
-      body: CustomScrollView(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(generatorsProvider);
+          ref.invalidate(_remoteFavoritesProvider);
+        },
+        child: CustomScrollView(
         slivers: [
           // ── Brand header ─────────────────────────────────────────────
           SliverAppBar(
@@ -597,6 +602,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             },
           ),
         ],
+        ),
       ),
     );
   }
@@ -763,15 +769,59 @@ class _GeneratorCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      generator['title']?.toString() ?? '-',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.2,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            generator['title']?.toString() ?? '-',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if ((generator['avg_score'] as num?)
+                                    ?.toDouble() !=
+                                null &&
+                            (generator['avg_score'] as num).toDouble() >=
+                                4.5 &&
+                            (generator['rating_count'] as num?)
+                                    ?.toInt() !=
+                                null &&
+                            (generator['rating_count'] as num).toInt() >=
+                                3)
+                          Container(
+                            margin: const EdgeInsets.only(left: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.shade50,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                  color: Colors.amber.shade300),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.star_rounded,
+                                    size: 10,
+                                    color: Colors.amber.shade700),
+                                const SizedBox(width: 2),
+                                Text(
+                                  'Top',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.amber.shade800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Row(

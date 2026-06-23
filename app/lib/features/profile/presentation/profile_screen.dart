@@ -1,6 +1,8 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/config/supabase.dart';
 import '../../../core/localization/locale_provider.dart';
@@ -14,7 +16,7 @@ final _profileDataProvider =
   if (uid == null) return null;
   final data = await supabase
       .from('profiles')
-      .select('full_name, phone, role')
+      .select('full_name, phone, role, avatar_url')
       .eq('id', uid)
       .maybeSingle();
   return data;
@@ -67,6 +69,7 @@ class ProfileScreen extends ConsumerWidget {
     final phone = user?.phone;
     final isAnon = user?.isAnonymous ?? false;
     final fullName = profileAsync.valueOrNull?['full_name']?.toString();
+    final avatarUrl = profileAsync.valueOrNull?['avatar_url']?.toString();
     final displayName = fullName?.isNotEmpty == true
         ? fullName!
         : (email ?? phone ?? (isAnon ? 'Guest' : 'User'));
@@ -104,30 +107,64 @@ class ProfileScreen extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(height: 32),
-                      // Avatar
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: cs.primary,
-                          boxShadow: [
-                            BoxShadow(
-                              color: cs.primary.withValues(alpha: 0.3),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
+                      // Avatar — tap to upload
+                      GestureDetector(
+                        onTap: isAnon
+                            ? null
+                            : () => _uploadAvatar(context, ref, cs),
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: cs.primary,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: cs.primary.withValues(alpha: 0.3),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                                image: avatarUrl != null
+                                    ? DecorationImage(
+                                        image: NetworkImage(avatarUrl),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
+                              ),
+                              child: avatarUrl == null
+                                  ? Center(
+                                      child: Text(
+                                        initial,
+                                        style: TextStyle(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.w700,
+                                          color: cs.onPrimary,
+                                        ),
+                                      ),
+                                    )
+                                  : null,
                             ),
+                            if (!isAnon)
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: cs.primary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: cs.surface, width: 2),
+                                  ),
+                                  child: Icon(Icons.camera_alt,
+                                      size: 12, color: cs.onPrimary),
+                                ),
+                              ),
                           ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            initial,
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w700,
-                              color: cs.onPrimary,
-                            ),
-                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -510,6 +547,60 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _uploadAvatar(
+      BuildContext context, WidgetRef ref, ColorScheme cs) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    final bytes = file.bytes;
+    if (bytes == null) return;
+
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+
+    final ext = (file.extension ?? 'jpg').toLowerCase();
+    final storagePath = '$uid/avatar.$ext';
+
+    try {
+      await supabase.storage.from('avatars').uploadBinary(
+            storagePath,
+            bytes,
+            fileOptions: FileOptions(
+              contentType: 'image/$ext',
+              upsert: true,
+            ),
+          );
+
+      final publicUrl =
+          supabase.storage.from('avatars').getPublicUrl(storagePath);
+
+      await supabase
+          .from('profiles')
+          .update({'avatar_url': publicUrl}).eq('id', uid);
+
+      ref.invalidate(_profileDataProvider);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile photo updated'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _editName(
