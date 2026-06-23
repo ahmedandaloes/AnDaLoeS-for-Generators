@@ -50,6 +50,10 @@ final featuredGeneratorsProvider =
   return (data as List).cast<Map<String, dynamic>>();
 });
 
+// Recently viewed generators — last 5, stored as full maps for instant display.
+final recentlyViewedProvider =
+    StateProvider<List<Map<String, dynamic>>>((ref) => const []);
+
 // Autocomplete suggestions based on partial query (min 2 chars).
 final autocompleteProvider =
     FutureProvider.autoDispose.family<List<String>, String>((ref, q) async {

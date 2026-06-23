@@ -331,6 +331,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: _FeaturedCarousel(ref: ref, cs: cs),
           ),
 
+          // ── Recently viewed ───────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: _RecentlyViewed(ref: ref, cs: cs),
+          ),
+
           // ── Section header + sort ─────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
@@ -949,4 +954,141 @@ class _FeaturedCard extends StatelessWidget {
         color: cs.primaryContainer,
         child: Icon(Icons.bolt, size: 36, color: cs.primary),
       );
+}
+
+// ── Recently Viewed Section ───────────────────────────────────────────────────
+class _RecentlyViewed extends StatelessWidget {
+  const _RecentlyViewed({required this.ref, required this.cs});
+  final WidgetRef ref;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final recent = ref.watch(recentlyViewedProvider);
+    if (recent.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
+          child: Row(children: [
+            Icon(Icons.history_rounded,
+                size: 16, color: cs.onSurfaceVariant),
+            const SizedBox(width: 6),
+            Text('Recently viewed',
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: cs.onSurface)),
+            const Spacer(),
+            GestureDetector(
+              onTap: () =>
+                  ref.read(recentlyViewedProvider.notifier).state = [],
+              child: Text('Clear',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: cs.onSurfaceVariant,
+                      decoration: TextDecoration.underline,
+                      decorationColor:
+                          cs.onSurfaceVariant.withValues(alpha: 0.4))),
+            ),
+          ]),
+        ),
+        SizedBox(
+          height: 88,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            itemCount: recent.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, i) =>
+                _RecentCard(gen: recent[i], cs: cs),
+          ),
+        ),
+        const SizedBox(height: 4),
+      ],
+    );
+  }
+}
+
+class _RecentCard extends StatelessWidget {
+  const _RecentCard({required this.gen, required this.cs});
+  final Map<String, dynamic> gen;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final photos = (gen['photos'] as List?)?.cast<String>() ?? [];
+    final photo = photos.isNotEmpty ? photos.first : null;
+    final title = gen['title']?.toString() ?? '-';
+    final price = gen['price_per_day'];
+    final city = gen['city']?.toString() ?? '';
+
+    return GestureDetector(
+      onTap: () => context.push('/generators/${gen['id']}'),
+      child: Container(
+        width: 130,
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
+        ),
+        child: Row(children: [
+          // Photo strip on left
+          ClipRRect(
+            borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(11)),
+            child: photo != null
+                ? Image.network(photo,
+                    width: 44, height: 88, fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                          width: 44,
+                          color: cs.primaryContainer,
+                          child: Icon(Icons.bolt,
+                              size: 20, color: cs.primary),
+                        ))
+                : Container(
+                    width: 44,
+                    color: cs.primaryContainer,
+                    child: Icon(Icons.bolt, size: 20, color: cs.primary),
+                  ),
+          ),
+          // Info
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 8, vertical: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 3),
+                  if (city.isNotEmpty)
+                    Text(city,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 10, color: cs.onSurfaceVariant)),
+                  if (price != null) ...[
+                    const SizedBox(height: 2),
+                    Text('EGP $price',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: cs.primary)),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
 }

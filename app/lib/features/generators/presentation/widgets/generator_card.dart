@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/supabase.dart';
-import '../../providers/generators_providers.dart' show favoritesProvider;
+import '../../providers/generators_providers.dart'
+    show favoritesProvider, recentlyViewedProvider;
 import 'fuel_chip.dart';
 
 class GeneratorCard extends ConsumerWidget {
@@ -24,7 +25,18 @@ class GeneratorCard extends ConsumerWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => context.push('/generators/${generator['id']}'),
+        onTap: () {
+          // Track recently viewed
+          final current =
+              ref.read(recentlyViewedProvider);
+          final id = generator['id']?.toString() ?? '';
+          final updated = [
+            generator,
+            ...current.where((g) => g['id']?.toString() != id),
+          ].take(5).toList();
+          ref.read(recentlyViewedProvider.notifier).state = updated;
+          context.push('/generators/${generator['id']}');
+        },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(

@@ -496,9 +496,20 @@ class _GeneratorDetailWrapperState
     final cached = ref.read(generatorDetailProvider(id)).valueOrNull;
     final title = cached?['title']?.toString() ?? 'a generator';
     final kva = cached?['capacity_kva'];
-    final text = kva != null
-        ? 'Check out $title ($kva KVA) on AnDaLoeS for Generators!'
-        : 'Check out $title on AnDaLoeS for Generators!';
+    final price = cached?['price_per_day'];
+    final city = cached?['city']?.toString();
+    final gov = cached?['governorate']?.toString();
+    final location = [city, gov]
+        .where((v) => v != null && v.isNotEmpty)
+        .join(', ');
+    final parts = <String>[
+      title,
+      if (kva != null) '$kva KVA',
+      if (price != null) 'EGP $price/day',
+      if (location.isNotEmpty) location,
+    ];
+    final text =
+        '${parts.join(' · ')}\n\nFind it on AnDaLoeS for Generators 🔌';
     await Share.share(text, subject: title);
   }
 

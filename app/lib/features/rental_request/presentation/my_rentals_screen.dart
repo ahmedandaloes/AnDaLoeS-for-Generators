@@ -200,14 +200,87 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                     ),
                   );
                 }
+                // Spending summary at top of Done tab
+                Widget? header;
+                if (tabIndex == 3 && filtered.isNotEmpty) {
+                  final completedOnly = filtered
+                      .where((r) => r['status'] == 'completed')
+                      .toList();
+                  final total = completedOnly.fold<num>(
+                      0,
+                      (sum, r) =>
+                          sum + ((r['price_total'] as num?) ?? 0));
+                  if (total > 0) {
+                    header = Container(
+                      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.green.shade700,
+                            Colors.green.shade500,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(children: [
+                        const Icon(Icons.payments_outlined,
+                            color: Colors.white, size: 20),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            const Text('Total spent',
+                                style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11)),
+                            Text('EGP ${total.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.5)),
+                          ],
+                        ),
+                        const Spacer(),
+                        Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.end,
+                          children: [
+                            const Text('Rentals completed',
+                                style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11)),
+                            Text('${completedOnly.length}',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800)),
+                          ],
+                        ),
+                      ]),
+                    );
+                  }
+                }
+
                 return RefreshIndicator(
                   onRefresh: () => ref.refresh(myRentalsProvider.future),
                   child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filtered.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (ctx, i) => _RentalCard(
-                        rental: filtered[i], cs: cs, ref: ref),
+                    padding: EdgeInsets.fromLTRB(
+                        16, header != null ? 8 : 16, 16, 16),
+                    itemCount:
+                        filtered.length + (header != null ? 1 : 0),
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: 12),
+                    itemBuilder: (ctx, i) {
+                      if (header != null && i == 0) return header;
+                      final idx = header != null ? i - 1 : i;
+                      return _RentalCard(
+                          rental: filtered[idx], cs: cs, ref: ref);
+                    },
                   ),
                 );
               }),

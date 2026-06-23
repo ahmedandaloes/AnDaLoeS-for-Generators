@@ -57,13 +57,21 @@ final _earningsProvider =
   };
 });
 
-class OwnerEarningsScreen extends ConsumerWidget {
+class OwnerEarningsScreen extends ConsumerStatefulWidget {
   const OwnerEarningsScreen({super.key, required this.companyId});
   final String companyId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final earningsAsync = ref.watch(_earningsProvider(companyId));
+  ConsumerState<OwnerEarningsScreen> createState() =>
+      _OwnerEarningsScreenState();
+}
+
+class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
+  String? _selectedMonth; // null = all time
+
+  @override
+  Widget build(BuildContext context) {
+    final earningsAsync = ref.watch(_earningsProvider(widget.companyId));
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -72,20 +80,74 @@ class OwnerEarningsScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
         data: (data) {
-          final rentals =
+          final allRentals =
               (data['rentals'] as List).cast<Map<String, dynamic>>();
           final commissionMap =
               data['commission_map'] as Map<String, dynamic>;
-          final totalRevenue = data['total_revenue'] as double;
-          final totalCommissions = data['total_commissions'] as double;
-          final netPayout = data['net_payout'] as double;
+          final monthlyNet = data['monthly_net'] as Map<String, double>;
+          final months = monthlyNet.keys.toList();
+
+          // Filter rentals by selected month
+          final rentals = _selectedMonth == null
+              ? allRentals
+              : allRentals.where((r) {
+                  final raw = r['start_date']?.toString() ?? '';
+                  return raw.length >= 7 &&
+                      raw.substring(0, 7) == _selectedMonth;
+                }).toList();
+
+          // Recompute totals for selected period
+          final totalRevenue = rentals.fold<double>(
+              0,
+              (s, r) =>
+                  s +
+                  (double.tryParse(r['price_total']?.toString() ?? '0') ??
+                      0));
+          final totalCommissions = rentals.fold<double>(0, (s, r) {
+            final c = commissionMap[r['id'].toString()];
+            return s +
+                (double.tryParse(
+                        c?['commission_amount']?.toString() ?? '0') ??
+                    0);
+          });
+          final netPayout = totalRevenue - totalCommissions;
 
           return RefreshIndicator(
             onRefresh: () =>
-                ref.refresh(_earningsProvider(companyId).future),
+                ref.refresh(_earningsProvider(widget.companyId).future),
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                // Month selector chips
+                if (months.isNotEmpty) ...[
+                  SizedBox(
+                    height: 36,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _MonthChip(
+                          label: 'All time',
+                          selected: _selectedMonth == null,
+                          onTap: () =>
+                              setState(() => _selectedMonth = null),
+                          cs: cs,
+                        ),
+                        const SizedBox(width: 6),
+                        ...months.reversed.map((m) => Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: _MonthChip(
+                                label: _fmtMonth(m),
+                                selected: _selectedMonth == m,
+                                onTap: () =>
+                                    setState(() => _selectedMonth = m),
+                                cs: cs,
+                              ),
+                            )),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 // Summary cards
                 Row(
                   children: [
@@ -637,5 +699,58 @@ class _AmountCol extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// ── Month chip selector ───────────────────────────────────────────────────────
+class _MonthChip extends StatelessWidget {
+  const _MonthChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    required this.cs,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? cs.primary : cs.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight:
+                selected ? FontWeight.w700 : FontWeight.w500,
+            color: selected ? cs.onPrimary : cs.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _fmtMonth(String ym) {
+  const labels = [
+    '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  try {
+    final parts = ym.split('-');
+    final m = int.parse(parts[1]);
+    return '${labels[m]} \'${parts[0].substring(2)}';
+  } catch (_) {
+    return ym;
   }
 }
