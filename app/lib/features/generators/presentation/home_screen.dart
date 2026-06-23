@@ -691,6 +691,8 @@ class _GridGeneratorCard extends StatelessWidget {
     final price = generator['price_per_day'];
     final score = (generator['avg_score'] as num?)?.toDouble() ?? 0;
     final ratingCount = (generator['rating_count'] as num?)?.toInt() ?? 0;
+    final company =
+        (generator['companies'] as Map?)?['name']?.toString() ?? '';
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -718,7 +720,24 @@ class _GridGeneratorCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 2),
+                    if (company.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1),
+                        child: Row(children: [
+                          Icon(Icons.storefront_outlined,
+                              size: 11, color: cs.onSurfaceVariant),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(company,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontSize: 10.5,
+                                    color: cs.onSurfaceVariant)),
+                          ),
+                        ]),
+                      ),
+                    const SizedBox(height: 3),
                     Text(
                         '${kva ?? '-'} KVA${city.isNotEmpty ? ' · $city' : ''}',
                         maxLines: 1,
