@@ -94,7 +94,7 @@ MEDIUM (polish):
       shown to customer at confirm + to owner on the request card (ops can fulfill).
 - [ ] Digital payment is "coming soon" stub (COD works) — tied to monetization decision
 - [ ] company_documents table unused; verify RLS airtight (hardcoded publishable key)
-- [ ] company onboarding saves city but not governorate
+- [x] company onboarding now saves governorate (was only city); location join deduped
 
 ---
 
@@ -166,7 +166,8 @@ nothing actually collects cash commission yet. Re-word the owner label once deci
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
 **Working branch:** `development` (main is integration/release)
-**Last commit:** `feat: prevent double-booking (DB 0021 exclusion constraint) + friendly accept errors`
+**Mode:** continuous loop (owner directive — no timer waits; finish item → start next).
+**Last commit:** `fix: company onboarding governorate + dedupe location`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** money-model shift — switch commission_config to ~10% percentage + show fee/payout breakdown at request time (rental-workflow + supabase-db). See docs/BUSINESS_STRATEGY.md + docs/MONETIZATION.md.
 **Strategy:** repositioned to B2B/SMB trust marketplace per market research 2026-06-23 (docs/BUSINESS_STRATEGY.md).
