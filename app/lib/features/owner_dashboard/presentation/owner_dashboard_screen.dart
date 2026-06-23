@@ -554,15 +554,83 @@ class _HistoryTab extends StatelessWidget {
             ),
           );
         }
+        // Compute earnings summary from history items
+        final completed =
+            items.where((r) => r['status'] == 'completed').toList();
+        final totalEarned = completed.fold<double>(
+          0,
+          (s, r) => s + (double.tryParse(r['price_total']?.toString() ?? '0') ?? 0),
+        );
+        final hasEarnings = completed.isNotEmpty && totalEarned > 0;
+
         return RefreshIndicator(
           onRefresh: () =>
               ref.refresh(ownerHistoryProvider(companyId).future),
           child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            itemCount: items.length + (hasEarnings ? 1 : 0),
+            separatorBuilder: (_, i) =>
+                SizedBox(height: i == 0 && hasEarnings ? 16 : 10),
             itemBuilder: (_, i) {
-              final r = items[i];
+              // First item is the earnings summary card
+              if (hasEarnings && i == 0) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.green.shade700,
+                        Colors.green.shade500,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(children: [
+                    const Icon(Icons.payments_outlined,
+                        color: Colors.white, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Total earned',
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 12)),
+                          Text(
+                            'EGP ${totalEarned.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text('Jobs done',
+                            style: TextStyle(
+                                color: Colors.white70, fontSize: 12)),
+                        Text(
+                          '${completed.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ]),
+                );
+              }
+
+              final r = items[hasEarnings ? i - 1 : i];
               final gen = r['generators'] as Map<String, dynamic>?;
               final customer = r['profiles'] as Map<String, dynamic>?;
               final status = r['status']?.toString() ?? '';

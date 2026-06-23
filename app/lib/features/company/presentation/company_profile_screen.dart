@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
@@ -10,7 +11,7 @@ final _companyProfileProvider =
         (ref, companyId) async {
   final data = await supabase
       .from('companies')
-      .select('id, name, city, governorate, phone, verification_status')
+      .select('id, name, city, governorate, contact_phone, verification_status')
       .eq('id', companyId)
       .maybeSingle();
   return data;
@@ -283,6 +284,14 @@ class _CompanyBody extends StatelessWidget {
           orElse: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
         ),
 
+        // ── Contact buttons ───────────────────────────────────────────
+        SliverToBoxAdapter(
+          child: _ContactButtons(
+            phone: company['contact_phone']?.toString(),
+            cs: cs,
+          ),
+        ),
+
         // ── Generators section ────────────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
@@ -451,6 +460,61 @@ class _CompanyGeneratorTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ContactButtons extends StatelessWidget {
+  const _ContactButtons({required this.phone, required this.cs});
+  final String? phone;
+  final ColorScheme cs;
+
+  Future<void> _call() async {
+    if (phone == null) return;
+    await launchUrl(Uri.parse('tel:$phone'));
+  }
+
+  Future<void> _whatsApp() async {
+    if (phone == null) return;
+    // Strip non-digits; prepend Egypt country code if not already present
+    final digits = phone!.replaceAll(RegExp(r'\D'), '');
+    final number = digits.startsWith('20') ? digits : '20$digits';
+    await launchUrl(
+      Uri.parse('https://wa.me/$number'),
+      mode: LaunchMode.externalApplication,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (phone == null || phone!.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Row(children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.phone_outlined, size: 16),
+            label: const Text('Call'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.green.shade700,
+              side: BorderSide(color: Colors.green.withValues(alpha: 0.4)),
+            ),
+            onPressed: _call,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: FilledButton.icon(
+            icon: const Icon(Icons.chat_outlined, size: 16),
+            label: const Text('WhatsApp'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: _whatsApp,
+          ),
+        ),
+      ]),
     );
   }
 }

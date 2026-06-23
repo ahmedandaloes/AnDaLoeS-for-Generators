@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Company profile: contact phone call/WhatsApp buttons
-- [ ] Generator detail: estimated delivery / pickup note from company
-- [ ] Home search: autocomplete suggestions from generator titles
-- [ ] Owner Dashboard: earnings summary card at top of History tab
+- [ ] Generator detail: "Ask owner" button opens WhatsApp/call sheet
+- [ ] Home: "Near you" section using stored governorate from profile
+- [ ] Rental request: estimated cost preview updates live as dates change
+- [ ] My Rentals: swipe-to-cancel on pending cards (with confirm dialog)
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,9 +87,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: governorate quick-filter chips, rental ID copy button`
+**Last commit:** `feat: company Call/WhatsApp buttons, owner history earnings summary`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** company profile call/WhatsApp buttons, home autocomplete, owner history earnings summary
+**Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 
 ---
 
