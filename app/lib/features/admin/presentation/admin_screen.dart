@@ -5,6 +5,7 @@ import '../../../core/config/supabase.dart';
 import 'admin_companies_tab.dart';
 import 'admin_generators_tab.dart';
 import 'admin_reports_tab.dart' show AdminReportsTab, openReportsProvider;
+import 'admin_revenue_tab.dart';
 import 'admin_stats_tab.dart';
 import 'admin_users_tab.dart';
 
@@ -75,7 +76,7 @@ class AdminScreen extends ConsumerWidget {
             );
           }
           return DefaultTabController(
-            length: 5,
+            length: 6,
             child: Column(
               children: [
                 TabBar(
@@ -119,6 +120,7 @@ class AdminScreen extends ConsumerWidget {
                       );
                     }),
                   ),
+                  const Tab(text: 'Revenue'),
                   const Tab(text: 'Stats'),
                   const Tab(text: 'Users'),
                 ]),
@@ -128,6 +130,7 @@ class AdminScreen extends ConsumerWidget {
                       AdminCompaniesTab(ref: ref),
                       AdminGeneratorsTab(ref: ref),
                       AdminReportsTab(ref: ref),
+                      AdminRevenueTab(ref: ref),
                       AdminStatsTab(ref: ref),
                       AdminUsersTab(ref: ref),
                     ],

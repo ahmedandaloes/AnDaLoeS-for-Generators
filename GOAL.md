@@ -127,7 +127,7 @@ owner paid out ≤3 working days → deposit released/claimed → both RATE.
       index). Owner picks them in add/edit (chips), customer filters by them in
       the browse filter sheet, shown on the detail screen. Shared
       kGeneratorUseCases constant. Operationalizes the B2B repositioning.
-- [ ] Commission: admin can edit `commission_config` rate from the panel (currently DB-only)
+- [x] Revenue: admin Revenue tab — editable commission rate, accrued-vs-settled totals, per-commission "Mark collected" (ledger model; DB 0026 admin RLS). Cash-market revenue tracking now; online auto-collect (Fawry) later.
 - [ ] Status state machine: guard invalid transitions at DB level (e.g. no rejected→active)
 - [x] Double-booking: enforce no overlapping accepted/active rentals per generator (DB 0021)
 
