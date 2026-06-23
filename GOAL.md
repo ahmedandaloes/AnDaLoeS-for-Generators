@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Profile screen: edit name/phone inline (not a separate screen)
-- [ ] Generator detail: share button in app bar (share URL with title)
-- [ ] Owner: add generator form — photo preview before upload
 - [ ] Home: city/governorate quick-filter chips from user's profile location
+- [ ] My Rentals: rental card — one-tap copy rental ID for support queries
+- [ ] Owner earnings: monthly breakdown chart (bar chart by month)
+- [ ] Company profile: verify phone number badge when phone is confirmed
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,9 +87,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: My Rentals skeleton, owner requests empty state, admin approve/reject snackbars`
+**Last commit:** `feat: photo tap-to-preview fullscreen viewer on add/edit generator`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** profile inline edit, share button, add-generator photo preview, city quick-filter chips
+**Next action:** home city quick-filter, rental ID copy, owner monthly earnings chart
 
 ---
 

@@ -176,6 +176,8 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                   ..._photos.asMap().entries.map(
                         (e) => _PhotoThumb(
                           file: e.value,
+                          index: e.key,
+                          total: _photos.length,
                           onRemove: () =>
                               setState(() => _photos.removeAt(e.key)),
                         ),
@@ -331,23 +333,91 @@ class _PhotoAddButton extends StatelessWidget {
 }
 
 class _PhotoThumb extends StatelessWidget {
-  const _PhotoThumb({required this.file, required this.onRemove});
+  const _PhotoThumb({required this.file, required this.onRemove, required this.index, required this.total});
   final File file;
   final VoidCallback onRemove;
+  final int index;
+  final int total;
+
+  void _preview(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (_) => GestureDetector(
+        onTap: () => Navigator.pop(context),
+        child: Stack(children: [
+          Center(
+            child: InteractiveViewer(
+              child: Image.file(file, fit: BoxFit.contain),
+            ),
+          ),
+          Positioned(
+            top: 40,
+            right: 16,
+            child: SafeArea(
+              child: Row(children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text('${index + 1} / $total',
+                      style: const TextStyle(color: Colors.white, fontSize: 12)),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    onRemove();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Colors.redAccent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.delete_outline,
+                        size: 18, color: Colors.white),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Container(
-          width: 96,
-          height: 96,
-          margin: const EdgeInsets.only(right: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            image: DecorationImage(
-              image: FileImage(file),
-              fit: BoxFit.cover,
+        GestureDetector(
+          onTap: () => _preview(context),
+          child: Container(
+            width: 96,
+            height: 96,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              image: DecorationImage(
+                image: FileImage(file),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.15)],
+                ),
+              ),
+              alignment: Alignment.bottomCenter,
+              padding: const EdgeInsets.only(bottom: 5),
+              child: const Icon(Icons.zoom_in_rounded, size: 14, color: Colors.white54),
             ),
           ),
         ),

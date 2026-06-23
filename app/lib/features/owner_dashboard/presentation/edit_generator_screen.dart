@@ -457,19 +457,64 @@ class _NetworkPhotoThumb extends StatelessWidget {
   final String url;
   final VoidCallback onRemove;
 
+  void _preview(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (_) => GestureDetector(
+        onTap: () => Navigator.pop(context),
+        child: Stack(children: [
+          Center(
+            child: InteractiveViewer(
+              child: Image.network(url, fit: BoxFit.contain),
+            ),
+          ),
+          Positioned(
+            top: 40, right: 16,
+            child: SafeArea(
+              child: GestureDetector(
+                onTap: () { Navigator.pop(context); onRemove(); },
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Colors.redAccent, shape: BoxShape.circle),
+                  child: const Icon(Icons.delete_outline, size: 18, color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Container(
-          width: 96,
-          height: 96,
-          margin: const EdgeInsets.only(right: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            image: DecorationImage(
-              image: NetworkImage(url),
-              fit: BoxFit.cover,
+        GestureDetector(
+          onTap: () => _preview(context),
+          child: Container(
+            width: 96,
+            height: 96,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              image: DecorationImage(
+                image: NetworkImage(url),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.15)]),
+              ),
+              alignment: Alignment.bottomCenter,
+              padding: const EdgeInsets.only(bottom: 5),
+              child: const Icon(Icons.zoom_in_rounded, size: 14, color: Colors.white54),
             ),
           ),
         ),
@@ -484,8 +529,7 @@ class _NetworkPhotoThumb extends StatelessWidget {
                 color: Colors.black54,
                 shape: BoxShape.circle,
               ),
-              child:
-                  const Icon(Icons.close, size: 14, color: Colors.white),
+              child: const Icon(Icons.close, size: 14, color: Colors.white),
             ),
           ),
         ),
@@ -499,19 +543,64 @@ class _LocalPhotoThumb extends StatelessWidget {
   final File file;
   final VoidCallback onRemove;
 
+  void _preview(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (_) => GestureDetector(
+        onTap: () => Navigator.pop(context),
+        child: Stack(children: [
+          Center(
+            child: InteractiveViewer(
+              child: Image.file(file, fit: BoxFit.contain),
+            ),
+          ),
+          Positioned(
+            top: 40, right: 16,
+            child: SafeArea(
+              child: GestureDetector(
+                onTap: () { Navigator.pop(context); onRemove(); },
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Colors.redAccent, shape: BoxShape.circle),
+                  child: const Icon(Icons.delete_outline, size: 18, color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Container(
-          width: 96,
-          height: 96,
-          margin: const EdgeInsets.only(right: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            image: DecorationImage(
-              image: FileImage(file),
-              fit: BoxFit.cover,
+        GestureDetector(
+          onTap: () => _preview(context),
+          child: Container(
+            width: 96,
+            height: 96,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              image: DecorationImage(
+                image: FileImage(file),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.15)]),
+              ),
+              alignment: Alignment.bottomCenter,
+              padding: const EdgeInsets.only(bottom: 5),
+              child: const Icon(Icons.zoom_in_rounded, size: 14, color: Colors.white54),
             ),
           ),
         ),
@@ -526,8 +615,7 @@ class _LocalPhotoThumb extends StatelessWidget {
                 color: Colors.black54,
                 shape: BoxShape.circle,
               ),
-              child:
-                  const Icon(Icons.close, size: 14, color: Colors.white),
+              child: const Icon(Icons.close, size: 14, color: Colors.white),
             ),
           ),
         ),
