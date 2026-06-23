@@ -23,7 +23,6 @@ import '../providers/generators_providers.dart'
 import '../../owner_dashboard/providers/owner_providers.dart'
     show ownerPendingCountProvider;
 import 'widgets/fuel_chip.dart' show fuelLabel;
-import 'widgets/generator_card.dart';
 import 'widgets/generator_filter.dart';
 import 'widgets/search_autocomplete.dart';
 import '../../../core/routing/app_routes.dart';
@@ -246,24 +245,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     final role = p['role']?.toString() ?? 'customer';
                     final name = (p['full_name']?.toString() ?? '').split(' ').firstOrNull ?? '';
                     final greeting = _timeGreeting();
-                    final (icon, label, sub, bg) = switch (role) {
+                    final (IconData icon, String label, String sub, Color bg,
+                            Color fg) =
+                        switch (role) {
                       'admin' => (
                           Icons.shield_outlined,
                           '$greeting, $name',
                           'Admin mode — full platform access.',
-                          cs.errorContainer,
+                          cs.surfaceContainerHigh,
+                          cs.onSurface,
                         ),
                       'owner' => (
                           Icons.storefront_outlined,
                           '$greeting, $name',
-                          '', // dynamically set below for owners
+                          '',
                           cs.secondaryContainer,
+                          cs.onSecondaryContainer,
                         ),
                       _ => (
                           Icons.bolt,
                           '$greeting, ${name.isEmpty ? "there" : name}',
                           'Find your perfect generator rental today.',
                           cs.primaryContainer,
+                          cs.onPrimaryContainer,
                         ),
                     };
                     return Padding(
@@ -274,14 +278,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         decoration: BoxDecoration(
                           color: bg,
                           borderRadius: BorderRadius.circular(16),
+                          border: role == 'admin'
+                              ? Border.all(color: cs.outlineVariant)
+                              : null,
                         ),
                         child: Row(children: [
-                          Icon(icon, size: 24,
-                              color: bg == cs.errorContainer
-                                  ? cs.onErrorContainer
-                                  : bg == cs.secondaryContainer
-                                      ? cs.onSecondaryContainer
-                                      : cs.onPrimaryContainer),
+                          Icon(icon,
+                              size: 24,
+                              color: role == 'admin' ? cs.primary : fg),
                           const SizedBox(width: 12),
                           Expanded(child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,11 +294,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
-                                    color: bg == cs.errorContainer
-                                        ? cs.onErrorContainer
-                                        : bg == cs.secondaryContainer
-                                            ? cs.onSecondaryContainer
-                                            : cs.onPrimaryContainer,
+                                    color: fg,
                                   )),
                               const SizedBox(height: 2),
                               if (role == 'owner')
@@ -306,18 +306,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   return Text(txt,
                                       style: TextStyle(
                                           fontSize: 12,
-                                          color: cs.onSecondaryContainer.withValues(alpha: 0.8)));
+                                          color: fg.withValues(alpha: 0.8)));
                                 })
                               else
                                 Text(sub,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: (bg == cs.errorContainer
-                                          ? cs.onErrorContainer
-                                          : bg == cs.secondaryContainer
-                                              ? cs.onSecondaryContainer
-                                              : cs.onPrimaryContainer)
-                                          .withValues(alpha: 0.75),
+                                      color: fg.withValues(alpha: 0.75),
                                     )),
                             ],
                           )),
@@ -333,7 +328,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
-                                      color: cs.onSecondaryContainer)),
+                                      color: fg)),
                             ),
                           if (role == 'admin')
                             TextButton(
@@ -347,7 +342,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
-                                      color: cs.onErrorContainer)),
+                                      color: cs.primary)),
                             ),
                         ]),
                       ),
@@ -389,62 +384,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
 
           // ── Governorate quick-chips ───────────────────────────────────
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 44,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                children: [
-                  for (final gov in [
-                    'Cairo', 'Giza', 'Alexandria', 'Minya',
-                    'Assiut', 'Sharqia', 'Aswan', 'Luxor',
-                  ])
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        avatar: const Icon(Icons.location_on_outlined, size: 12),
-                        label: Text(gov, style: const TextStyle(fontSize: 12)),
-                        selected: filter.governorate == gov,
-                        onSelected: (on) => ref
-                            .read(filterProvider.notifier)
-                            .state = filter.withGovernorate(on ? gov : null),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Budget quick-chips ────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 44,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                children: [
-                  for (final price in [300, 500, 800, 1200, 2000])
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        avatar: const Icon(Icons.payments_outlined, size: 12),
-                        label: Text('≤ $price EGP',
-                            style: const TextStyle(fontSize: 12)),
-                        selected: filter.maxPrice == price.toDouble(),
-                        onSelected: (on) => ref
-                            .read(filterProvider.notifier)
-                            .state = filter.withMaxPrice(
-                                on ? price.toDouble() : null),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
           // ── Recent searches ───────────────────────────────────────────
           if (filter.query.isEmpty && recentSearches.isNotEmpty)
             SliverToBoxAdapter(
@@ -477,79 +416,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // ── Governorate quick-filter chips ────────────────────────────
           SliverToBoxAdapter(
             child: _GovernorateChips(ref: ref, filter: filter),
-          ),
-
-          // ── Quick KVA filters ─────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 44,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                children: [
-                  for (final kva in [50.0, 100.0, 200.0, 500.0])
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text('≤ ${kva.toInt()} KVA'),
-                        selected: filter.maxKva == kva,
-                        onSelected: (on) => ref
-                            .read(filterProvider.notifier)
-                            .state = filter.withMaxKva(on ? kva : null),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Top Rated carousel ───────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _FeaturedCarousel(ref: ref, cs: cs),
-          ),
-
-          // ── New arrivals ─────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Consumer(
-              builder: (_, ref, __) {
-                final newAsync = ref.watch(newArrivalsProvider);
-                return newAsync.maybeWhen(
-                  data: (items) => items.isEmpty
-                      ? const SizedBox.shrink()
-                      : _NewArrivalsSection(items: items, cs: cs),
-                  orElse: () => const SizedBox.shrink(),
-                );
-              },
-            ),
-          ),
-
-          // ── Popular in your area ─────────────────────────────────────
-          SliverToBoxAdapter(
-            child: generators.maybeWhen(
-              data: (items) => _PopularInArea(
-                  items: items, cs: cs, ref: ref),
-              orElse: () => const SizedBox.shrink(),
-            ),
-          ),
-
-          // ── Recently viewed ───────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _RecentlyViewed(ref: ref, cs: cs),
-          ),
-
-          // ── Flash deals ──────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _FlashDealsSection(ref: ref, cs: cs),
-          ),
-
-          // ── Near me ──────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _NearMeSection(ref: ref, cs: cs),
-          ),
-
-          // ── Top Rated Owners ─────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _TopRatedOwnersSection(ref: ref, cs: cs),
           ),
 
           // ── Section header + sort ─────────────────────────────────────
@@ -698,16 +564,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 );
               }
               return SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                sliver: SliverList.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, i) =>
-                      GeneratorCard(generator: items[i]),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                sliver: SliverGrid(
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.74,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, i) => _GridGeneratorCard(generator: items[i]),
+                    childCount: items.length,
+                  ),
                 ),
               );
             },
           ),
+
+          // ── Discover (curated strips, below the results grid) ─────────
+          SliverToBoxAdapter(
+            child: Consumer(
+              builder: (_, ref, __) {
+                final newAsync = ref.watch(newArrivalsProvider);
+                return newAsync.maybeWhen(
+                  data: (items) => items.isEmpty
+                      ? const SizedBox.shrink()
+                      : _NewArrivalsSection(items: items, cs: cs),
+                  orElse: () => const SizedBox.shrink(),
+                );
+              },
+            ),
+          ),
+          SliverToBoxAdapter(child: _FeaturedCarousel(ref: ref, cs: cs)),
+          SliverToBoxAdapter(
+            child: generators.maybeWhen(
+              data: (items) =>
+                  _PopularInArea(items: items, cs: cs, ref: ref),
+              orElse: () => const SizedBox.shrink(),
+            ),
+          ),
+          SliverToBoxAdapter(child: _RecentlyViewed(ref: ref, cs: cs)),
+          SliverToBoxAdapter(child: _FlashDealsSection(ref: ref, cs: cs)),
+          SliverToBoxAdapter(child: _NearMeSection(ref: ref, cs: cs)),
+          SliverToBoxAdapter(
+              child: _TopRatedOwnersSection(ref: ref, cs: cs)),
+          const SliverToBoxAdapter(child: SizedBox(height: 90)),
         ]),
       ),
     );
@@ -779,6 +681,99 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       builder: (_) => FilterSheet(filter: filter, ref: ref),
     );
   }
+}
+
+// ── Grid card (Premium B2B / Trust: photo, title, verified + rating, price) ──
+class _GridGeneratorCard extends StatelessWidget {
+  const _GridGeneratorCard({required this.generator});
+  final Map<String, dynamic> generator;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final photos = (generator['photos'] as List?)?.cast<String>() ?? const [];
+    final photo = photos.isNotEmpty ? photos.first : null;
+    final title = generator['title']?.toString() ?? 'Generator';
+    final kva = generator['capacity_kva'];
+    final city = generator['city']?.toString() ??
+        generator['governorate']?.toString() ??
+        '';
+    final price = generator['price_per_day'];
+    final score = (generator['avg_score'] as num?)?.toDouble() ?? 0;
+    final ratingCount = (generator['rating_count'] as num?)?.toInt() ?? 0;
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context
+            .push(AppRoutes.generatorDetail(generator['id'].toString())),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 10,
+              child: photo != null
+                  ? Image.network(photo, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _placeholder(cs))
+                  : _placeholder(cs),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text(
+                        '${kva ?? '-'} KVA${city.isNotEmpty ? ' · $city' : ''}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 11.5, color: cs.onSurfaceVariant)),
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      Icon(Icons.verified, size: 13, color: cs.secondary),
+                      const SizedBox(width: 3),
+                      Text('Verified',
+                          style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: cs.secondary)),
+                      if (ratingCount > 0) ...[
+                        const SizedBox(width: 8),
+                        Icon(Icons.star_rounded,
+                            size: 13, color: Colors.amber.shade600),
+                        const SizedBox(width: 2),
+                        Text(score.toStringAsFixed(1),
+                            style: const TextStyle(
+                                fontSize: 11, fontWeight: FontWeight.w600)),
+                      ],
+                    ]),
+                    const Spacer(),
+                    Text('EGP ${price ?? '-'}/day',
+                        style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                            color: cs.primary)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _placeholder(ColorScheme cs) => Container(
+        color: cs.primaryContainer.withValues(alpha: 0.4),
+        child: Icon(Icons.bolt, color: cs.primary, size: 36),
+      );
 }
 
 // ── Hero banner ───────────────────────────────────────────────────────────────
