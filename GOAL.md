@@ -85,7 +85,9 @@ HIGH — real-user auth. DECISION (owner 2026-06-24): **verified email now, phon
 - [ ] Verify Supabase project setting: "Confirm email" should be ON for production
       (so unconfirmed accounts can't sign in). Owner to confirm in Supabase dashboard.
 - [ ] Phase 2: phone OTP once owner provisions an SMS provider (Twilio/Vonage) — UI built; keep it.
-- [ ] H3: guest→registered upgrade (linkIdentity) — nice-to-have, after launch.
+- [x] H3: guest→registered upgrade — premium CTA on profile for guests opens a
+      sheet that links email+password to the same anonymous user (updateUser), so
+      favorites/rentals/chats carry over. Email confirmation applies if enabled.
 
 MEDIUM (polish):
 - [x] Delivery address/time now structured columns (DB 0025) — captured on request,

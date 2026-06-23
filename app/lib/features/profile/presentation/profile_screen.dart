@@ -4,7 +4,8 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show FileOptions, UserAttributes;
 
 import '../../../core/config/supabase.dart';
 import '../../../core/localization/locale_provider.dart';
@@ -287,6 +288,57 @@ class ProfileScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 8),
+                  // Guest → registered upgrade CTA (keeps the same user + data)
+                  if (isAnon) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            cs.primary,
+                            cs.primary.withValues(alpha: 0.82),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Icon(Icons.workspace_premium_outlined,
+                                color: cs.onPrimary, size: 20),
+                            const SizedBox(width: 8),
+                            Text('Save your account',
+                                style: TextStyle(
+                                    color: cs.onPrimary,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800)),
+                          ]),
+                          const SizedBox(height: 6),
+                          Text(
+                            "You're browsing as a guest. Create an account to keep your favorites, rentals and chats.",
+                            style: TextStyle(
+                                color: cs.onPrimary.withValues(alpha: 0.9),
+                                fontSize: 13,
+                                height: 1.35),
+                          ),
+                          const SizedBox(height: 14),
+                          FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: cs.onPrimary,
+                              foregroundColor: cs.primary,
+                              minimumSize: const Size.fromHeight(46),
+                            ),
+                            onPressed: () => _showGuestUpgrade(context, ref),
+                            child: const Text('Create my account'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                   // All-pages navigation hub (reach any screen for review/testing)
                   _Card(
                     children: [
@@ -1143,6 +1195,97 @@ class ProfileScreen extends ConsumerWidget {
         .eq('id', uid);
     ref.invalidate(_profileDataProvider);
   }
+}
+
+/// Converts the current anonymous (guest) session into a permanent email +
+/// password account. Supabase keeps the SAME user id, so the guest's favorites,
+/// rentals and chats carry over. Email confirmation applies if the project
+/// requires it (the user simply confirms via the emailed link, then signs in).
+Future<void> _showGuestUpgrade(BuildContext context, WidgetRef ref) async {
+  final emailC = TextEditingController();
+  final passC = TextEditingController();
+  var loading = false;
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (sheetCtx) => StatefulBuilder(builder: (sheetCtx, setSheet) {
+      final cs = Theme.of(sheetCtx).colorScheme;
+      Future<void> submit() async {
+        final email = emailC.text.trim();
+        final pass = passC.text;
+        if (!email.contains('@') || pass.length < 6) {
+          ScaffoldMessenger.of(sheetCtx).showSnackBar(const SnackBar(
+              content: Text(
+                  'Enter a valid email and a password of at least 6 characters.')));
+          return;
+        }
+        setSheet(() => loading = true);
+        try {
+          await supabase.auth.updateUser(
+              UserAttributes(email: email, password: pass));
+          ref.invalidate(_profileDataProvider);
+          if (sheetCtx.mounted) Navigator.pop(sheetCtx);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text(
+                    'Account created — check your email to confirm. Your data is saved.')));
+          }
+        } catch (e) {
+          setSheet(() => loading = false);
+          if (sheetCtx.mounted) {
+            ScaffoldMessenger.of(sheetCtx).showSnackBar(SnackBar(
+                content: Text('Could not create account. Please try again.')));
+          }
+        }
+      }
+
+      return Padding(
+        padding: EdgeInsets.fromLTRB(
+            20, 8, 20, MediaQuery.of(sheetCtx).viewInsets.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Create your account',
+                style: Theme.of(sheetCtx).textTheme.titleLarge),
+            const SizedBox(height: 4),
+            Text('Keep your favorites, rentals and chats.',
+                style: TextStyle(color: cs.onSurfaceVariant)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailC,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.email_outlined),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: passC,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Password',
+                prefixIcon: Icon(Icons.lock_outline),
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: loading ? null : submit,
+              child: loading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Create account'),
+            ),
+          ],
+        ),
+      );
+    }),
+  );
 }
 
 class _StatItem extends StatelessWidget {
