@@ -278,8 +278,118 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                     itemBuilder: (ctx, i) {
                       if (header != null && i == 0) return header;
                       final idx = header != null ? i - 1 : i;
-                      return _RentalCard(
-                          rental: filtered[idx], cs: cs, ref: ref);
+                      final rental = filtered[idx];
+                      final status =
+                          rental['status']?.toString() ?? '';
+                      final rentalId =
+                          rental['id']?.toString() ?? '';
+
+                      // Swipe-right → view doc; swipe-left → cancel pending
+                      final canViewDoc = status == 'accepted' ||
+                          status == 'active' ||
+                          status == 'completed';
+                      final canCancel = status == 'pending';
+
+                      return Dismissible(
+                        key: ValueKey('rental_$rentalId'),
+                        direction: canViewDoc
+                            ? DismissDirection.startToEnd
+                            : canCancel
+                                ? DismissDirection.endToStart
+                                : DismissDirection.none,
+                        confirmDismiss: (dir) async {
+                          if (dir == DismissDirection.startToEnd &&
+                              canViewDoc) {
+                            final route = status == 'completed'
+                                ? '/invoice/$rentalId'
+                                : '/offer/$rentalId';
+                            if (ctx.mounted) ctx.push(route);
+                            return false;
+                          }
+                          if (dir == DismissDirection.endToStart &&
+                              canCancel) {
+                            final confirm = await showDialog<bool>(
+                              context: ctx,
+                              builder: (_) => AlertDialog(
+                                title: const Text('Cancel request?'),
+                                content: const Text(
+                                    'This will cancel your rental request.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(ctx, false),
+                                    child: const Text('No'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () =>
+                                        Navigator.pop(ctx, true),
+                                    style: FilledButton.styleFrom(
+                                        backgroundColor: cs.error),
+                                    child: const Text('Yes, cancel'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm == true && ctx.mounted) {
+                              await supabase
+                                  .from('rental_requests')
+                                  .update({'status': 'cancelled'}).eq(
+                                      'id', rentalId);
+                              ref.invalidate(myRentalsProvider);
+                            }
+                            return false;
+                          }
+                          return false;
+                        },
+                        background: canViewDoc
+                            ? Container(
+                                alignment: Alignment.centerLeft,
+                                padding: const EdgeInsets.only(left: 20),
+                                decoration: BoxDecoration(
+                                  color: cs.primary.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(children: [
+                                  Icon(
+                                    status == 'completed'
+                                        ? Icons.receipt_long_outlined
+                                        : Icons.description_outlined,
+                                    color: cs.primary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    status == 'completed'
+                                        ? 'Invoice'
+                                        : 'Offer',
+                                    style: TextStyle(
+                                        color: cs.primary,
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                ]),
+                              )
+                            : Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                decoration: BoxDecoration(
+                                  color: cs.error.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.end,
+                                    children: [
+                                      Icon(Icons.cancel_outlined,
+                                          color: cs.error),
+                                      const SizedBox(width: 8),
+                                      Text('Cancel',
+                                          style: TextStyle(
+                                              color: cs.error,
+                                              fontWeight: FontWeight.w700)),
+                                    ]),
+                              ),
+                        child: _RentalCard(
+                            rental: rental, cs: cs, ref: ref),
+                      );
                     },
                   ),
                 );

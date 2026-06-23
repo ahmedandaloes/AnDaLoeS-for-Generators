@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/supabase.dart';
+import 'admin_generators_tab.dart';
 
 // ── Role guard ────────────────────────────────────────────────────────────────
 
@@ -138,11 +139,12 @@ class AdminScreen extends ConsumerWidget {
             );
           }
           return DefaultTabController(
-            length: 3,
+            length: 4,
             child: Column(
               children: [
                 const TabBar(tabs: [
                   Tab(text: 'Companies'),
+                  Tab(text: 'Generators'),
                   Tab(text: 'Reports'),
                   Tab(text: 'Stats'),
                 ]),
@@ -150,6 +152,7 @@ class AdminScreen extends ConsumerWidget {
                   child: TabBarView(
                     children: [
                       _CompaniesTab(ref: ref),
+                      AdminGeneratorsTab(ref: ref),
                       _ReportsTab(ref: ref),
                       _StatsTab(ref: ref),
                     ],

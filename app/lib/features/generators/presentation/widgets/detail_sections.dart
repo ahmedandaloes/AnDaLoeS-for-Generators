@@ -40,7 +40,7 @@ class SimilarGeneratorsSection extends StatelessWidget {
               return GestureDetector(
                 onTap: () {
                   HapticFeedback.selectionClick();
-                  context.push('/generator/${g['id']}');
+                  context.push('/generators/${g['id']}');
                 },
                 child: Container(
                   width: 140,
@@ -98,6 +98,17 @@ class SimilarGeneratorsSection extends StatelessWidget {
                               Text(score,
                                   style: const TextStyle(fontSize: 10)),
                             ]),
+                            if (g['price_per_day'] != null) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                'EGP ${g['price_per_day']}/day',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: cs.secondary,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
