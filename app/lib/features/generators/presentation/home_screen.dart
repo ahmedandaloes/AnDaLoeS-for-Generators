@@ -8,7 +8,6 @@ import '../../notifications/providers/notifications_providers.dart'
     show unreadCountProvider;
 import '../providers/generators_providers.dart'
     show
-        filterProvider,
         favoritesProvider,
         generatorsProvider,
         remoteFavoritesProvider,
@@ -17,7 +16,6 @@ import '../providers/generators_providers.dart'
         featuredGeneratorsProvider,
         recentlyViewedProvider,
         newArrivalsProvider,
-        autocompleteProvider,
         flashDealsProvider,
         nearMeProvider,
         currentProfileProvider,

@@ -1348,7 +1348,7 @@ class _HistoryTabState extends State<_HistoryTab> {
     for (final r in rows) {
       final gen = (r['generators'] as Map?)?['title'] ?? '';
       final cust = (r['profiles'] as Map?)?['full_name'] ?? '';
-      csv.writeln('"$gen","${r['start_date'] ?? ''}","${r['end_date'] ?? ''}","${r['total_days'] ?? ''}","${r['price_total'] ?? ''}"');
+      csv.writeln('"$gen","$cust","${r['start_date'] ?? ''}","${r['end_date'] ?? ''}","${r['total_days'] ?? ''}","${r['price_total'] ?? ''}"');
     }
 
     // ── Text earnings statement ────────────────────────────────────────
