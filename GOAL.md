@@ -5,35 +5,33 @@
 ---
 
 ## Shipped Features ✅
-- Home: search, governorate chips, KVA + price filters, active filter pills, sort, favorites (haptic), unread badge, pull-to-refresh, "Top Rated" badge
-- Generator detail: photo carousel, call/WhatsApp, booked dates, ratings, **similar generators horizontal scroll**, **haptic on Rent Now**
+- Home: search, governorate chips, KVA + price filters, fuel type filter, search autocomplete, active filter pills, sort, favorites (haptic), unread badge, pull-to-refresh, "Top Rated" badge, fuel type chip on cards
+- Generator detail: photo carousel, call/WhatsApp, booked dates, ratings, similar generators horizontal scroll, haptic on Rent Now, favorite FAB
 - Notifications: realtime, mark-all-read, unread badge
-- Profile: rental stats, dark mode (persisted), language toggle (persisted), **avatar photo upload** (FilePicker → Supabase avatars bucket)
-- My Rentals: conflict warning, rating badge, view receipt
+- Profile: rental stats, dark mode (persisted), language toggle (persisted), avatar photo upload (FilePicker → Supabase avatars bucket)
+- My Rentals: conflict warning, rating badge, view receipt, owner accept/reject note shown to customer
 - Rental Receipt: gradient header, copy-as-text
-- Owner Dashboard: requests, history, rate customer, earnings + monthly chart
+- Owner Dashboard: requests, history, rate customer, earnings + monthly chart, accept/reject with optional message dialog
+- Add Generator + Edit Generator: fuel type dropdown (diesel/petrol/gas/natural_gas/solar)
 - Admin panel: company approval, reports, platform stats
-- DB migrations 0011–0013 (favorites, notifications, avatar_url + avatars bucket + RLS)
+- Company profile: stat chips (generator count, completed rentals)
+- DB migrations 0011–0015 (favorites, notifications, avatar, fuel_type, owner_note)
 - CI: flutter.yml with Flutter 3.32.x, analyze+test, APK build job
 - CLAUDE.md agentic guide
 - /goal + /loop skills for self-sustaining development across context windows
 - Onboarding splash: 3-page PageView, SharedPreferences flag, first-launch only
-- Generator detail: favorite FAB (syncs with Supabase user_favorites), animated icon
-- Company profile: stat chips (generator count, completed rentals)
 
 ---
 
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Owner: respond to rental request with message (accept + note to customer)
-- [ ] Rental request: show booked/unavailable dates clearly on the date picker
-- [ ] Generator card: show fuel_type chip (Diesel / Solar / Gas)
-- [ ] Add generator form: include fuel_type dropdown (migration 0014 already applied)
+- [ ] Payment flow: COD confirmation screen with digital payment placeholder
+- [ ] Rental request: calendar date range picker (replace plain text fields) with booked dates blocked
+- [ ] Chat screen: owner ↔ customer thread per rental request (Supabase Realtime)
+- [ ] Generator detail: booked dates from rental_requests shown as unavailable day dots
 
 ### SOON
-- [ ] Payment flow: COD confirmation screen with digital payment placeholder
-- [ ] Chat screen: owner ↔ customer thread per rental request
 - [ ] Push notifications: FCM integration with Supabase edge function
 - [ ] Map view: generators plotted on Google Maps
 - [ ] Referral code system: users get discount for referring friends
@@ -49,9 +47,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: fuel type filter, search autocomplete, router instance fix`
+**Last commit:** `feat: owner accept/reject with note, fuel type chip on cards, fuel type in forms`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** Owner accept-with-note flow + fuel_type chip on cards + add generator form update
+**Next action:** COD payment screen + calendar date range picker for rental request
 
 ---
 
