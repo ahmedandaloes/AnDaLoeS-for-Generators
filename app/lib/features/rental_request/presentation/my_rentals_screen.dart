@@ -17,6 +17,21 @@ final myRentalsProvider =
   return (data as List).cast<Map<String, dynamic>>();
 });
 
+// Rental request IDs that the current user has already submitted a rating for.
+final _myRatedRentalIdsProvider =
+    FutureProvider.autoDispose<Set<String>>((ref) async {
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) return {};
+  final data = await supabase
+      .from('ratings')
+      .select('rental_request_id')
+      .eq('rater_id', uid);
+  return {
+    for (final r in (data as List))
+      r['rental_request_id'].toString()
+  };
+});
+
 const _statusLabels = {
   'accepted': 'Rental accepted',
   'rejected': 'Rental rejected',
@@ -137,7 +152,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
   }
 }
 
-class _RentalCard extends StatelessWidget {
+class _RentalCard extends ConsumerWidget {
   const _RentalCard(
       {required this.rental, required this.cs, required this.ref});
   final Map<String, dynamic> rental;
@@ -145,12 +160,18 @@ class _RentalCard extends StatelessWidget {
   final WidgetRef ref;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef wRef) {
     final gen = rental['generators'] as Map<String, dynamic>?;
     final status = rental['status']?.toString() ?? 'pending';
     final statusColor = _statusColor(status, cs);
     final photos = (gen?['photos'] as List?)?.cast<String>() ?? [];
     final firstPhoto = photos.isNotEmpty ? photos.first : null;
+    final rentalId = rental['id']?.toString() ?? '';
+    final alreadyRated = wRef
+            .watch(_myRatedRentalIdsProvider)
+            .valueOrNull
+            ?.contains(rentalId) ==
+        true;
 
     return Card(
       child: InkWell(
@@ -298,16 +319,43 @@ class _RentalCard extends StatelessWidget {
               ],
               if (status == 'completed') ...[
                 const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40),
+                if (alreadyRated)
+                  Container(
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: Colors.amber.shade300, width: 1),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.star_rounded,
+                            size: 16, color: Colors.amber.shade600),
+                        const SizedBox(width: 6),
+                        Text('You rated this rental',
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.amber.shade800,
+                                fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  )
+                else
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(40),
+                    ),
+                    onPressed: () {
+                      context.push(
+                        '/rate/${rental['id']}?ratee=${rental['company_id']}&name=Owner',
+                      );
+                    },
+                    icon: const Icon(Icons.star_outline, size: 16),
+                    label: const Text('Rate this rental'),
                   ),
-                  onPressed: () => context.push(
-                    '/rate/${rental['id']}?ratee=${rental['company_id']}&name=Owner',
-                  ),
-                  icon: const Icon(Icons.star_outline, size: 16),
-                  label: const Text('Rate this rental'),
-                ),
               ],
               if (status == 'completed' || status == 'active') ...[
                 const SizedBox(height: 8),

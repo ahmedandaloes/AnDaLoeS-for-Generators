@@ -45,7 +45,19 @@ final _filterProvider = StateProvider<_Filter>((ref) => const _Filter());
 final _recentSearchesProvider =
     StateProvider<List<String>>((ref) => const []);
 
-// In-session saved/favourite generator IDs.
+// Loads the current user's saved generator IDs from Supabase (if logged in).
+final _remoteFavoritesProvider =
+    FutureProvider.autoDispose<Set<String>>((ref) async {
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) return {};
+  final data = await supabase
+      .from('user_favorites')
+      .select('generator_id')
+      .eq('user_id', uid);
+  return {for (final r in (data as List)) r['generator_id'].toString()};
+});
+
+// In-session saved/favourite generator IDs — seeded from Supabase on first load.
 final favoritesProvider =
     StateProvider<Set<String>>((ref) => const {});
 
@@ -72,11 +84,20 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchController = TextEditingController();
+  bool _favoritesSeeded = false;
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _seedFavoritesIfNeeded(Set<String> remote) {
+    if (_favoritesSeeded || remote.isEmpty) return;
+    _favoritesSeeded = true;
+    if (ref.read(favoritesProvider).isEmpty) {
+      ref.read(favoritesProvider.notifier).state = remote;
+    }
   }
 
   void _saveRecentSearch(String term) {
@@ -100,6 +121,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final favorites = ref.watch(favoritesProvider);
     final loggedIn = supabase.auth.currentSession != null;
     final cs = Theme.of(context).colorScheme;
+
+    // Seed local favorites from Supabase once on first build.
+    ref.watch(_remoteFavoritesProvider).whenData(_seedFavoritesIfNeeded);
 
     // Apply client-side filter
     final generators = allGenerators.whenData((items) => items.where((g) {
@@ -689,13 +713,33 @@ class _GeneratorCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   GestureDetector(
-                    onTap: () {
-                      final notifier =
-                          ref.read(favoritesProvider.notifier);
+                    onTap: () async {
                       final current = ref.read(favoritesProvider);
-                      notifier.state = current.contains(id)
-                          ? {...current}..remove(id)
-                          : {...current, id};
+                      final next = Set<String>.from(current);
+                      final uid = supabase.auth.currentUser?.id;
+                      if (next.contains(id)) {
+                        next.remove(id);
+                        if (uid != null) {
+                          supabase
+                              .from('user_favorites')
+                              .delete()
+                              .eq('user_id', uid)
+                              .eq('generator_id', id)
+                              .then((_) {});
+                        }
+                      } else {
+                        next.add(id);
+                        if (uid != null) {
+                          supabase
+                              .from('user_favorites')
+                              .upsert({
+                                'user_id': uid,
+                                'generator_id': id,
+                              })
+                              .then((_) {});
+                        }
+                      }
+                      ref.read(favoritesProvider.notifier).state = next;
                     },
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 200),

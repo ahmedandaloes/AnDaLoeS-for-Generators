@@ -50,6 +50,8 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
       if (mounted) {
         _snack('Thank you for your review!');
         context.pop();
+        // The calling screen will invalidate its own providers via
+        // Riverpod ref.invalidate — the rating badge updates on next build.
       }
     } catch (e) {
       _snack('Error: $e');
