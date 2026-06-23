@@ -45,6 +45,14 @@ final _filterProvider = StateProvider<_Filter>((ref) => const _Filter());
 final _recentSearchesProvider =
     StateProvider<List<String>>((ref) => const []);
 
+// In-session saved/favourite generator IDs.
+final favoritesProvider =
+    StateProvider<Set<String>>((ref) => const {});
+
+// When true, the generator list shows only saved generators.
+final _showFavoritesOnlyProvider =
+    StateProvider<bool>((ref) => false);
+
 final generatorsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final data = await supabase
@@ -88,11 +96,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final allGenerators = ref.watch(generatorsProvider);
     final filter = ref.watch(_filterProvider);
     final recentSearches = ref.watch(_recentSearchesProvider);
+    final showFavoritesOnly = ref.watch(_showFavoritesOnlyProvider);
+    final favorites = ref.watch(favoritesProvider);
     final loggedIn = supabase.auth.currentSession != null;
     final cs = Theme.of(context).colorScheme;
 
     // Apply client-side filter
     final generators = allGenerators.whenData((items) => items.where((g) {
+      if (showFavoritesOnly &&
+          !favorites.contains(g['id']?.toString() ?? '')) {
+        return false;
+      }
       final q = filter.query.toLowerCase();
       if (q.isNotEmpty) {
         final title = (g['title'] ?? '').toString().toLowerCase();
@@ -322,6 +336,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     orElse: () => const SizedBox.shrink(),
                   ),
                   const SizedBox(width: 8),
+                  // Saved filter toggle
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final favs = ref.watch(favoritesProvider);
+                      final showingFavs =
+                          ref.watch(_showFavoritesOnlyProvider);
+                      if (favs.isEmpty) return const SizedBox.shrink();
+                      return GestureDetector(
+                        onTap: () => ref
+                            .read(_showFavoritesOnlyProvider.notifier)
+                            .state = !showingFavs,
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: showingFavs
+                                ? Colors.red.shade100
+                                : cs.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.favorite_rounded,
+                                size: 13,
+                                color: showingFavs
+                                    ? Colors.red.shade600
+                                    : cs.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${favs.length}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: showingFavs
+                                      ? Colors.red.shade600
+                                      : cs.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   GestureDetector(
                     onTap: () => _showSortSheet(context, ref, filter, cs),
                     child: Container(
@@ -530,13 +592,15 @@ class _HeroBanner extends StatelessWidget {
 }
 
 // ── Generator card ───────────────────────────────────────────────────────────
-class _GeneratorCard extends StatelessWidget {
+class _GeneratorCard extends ConsumerWidget {
   const _GeneratorCard({required this.generator, required this.cs});
   final Map<String, dynamic> generator;
   final ColorScheme cs;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final id = generator['id']?.toString() ?? '';
+    final isFav = ref.watch(favoritesProvider).contains(id);
     final location = [
       generator['city'],
       generator['governorate'],
@@ -620,10 +684,32 @@ class _GeneratorCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              // Price
+              // Price + save button
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  GestureDetector(
+                    onTap: () {
+                      final notifier =
+                          ref.read(favoritesProvider.notifier);
+                      final current = ref.read(favoritesProvider);
+                      notifier.state = current.contains(id)
+                          ? {...current}..remove(id)
+                          : {...current, id};
+                    },
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        isFav
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        key: ValueKey(isFav),
+                        size: 20,
+                        color: isFav ? Colors.red.shade400 : cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     '${generator['price_per_day']}',
                     style: TextStyle(
