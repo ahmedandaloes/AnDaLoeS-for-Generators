@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Owner: earnings breakdown filter by month (date picker in history tab)
-- [ ] Profile: "badge" system — show customer tier (Bronze/Silver/Gold by spend)
-- [ ] Generator detail: "Add to wishlist" share card feature
-- [ ] Home search: recent searches tap to re-apply full filter
+- [ ] Home: KVA quick filter chips (5 KVA, 10 KVA, 25 KVA, 50 KVA, 100+ KVA)
+- [ ] Owner requests: customer rental history badge on request card
+- [ ] Generator detail: "copy link" share button in appbar actions
+- [ ] My Rentals: summary stats card on the Done tab (avg spend per rental)
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: flash deals section, My Rentals monthly grouping`
+**Last commit:** `feat: customer tier badge, owner month filter, acceptance rate badge`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 

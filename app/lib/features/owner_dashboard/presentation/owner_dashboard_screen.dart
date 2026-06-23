@@ -695,12 +695,23 @@ class _GenIcon extends StatelessWidget {
 }
 
 // ── History tab ───────────────────────────────────────────────────────────────
-class _HistoryTab extends StatelessWidget {
+class _HistoryTab extends StatefulWidget {
   const _HistoryTab(
       {required this.companyId, required this.cs, required this.ref});
   final String companyId;
   final ColorScheme cs;
   final WidgetRef ref;
+
+  @override
+  State<_HistoryTab> createState() => _HistoryTabState();
+}
+
+class _HistoryTabState extends State<_HistoryTab> {
+  String? _selectedMonth; // 'YYYY-MM' or null for all
+
+  String get companyId => widget.companyId;
+  ColorScheme get cs => widget.cs;
+  WidgetRef get ref => widget.ref;
 
   @override
   Widget build(BuildContext context) {
@@ -726,9 +737,39 @@ class _HistoryTab extends StatelessWidget {
             ),
           );
         }
+        // Build month keys for filter chips
+        final allMonths = <String>[];
+        for (final r in items) {
+          final raw = r['updated_at']?.toString() ?? r['created_at']?.toString();
+          if (raw == null) continue;
+          try {
+            final dt = DateTime.parse(raw).toLocal();
+            final k = '${dt.year}-${dt.month.toString().padLeft(2, '0')}';
+            if (!allMonths.contains(k)) allMonths.add(k);
+          } catch (_) {}
+        }
+        allMonths.sort((a, b) => b.compareTo(a)); // newest first
+
+        // Filter items by selected month
+        final filteredItems = _selectedMonth == null
+            ? items
+            : items.where((r) {
+                final raw = r['updated_at']?.toString() ??
+                    r['created_at']?.toString();
+                if (raw == null) return false;
+                try {
+                  final dt = DateTime.parse(raw).toLocal();
+                  final k =
+                      '${dt.year}-${dt.month.toString().padLeft(2, '0')}';
+                  return k == _selectedMonth;
+                } catch (_) {
+                  return false;
+                }
+              }).toList();
+
         // Compute earnings summary from history items
         final completed =
-            items.where((r) => r['status'] == 'completed').toList();
+            filteredItems.where((r) => r['status'] == 'completed').toList();
         final totalEarned = completed.fold<double>(
           0,
           (s, r) => s + (double.tryParse(r['price_total']?.toString() ?? '0') ?? 0),
@@ -777,14 +818,16 @@ class _HistoryTab extends StatelessWidget {
 
         final extraCards = (hasEarnings ? 1 : 0) + (hasMonthly ? 1 : 0);
 
+        final showMonthChips = allMonths.length >= 2;
+
         return Stack(
           children: [
             RefreshIndicator(
           onRefresh: () =>
               ref.refresh(ownerHistoryProvider(companyId).future),
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-            itemCount: items.length + extraCards,
+            padding: EdgeInsets.fromLTRB(16, showMonthChips ? 56 : 16, 16, 80),
+            itemCount: filteredItems.length + extraCards,
             separatorBuilder: (_, i) =>
                 SizedBox(height: i < extraCards ? 16 : 10),
             itemBuilder: (_, i) {
@@ -973,7 +1016,7 @@ class _HistoryTab extends StatelessWidget {
                 );
               }
 
-              final r = items[i - extraCards];
+              final r = filteredItems[i - extraCards];
               final gen = r['generators'] as Map<String, dynamic>?;
               final customer = r['profiles'] as Map<String, dynamic>?;
               final status = r['status']?.toString() ?? '';
@@ -1122,6 +1165,52 @@ class _HistoryTab extends StatelessWidget {
                 )
               : const SizedBox.shrink(),
         ),
+        if (showMonthChips)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              color: cs.surface,
+              height: 48,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: const Text('All',
+                          style: TextStyle(fontSize: 11)),
+                      selected: _selectedMonth == null,
+                      onSelected: (_) =>
+                          setState(() => _selectedMonth = null),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                  for (final m in allMonths)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(
+                          () {
+                            final parts = m.split('-');
+                            if (parts.length != 2) return m;
+                            final mn = int.tryParse(parts[1]) ?? 1;
+                            return _monthAbbr(mn);
+                          }(),
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        selected: _selectedMonth == m,
+                        onSelected: (_) =>
+                            setState(() => _selectedMonth = m),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
           ],
         );
       },

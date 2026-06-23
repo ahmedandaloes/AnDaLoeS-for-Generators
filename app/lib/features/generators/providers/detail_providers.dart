@@ -28,6 +28,22 @@ final avgResponseTimeProvider =
       .fetchAvgResponseTime(companyId);
 });
 
+// Percentage of requests the owner accepted (0–100), null if no data.
+final ownerAcceptanceRateProvider =
+    FutureProvider.autoDispose.family<int?, String>((ref, companyId) async {
+  if (companyId.isEmpty) return null;
+  final data = await supabase
+      .from('rental_requests')
+      .select('status')
+      .eq('company_id', companyId)
+      .inFilter('status', ['accepted', 'rejected'])
+      .limit(100);
+  final list = (data as List).cast<Map<String, dynamic>>();
+  if (list.isEmpty) return null;
+  final accepted = list.where((r) => r['status'] == 'accepted').length;
+  return ((accepted / list.length) * 100).round();
+});
+
 final isFavProvider =
     FutureProvider.autoDispose.family<bool, String>((ref, id) async {
   final uid = supabase.auth.currentUser?.id;

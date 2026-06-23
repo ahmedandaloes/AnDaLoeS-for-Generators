@@ -439,6 +439,103 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ],
 
+                  // Customer tier badge
+                  statsAsync.maybeWhen(
+                    data: (stats) {
+                      final spent =
+                          (stats['total_spent'] ?? 0).toDouble();
+                      if (spent <= 0) return const SizedBox.shrink();
+                      final tier = spent >= 10000
+                          ? (name: 'Gold', color: Colors.amber.shade700, icon: Icons.emoji_events_rounded)
+                          : spent >= 3000
+                              ? (name: 'Silver', color: Colors.blueGrey.shade500, icon: Icons.workspace_premium_rounded)
+                              : (name: 'Bronze', color: Colors.brown.shade400, icon: Icons.military_tech_rounded);
+                      final next = spent >= 10000
+                          ? null
+                          : spent >= 3000
+                              ? 10000.0
+                              : 3000.0;
+                      final progress = next == null
+                          ? 1.0
+                          : spent >= 3000
+                              ? (spent - 3000) / (10000 - 3000)
+                              : spent / 3000;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _SectionLabel('Member tier'),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: tier.color.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                  color: tier.color.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: tier.color.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(tier.icon,
+                                    color: tier.color, size: 24),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Row(children: [
+                                      Text(tier.name,
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w800,
+                                              color: tier.color)),
+                                      const SizedBox(width: 6),
+                                      Text('Member',
+                                          style: TextStyle(
+                                              fontSize: 13,
+                                              color: cs.onSurfaceVariant)),
+                                    ]),
+                                    const SizedBox(height: 6),
+                                    ClipRRect(
+                                      borderRadius:
+                                          BorderRadius.circular(4),
+                                      child: LinearProgressIndicator(
+                                        value: progress.clamp(0.0, 1.0),
+                                        minHeight: 6,
+                                        backgroundColor: tier.color
+                                            .withValues(alpha: 0.15),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                tier.color),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      next == null
+                                          ? 'Maximum tier reached'
+                                          : 'EGP ${(next - spent).toStringAsFixed(0)} to next tier',
+                                      style: TextStyle(
+                                          fontSize: 10,
+                                          color: cs.onSurfaceVariant),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ]),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      );
+                    },
+                    orElse: () => const SizedBox.shrink(),
+                  ),
+
                   // Referral code
                   if (!isAnon) ...[
                     _SectionLabel('Refer a friend'),

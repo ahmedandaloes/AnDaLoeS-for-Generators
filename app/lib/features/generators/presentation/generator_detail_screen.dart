@@ -65,6 +65,8 @@ class _Body extends ConsumerWidget {
     final companyId = gen['company_id']?.toString() ?? '';
     final reviewsAsync = ref.watch(generatorReviewsProvider(generatorId));
     final responseTimeAsync = ref.watch(avgResponseTimeProvider(companyId));
+    final acceptanceRateAsync =
+        ref.watch(ownerAcceptanceRateProvider(companyId));
     final bookedAsync = ref.watch(bookedDatesProvider(generatorId));
     final similarAsync = ref.watch(similarGeneratorsProvider(gen));
 
@@ -261,6 +263,45 @@ class _Body extends ConsumerWidget {
                                   color: Colors.green.shade700),
                             ),
                           ]),
+                        ),
+                      );
+                    },
+                    orElse: () => const SizedBox.shrink(),
+                  ),
+                  // Acceptance rate badge
+                  acceptanceRateAsync.maybeWhen(
+                    data: (rate) {
+                      if (rate == null || rate <= 0) {
+                        return const SizedBox.shrink();
+                      }
+                      final color = rate >= 80
+                          ? Colors.green.shade700
+                          : rate >= 50
+                              ? Colors.orange.shade700
+                              : Colors.red.shade700;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.check_circle_outline,
+                                    size: 11, color: color),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '$rate% acceptance rate',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: color),
+                                ),
+                              ]),
                         ),
                       );
                     },
