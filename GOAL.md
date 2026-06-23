@@ -76,10 +76,13 @@ CRITICAL — marketplace couldn't function end-to-end (DB-layer chain). FIXED:
 - [x] C4: owner stuck on "Under review" — downstream of C1–C2, now resolved (approval works)
 - [x] H4: customer-facing raw `Error: $e` → routed through friendlyDbError (booking, company onboarding, rating)
 
-HIGH — real-user auth (still open; needs owner input / Supabase config):
-- [ ] H1: `/dev-login` (auto-signup, no email verification) ships unguarded — gate behind kDebugMode once a real auth path exists
-- [ ] H2: phone OTP likely non-functional (no SMS provider provisioned) — provision SMS, or commit to verified-email signup as launch auth
-- [ ] H3: no guest→registered upgrade (linkIdentity) — guest must restart auth to book
+HIGH — real-user auth. DECISION (owner 2026-06-24): **verified email now, phone later.**
+- [ ] H2/launch auth: build verified email + password sign-up/sign-in (Supabase
+      email confirmation, no external setup) as the production front door. IN PROGRESS.
+- [ ] H1: gate `/dev-login` behind kDebugMode (stays for testing, off in release)
+- [ ] Phase 2: phone OTP once owner provisions an SMS provider (Twilio/Vonage) in
+      Supabase Auth — UI already partly built; keep it.
+- [ ] H3: guest→registered upgrade (linkIdentity) — nice-to-have, after email auth
 
 MEDIUM (polish): digital payment is "coming soon" stub (COD works); delivery address/time stuffed in free-text note; company_documents table unused; verify RLS airtight (hardcoded publishable key).
 
