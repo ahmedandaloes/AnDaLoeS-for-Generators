@@ -31,10 +31,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] My Rentals: status timeline instead of plain chip (pending → accepted → active → completed progress steps)
-- [ ] Chat: send on Enter key, typing indicator
-- [ ] Rental request: animated confirmation when dates are selected (progress micro-animation)
-- [ ] Generator detail: sticky "Rent Now" FAB animates in/out on scroll
+- [ ] Rental request: animated date range confirmation (show summary card with animation when dates picked)
+- [ ] Pull-to-refresh on Owner Dashboard Requests + History tabs
+- [ ] Generator detail: share button shows generator title + KVA in share sheet
+- [ ] Admin: better stats display — pie/bar chart for rental status distribution
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -59,9 +59,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: map view + notifications UX overhaul`
+**Last commit:** `feat: status timeline, sticky FAB, typing indicator, Enter-to-send`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** Status timeline in My Rentals + chat UX improvements + sticky FAB on generator detail
+**Next action:** Animated date confirmation on rental request + pull-to-refresh on Owner Dashboard + admin stats chart
 
 ---
 
