@@ -53,6 +53,8 @@ class _PaymentConfirmationScreenState
         'price_total': widget.totalPrice,
         'rate_basis': _rateBasis(widget.days),
         'payment_method': _paymentMethod,
+        'deposit_amount':
+            (widget.generator['deposit_amount'] as num?)?.toDouble() ?? 0,
         'status': 'pending',
         if (widget.note.isNotEmpty) 'note': widget.note,
         if (widget.deliveryAddress.isNotEmpty)
@@ -248,6 +250,28 @@ class _PaymentConfirmationScreenState
                 ]),
               ),
             ),
+            // Refundable security deposit (set by the owner)
+            Builder(builder: (_) {
+              final deposit =
+                  (widget.generator['deposit_amount'] as num?)?.toDouble() ?? 0;
+              if (deposit <= 0) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Row(children: [
+                  Icon(Icons.shield_outlined,
+                      size: 16, color: cs.onSurfaceVariant),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Refundable security deposit: EGP ${deposit.toStringAsFixed(0)} '
+                      '(returned after the generator is returned in good condition).',
+                      style:
+                          TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                    ),
+                  ),
+                ]),
+              );
+            }),
             const SizedBox(height: 16),
 
             // Delivery details

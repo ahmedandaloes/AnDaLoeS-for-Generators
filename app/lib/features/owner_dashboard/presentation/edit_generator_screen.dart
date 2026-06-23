@@ -47,6 +47,7 @@ class _EditGeneratorScreenState
   final _pricePerDayController = TextEditingController();
   final _pricePerWeekController = TextEditingController();
   final _pricePerMonthController = TextEditingController();
+  final _depositController = TextEditingController();
   final _cityController = TextEditingController();
 
   String? _governorate;
@@ -74,6 +75,7 @@ class _EditGeneratorScreenState
     _pricePerDayController.dispose();
     _pricePerWeekController.dispose();
     _pricePerMonthController.dispose();
+    _depositController.dispose();
     _cityController.dispose();
     super.dispose();
   }
@@ -86,6 +88,8 @@ class _EditGeneratorScreenState
     _pricePerDayController.text = gen['price_per_day']?.toString() ?? '';
     _pricePerWeekController.text = gen['price_per_week']?.toString() ?? '';
     _pricePerMonthController.text = gen['price_per_month']?.toString() ?? '';
+    final dep = (gen['deposit_amount'] as num?)?.toDouble() ?? 0;
+    _depositController.text = dep > 0 ? dep.toStringAsFixed(0) : '';
     _cityController.text = gen['city']?.toString() ?? '';
     _governorate = gen['governorate']?.toString();
     _fuelType = gen['fuel_type']?.toString() ?? 'diesel';
@@ -162,6 +166,8 @@ class _EditGeneratorScreenState
         'title': title,
         'capacity_kva': double.parse(capacityStr),
         'price_per_day': double.parse(priceStr),
+        'deposit_amount':
+            double.tryParse(_depositController.text.trim()) ?? 0,
         'price_per_week': _pricePerWeekController.text.trim().isNotEmpty
             ? double.parse(_pricePerWeekController.text.trim())
             : null,
@@ -412,6 +418,9 @@ class _EditGeneratorScreenState
                             _pricePerMonthController)),
                   ],
                 ),
+                const SizedBox(height: 12),
+                _EditNumField(
+                    'Refundable deposit', 'optional', _depositController),
                 const SizedBox(height: 28),
 
                 FilledButton(

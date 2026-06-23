@@ -121,8 +121,7 @@ owner paid out ≤3 working days → deposit released/claimed → both RATE.
       projected net payout ("You receive EGP X · 10% platform fee") via
       commissionConfigProvider + projectCommission helper. Customer still sees
       the full total (commission is owner-charged).
-- [ ] **Security deposit field** on generators + shown in booking + stored on
-      rental_requests (foundation for the trust layer). → data-architect first
+- [x] **Security deposit field** — owner sets a refundable deposit; shown at booking; stored on rental_requests (DB 0027)
 - [x] **Use-case/segment tags** on generators (DB 0023 use_cases text[] + GIN
       index). Owner picks them in add/edit (chips), customer filters by them in
       the browse filter sheet, shown on the detail screen. Shared
@@ -171,7 +170,7 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 ### Fulfillment & Trust (on-time + confidence — the core promise)
 - [ ] [NOW] Owner SLA acceptance clock — auto-expire requests ignored past a window (e.g. 4h)
 - [ ] [NOW] Delivery confirmation — owner "out for delivery" → customer "received" (opt. photo) → ACTIVE, timestamped
-- [ ] [NOW] Security deposit field (generator → rental_request; record-only now, hold later) — foundation of the trust layer
+- [x] [NOW] Security deposit field (generator + rental_request, DB 0027) — owner sets it, shown to customer at booking, stored on the request
 - [ ] [NOW] Verified-owner badge from company-approval state on cards/detail (wire the unused company_documents)
 - [ ] [SOON] Fulfillment status timeline on the ticket (accepted→preparing→en route→delivered→active→returned)
 - [ ] [SOON] Owner reliability score (on-time %, acceptance, cancellation) shown on listings

@@ -33,6 +33,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
   final _pricePerDayController = TextEditingController();
   final _pricePerWeekController = TextEditingController();
   final _pricePerMonthController = TextEditingController();
+  final _depositController = TextEditingController();
   final _cityController = TextEditingController();
   String? _governorate;
   String _fuelType = 'diesel';
@@ -50,6 +51,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
     _descController.dispose();
     _pricePerDayController.dispose();
     _pricePerWeekController.dispose();
+    _depositController.dispose();
     _pricePerMonthController.dispose();
     _cityController.dispose();
     super.dispose();
@@ -96,6 +98,8 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
         'title': title,
         'capacity_kva': double.parse(capacityStr),
         'price_per_day': double.parse(priceStr),
+        if (_depositController.text.trim().isNotEmpty)
+          'deposit_amount': double.tryParse(_depositController.text.trim()) ?? 0,
         if (_pricePerWeekController.text.trim().isNotEmpty)
           'price_per_week': double.parse(_pricePerWeekController.text.trim()),
         if (_pricePerMonthController.text.trim().isNotEmpty)
@@ -314,6 +318,13 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
             const SizedBox(height: 8),
             Text(
               '1 day = 8 operating hours. Lower week/month rates attract more bookings.',
+              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 12),
+            _NumField('Refundable deposit', 'optional', _depositController),
+            const SizedBox(height: 4),
+            Text(
+              'A refundable security deposit reassures you against damage. Shown to the customer at booking.',
               style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 28),
