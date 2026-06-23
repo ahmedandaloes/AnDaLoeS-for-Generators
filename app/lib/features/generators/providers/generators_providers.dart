@@ -113,3 +113,17 @@ final nearMeProvider =
     generators: (data as List).cast<Map<String, dynamic>>()
   );
 });
+
+// Shared current user profile — consumed by HomeScreen greeting + any other screen
+// that needs role/name without duplicating the Supabase call.
+final currentProfileProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) return null;
+  final data = await supabase
+      .from('profiles')
+      .select('full_name, role, avatar_url')
+      .eq('id', uid)
+      .maybeSingle();
+  return data;
+});

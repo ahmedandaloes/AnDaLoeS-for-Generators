@@ -6,7 +6,21 @@ import '../../../core/config/supabase.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../notifications/providers/notifications_providers.dart'
     show unreadCountProvider;
-import '../providers/generators_providers.dart';
+import '../providers/generators_providers.dart'
+    show
+        filterProvider,
+        favoritesProvider,
+        generatorsProvider,
+        remoteFavoritesProvider,
+        showFavoritesOnlyProvider,
+        recentSearchesProvider,
+        featuredGeneratorsProvider,
+        recentlyViewedProvider,
+        newArrivalsProvider,
+        autocompleteProvider,
+        flashDealsProvider,
+        nearMeProvider,
+        currentProfileProvider;
 import 'widgets/fuel_chip.dart' show fuelLabel;
 import 'widgets/generator_card.dart';
 import 'widgets/generator_filter.dart';
@@ -214,6 +228,117 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ]),
             ),
           ),
+
+          // ── Personalized greeting card (role-aware) ──────────────────
+          if (loggedIn)
+            SliverToBoxAdapter(
+              child: Consumer(builder: (context, watchRef, _) {
+                final profile = watchRef.watch(currentProfileProvider);
+                return profile.maybeWhen(
+                  data: (p) {
+                    if (p == null) return const SizedBox.shrink();
+                    final role = p['role']?.toString() ?? 'customer';
+                    final name = (p['full_name']?.toString() ?? '').split(' ').firstOrNull ?? '';
+                    final greeting = _timeGreeting();
+                    final (icon, label, sub, bg) = switch (role) {
+                      'admin' => (
+                          Icons.shield_outlined,
+                          '$greeting, $name',
+                          'Admin mode — full platform access.',
+                          cs.errorContainer,
+                        ),
+                      'owner' => (
+                          Icons.storefront_outlined,
+                          '$greeting, $name',
+                          'Check your dashboard for new rental requests.',
+                          cs.secondaryContainer,
+                        ),
+                      _ => (
+                          Icons.bolt,
+                          '$greeting, ${name.isEmpty ? "there" : name}',
+                          'Find your perfect generator rental today.',
+                          cs.primaryContainer,
+                        ),
+                    };
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: bg,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(children: [
+                          Icon(icon, size: 24,
+                              color: bg == cs.errorContainer
+                                  ? cs.onErrorContainer
+                                  : bg == cs.secondaryContainer
+                                      ? cs.onSecondaryContainer
+                                      : cs.onPrimaryContainer),
+                          const SizedBox(width: 12),
+                          Expanded(child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(greeting.isEmpty ? label : label,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: bg == cs.errorContainer
+                                        ? cs.onErrorContainer
+                                        : bg == cs.secondaryContainer
+                                            ? cs.onSecondaryContainer
+                                            : cs.onPrimaryContainer,
+                                  )),
+                              const SizedBox(height: 2),
+                              Text(sub,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: (bg == cs.errorContainer
+                                        ? cs.onErrorContainer
+                                        : bg == cs.secondaryContainer
+                                            ? cs.onSecondaryContainer
+                                            : cs.onPrimaryContainer)
+                                        .withValues(alpha: 0.75),
+                                  )),
+                            ],
+                          )),
+                          if (role == 'owner')
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                minimumSize: Size.zero,
+                              ),
+                              onPressed: () => context.push(AppRoutes.ownerDashboard),
+                              child: Text('Dashboard',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: cs.onSecondaryContainer)),
+                            ),
+                          if (role == 'admin')
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                minimumSize: Size.zero,
+                              ),
+                              onPressed: () => context.push(AppRoutes.admin),
+                              child: Text('Admin Panel',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: cs.onErrorContainer)),
+                            ),
+                        ]),
+                      ),
+                    );
+                  },
+                  orElse: () => const SizedBox.shrink(),
+                );
+              }),
+            ),
 
           // ── Active filter pills ───────────────────────────────────────
           if (filter.hasActiveFilters)
@@ -618,6 +743,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 }
 
 // ── Hero banner ───────────────────────────────────────────────────────────────
+
+String _timeGreeting() {
+  final h = DateTime.now().hour;
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 class _HeroBanner extends StatelessWidget {
   const _HeroBanner({required this.cs, required this.l});
