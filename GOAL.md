@@ -175,7 +175,7 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 - [ ] [SOON] Fulfillment status timeline on the ticket (accepted→preparing→en route→delivered→active→returned)
 - [x] [NOW] Owner reliability — shared companyReliabilityProvider (acceptance, response, on-time, completed). On-time % badge added to generator detail; company profile migrated to the shared provider (removed duplicate).
 - [ ] [SOON] Two-sided dispute/claim flow (extend reports: damage/no-show/wrong-spec + evidence + admin adjudication)
-- [ ] [SOON] Cancellation policy + penalties (windows, strikes, auto-suspend repeat offenders)
+- [~] [NOW] Cancellation policy shown at booking ("free while pending; coordinate with owner after accept"). Penalties/strikes → SOON.
 - [ ] [LATER] Backup-fulfillment fallback — suggest nearest equivalent when an accepted owner cancels late
 
 ### Growth (supply, demand, liquidity)

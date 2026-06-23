@@ -386,6 +386,23 @@ class _PaymentConfirmationScreenState
                 ]),
               ),
 
+            // Cancellation policy (clarity up front)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Icon(Icons.event_busy_outlined,
+                    size: 16, color: cs.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Free cancellation while your request is pending. After the '
+                    'owner accepts, please coordinate any cancellation with them.',
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                  ),
+                ),
+              ]),
+            ),
+
             // Confirm button
             FilledButton.icon(
               onPressed: _submitting ? null : _confirm,
