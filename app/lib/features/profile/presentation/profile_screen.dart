@@ -6,6 +6,19 @@ import '../../../core/config/supabase.dart';
 import '../../../core/localization/locale_provider.dart';
 import '../../../l10n/app_localizations.dart';
 
+// Counts pending rental requests across all generators the user owns.
+final _pendingRequestsCountProvider =
+    FutureProvider.autoDispose<int>((ref) async {
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) return 0;
+  final data = await supabase
+      .from('rental_requests')
+      .select('id, generators!inner(company_id, companies!inner(owner_user_id))')
+      .eq('status', 'pending')
+      .eq('generators.companies.owner_user_id', uid);
+  return (data as List).length;
+});
+
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -234,8 +247,20 @@ class ProfileScreen extends ConsumerWidget {
                             style: TextStyle(fontWeight: FontWeight.w500)),
                         subtitle: const Text('Manage generators & requests',
                             style: TextStyle(fontSize: 12)),
-                        trailing: Icon(Icons.chevron_right,
-                            color: cs.onSurfaceVariant),
+                        trailing: ref
+                            .watch(_pendingRequestsCountProvider)
+                            .maybeWhen(
+                              data: (n) => n == 0
+                                  ? Icon(Icons.chevron_right,
+                                      color: cs.onSurfaceVariant)
+                                  : Badge(
+                                      label: Text('$n'),
+                                      child: Icon(Icons.chevron_right,
+                                          color: cs.onSurfaceVariant),
+                                    ),
+                              orElse: () => Icon(Icons.chevron_right,
+                                  color: cs.onSurfaceVariant),
+                            ),
                         onTap: () => context.push('/owner-dashboard'),
                       ),
                     ],
