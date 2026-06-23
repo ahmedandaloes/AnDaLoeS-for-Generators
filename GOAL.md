@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Generator detail: "Similar generators" section at the bottom
-- [ ] My Rentals: pull-to-refresh reloads both active and history tabs
-- [ ] Owner Dashboard: request card swipe-left to quick-reject pending
-- [ ] Home: empty-state illustration when no generators match filters
+- [ ] Notifications: mark-all-as-read button in AppBar
+- [ ] Generator detail: "Ask a question" pre-typed WhatsApp message
+- [ ] Owner Dashboard: average response time shown per request in card
+- [ ] Profile: referral code display + share button
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: receipt share-as-image, earnings breakdown chart by generator`
+**Last commit:** `feat: owner quick-reject swipe, improved filter empty state`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 

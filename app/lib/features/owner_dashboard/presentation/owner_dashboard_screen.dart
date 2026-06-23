@@ -376,8 +376,67 @@ class _RequestsTab extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             itemCount: items.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (ctx, i) =>
-                OwnerRequestCard(request: items[i], ref: ref, companyId: companyId),
+            itemBuilder: (ctx, i) {
+              final req = items[i];
+              final reqId = req['id']?.toString() ?? '';
+              final isPending = req['status']?.toString() == 'pending';
+
+              if (!isPending) {
+                return OwnerRequestCard(
+                    request: req, ref: ref, companyId: companyId);
+              }
+
+              return Dismissible(
+                key: ValueKey('owner_req_$reqId'),
+                direction: DismissDirection.endToStart,
+                confirmDismiss: (_) async {
+                  final confirmed = await showDialog<bool>(
+                    context: ctx,
+                    builder: (_) => AlertDialog(
+                      title: const Text('Reject request?'),
+                      content: const Text(
+                          'The customer will be notified that their request was rejected.'),
+                      actions: [
+                        TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancel')),
+                        FilledButton(
+                          style: FilledButton.styleFrom(
+                              backgroundColor: cs.error),
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Reject'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) {
+                    await supabase
+                        .from('rental_requests')
+                        .update({'status': 'rejected'}).eq('id', reqId);
+                    ref.invalidate(ownerRequestsProvider(companyId));
+                  }
+                  return false; // list refresh handles removal
+                },
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  decoration: BoxDecoration(
+                    color: cs.error.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                    Icon(Icons.close_rounded, color: cs.error),
+                    const SizedBox(width: 6),
+                    Text('Reject',
+                        style: TextStyle(
+                            color: cs.error, fontWeight: FontWeight.w700)),
+                  ]),
+                ),
+                child: OwnerRequestCard(
+                    request: req, ref: ref, companyId: companyId),
+              );
+            },
           ),
         );
       },

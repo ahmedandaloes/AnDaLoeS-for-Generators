@@ -480,7 +480,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ? _NoResultsState(
                           onClear: () => ref
                               .read(filterProvider.notifier)
-                              .state = const GeneratorFilter())
+                              .state = const GeneratorFilter(),
+                          filterSummary: [
+                            if (filter.query.isNotEmpty) '"${filter.query}"',
+                            if (filter.governorate != null &&
+                                filter.governorate!.isNotEmpty)
+                              filter.governorate!,
+                            if (filter.maxKva != null)
+                              '≤ ${filter.maxKva!.toStringAsFixed(0)} KVA',
+                            if (filter.maxPrice != null)
+                              '≤ EGP ${filter.maxPrice}',
+                          ].join(' · '),
+                        )
                       : _EmptyState(l: l),
                 );
               }
@@ -806,8 +817,9 @@ class _ErrorState extends StatelessWidget {
 }
 
 class _NoResultsState extends StatelessWidget {
-  const _NoResultsState({required this.onClear});
+  const _NoResultsState({required this.onClear, this.filterSummary});
   final VoidCallback onClear;
+  final String? filterSummary;
 
   @override
   Widget build(BuildContext context) {
@@ -818,16 +830,66 @@ class _NoResultsState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.search_off, size: 48, color: cs.onSurfaceVariant),
-            const SizedBox(height: 16),
+            // Layered ring illustration
+            Stack(alignment: Alignment.center, children: [
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+                ),
+              ),
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: cs.surfaceContainerHighest.withValues(alpha: 0.6),
+                ),
+              ),
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: cs.surfaceContainerHighest,
+                ),
+                child: Icon(Icons.search_off_rounded,
+                    size: 26, color: cs.onSurfaceVariant),
+              ),
+            ]),
+            const SizedBox(height: 20),
             const Text('No generators match',
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            Text('Try adjusting your filters.',
-                style: TextStyle(color: cs.onSurfaceVariant)),
+            if (filterSummary != null) ...[
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  filterSummary!,
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: cs.onSurface,
+                      fontWeight: FontWeight.w500),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            Text('Try different KVA, city, or price range.',
+                style: TextStyle(
+                    color: cs.onSurfaceVariant, fontSize: 13),
+                textAlign: TextAlign.center),
             const SizedBox(height: 20),
             FilledButton.tonal(
-                onPressed: onClear, child: const Text('Clear filters')),
+                onPressed: onClear,
+                child: const Text('Clear all filters')),
           ],
         ),
       ),
