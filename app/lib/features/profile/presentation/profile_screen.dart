@@ -287,6 +287,19 @@ class ProfileScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 8),
+                  // All-pages navigation hub (reach any screen for review/testing)
+                  _Card(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.apps_rounded),
+                        title: const Text('All pages'),
+                        subtitle: const Text('Open any screen directly'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push(AppRoutes.pageHub),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
                   // Account info card
                   if (!isAnon) ...[
                     _SectionLabel('Account'),

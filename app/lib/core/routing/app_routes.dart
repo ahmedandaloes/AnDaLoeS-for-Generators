@@ -16,6 +16,7 @@ abstract final class AppRoutes {
   static const admin = '/admin';
   static const ownerDashboard = '/owner-dashboard';
   static const companyOnboard = '/company/onboard';
+  static const pageHub = '/pages';
 
   // ── Route path templates (used in GoRoute definitions) ───────────────────
   static const generatorDetailPath = '/generators/:id';

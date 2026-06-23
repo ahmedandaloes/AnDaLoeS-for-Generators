@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/supabase.dart';
 import 'app_routes.dart';
+import '../dev/page_hub_screen.dart';
 import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/auth/presentation/email_login_screen.dart';
 import '../../features/auth/presentation/email_auth_screen.dart';
@@ -45,6 +46,7 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
       AppRoutes.companyOnboard,
       AppRoutes.admin,
       AppRoutes.notifications,
+      AppRoutes.pageHub,
     };
     final needsAuth = protected.contains(loc) ||
         (loc.startsWith('/generators/') && loc.endsWith('/request')) ||
@@ -78,6 +80,7 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
     GoRoute(path: AppRoutes.admin, builder: (_, __) => const AdminScreen()),
     GoRoute(path: AppRoutes.ownerDashboard, builder: (_, __) => const OwnerDashboardScreen()),
     GoRoute(path: AppRoutes.companyOnboard, builder: (_, __) => const CompanyOnboardingScreen()),
+    GoRoute(path: AppRoutes.pageHub, builder: (_, __) => const PageHubScreen()),
     GoRoute(
       path: AppRoutes.ownerEarningsPath,
       builder: (_, state) => OwnerEarningsScreen(

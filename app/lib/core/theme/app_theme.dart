@@ -1,26 +1,38 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color _seed = Color(0xFF1F6F43);
-  static const Color _seedDark = Color(0xFF2E8B57);
+  // "Premium B2B / Trust" design language: a confident blue conveys trust
+  // (primary), green signals verified / energy / success (secondary). Light,
+  // professional, data-forward surfaces.
+  static const Color _primary = Color(0xFF1D4ED8); // blue-700 — trust
+  static const Color _verified = Color(0xFF15803D); // green-700 — verified/energy
 
   static ThemeData light() {
-    final scheme = ColorScheme.fromSeed(seedColor: _seed);
+    final scheme = ColorScheme.fromSeed(
+      seedColor: _primary,
+      brightness: Brightness.light,
+    ).copyWith(
+      secondary: _verified,
+      tertiary: _verified,
+    );
     return _base(scheme);
   }
 
   static ThemeData dark() {
     final scheme = ColorScheme.fromSeed(
-      seedColor: _seedDark,
+      seedColor: _primary,
       brightness: Brightness.dark,
+    ).copyWith(
+      secondary: const Color(0xFF22C55E),
+      tertiary: const Color(0xFF22C55E),
     );
     return _base(scheme);
   }
 
   static ThemeData _base(ColorScheme scheme) {
     final isDark = scheme.brightness == Brightness.dark;
-    // Clean, neutral surfaces (Uber-grade): a true light gray, not a tinted one.
-    final scaffold = isDark ? scheme.surface : const Color(0xFFF7F7F8);
+    // Cool, professional light grey (B2B procurement feel), not a tinted one.
+    final scaffold = isDark ? scheme.surface : const Color(0xFFF4F6FA);
     return ThemeData(
       colorScheme: scheme,
       useMaterial3: true,
