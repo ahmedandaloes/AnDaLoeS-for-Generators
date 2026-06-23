@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/config/supabase.dart';
 
@@ -40,6 +43,39 @@ class AdminStatsTab extends StatelessWidget {
   const AdminStatsTab({super.key, required this.ref});
   final WidgetRef ref;
 
+  Future<void> _exportCsv(
+      BuildContext context, Map<String, dynamic> stats) async {
+    final now = DateTime.now();
+    final label =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+    final rows = [
+      ['Metric', 'Value'],
+      ['Export date', label],
+      ['Users', '${stats['users']}'],
+      ['Generators', '${stats['generators']}'],
+      ['Total rentals', '${stats['total_rentals']}'],
+      ['Pending rentals', '${stats['pending_rentals']}'],
+      ['Accepted rentals', '${stats['accepted_rentals']}'],
+      ['Active rentals', '${stats['active_rentals']}'],
+      ['Completed rentals', '${stats['completed_rentals']}'],
+      [
+        'Total commission (EGP)',
+        (stats['total_commission_earned'] as double).toStringAsFixed(2)
+      ],
+    ];
+
+    final csv = rows.map((r) => r.join(',')).join('\n');
+    final dir = Directory.systemTemp;
+    final file = File('${dir.path}/andaloes_stats_$label.csv');
+    await file.writeAsString(csv);
+
+    await Share.shareXFiles(
+      [XFile(file.path, mimeType: 'text/csv')],
+      subject: 'AnDaLoeS Platform Stats — $label',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final statsAsync = ref.watch(platformStatsProvider);
@@ -48,54 +84,61 @@ class AdminStatsTab extends StatelessWidget {
     return statsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('$e')),
-      data: (stats) => RefreshIndicator(
-        onRefresh: () => ref.refresh(platformStatsProvider.future),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            const SizedBox(height: 8),
-            Text('PLATFORM OVERVIEW',
-                style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
-                    color: cs.onSurfaceVariant)),
-            const SizedBox(height: 12),
-            _StatGrid(stats: stats, cs: cs),
-            const SizedBox(height: 24),
-            _RentalStatusChart(stats: stats, cs: cs),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Commission earned',
+      data: (stats) => Scaffold(
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => _exportCsv(context, stats),
+          icon: const Icon(Icons.download_outlined),
+          label: const Text('Export CSV'),
+        ),
+        body: RefreshIndicator(
+          onRefresh: () => ref.refresh(platformStatsProvider.future),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+            children: [
+              const SizedBox(height: 8),
+              Text('PLATFORM OVERVIEW',
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                      color: cs.onSurfaceVariant)),
+              const SizedBox(height: 12),
+              _StatGrid(stats: stats, cs: cs),
+              const SizedBox(height: 24),
+              _RentalStatusChart(stats: stats, cs: cs),
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Commission earned',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: cs.onSurfaceVariant,
+                              fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      Text(
+                        'EGP ${(stats['total_commission_earned'] as double).toStringAsFixed(0)}',
                         style: TextStyle(
-                            fontSize: 12,
-                            color: cs.onSurfaceVariant,
-                            fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Text(
-                      'EGP ${(stats['total_commission_earned'] as double).toStringAsFixed(0)}',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: cs.primary,
-                        letterSpacing: -1,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: cs.primary,
+                          letterSpacing: -1,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'from ${stats['completed_rentals']} completed rentals',
-                      style: TextStyle(
-                          fontSize: 12, color: cs.onSurfaceVariant),
-                    ),
-                  ],
+                      Text(
+                        'from ${stats['completed_rentals']} completed rentals',
+                        style: TextStyle(
+                            fontSize: 12, color: cs.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

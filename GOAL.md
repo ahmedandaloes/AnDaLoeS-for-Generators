@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Rental request: smarter conflict UX — show exact blocked date ranges as chips before picker
-- [ ] Admin: export stats as CSV (share sheet with raw numbers)
-- [ ] Generator detail: skeleton loading state while data loads
-- [ ] Home: featured generators section visible even when main list is empty
+- [ ] My Rentals: pull-to-refresh + skeleton loading cards
+- [ ] Generator card: "Available from" badge when generator has near-future bookings
+- [ ] Owner Dashboard: empty state for Requests tab when no pending requests
+- [ ] Admin: approvals with confirmation snackbar showing company name
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,9 +87,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: hero image 300px + gradient overlay, PressScale widget, micro-animations on Accept/Review CTAs`
+**Last commit:** `feat: admin CSV export FAB, next-available conflict banner, detail skeleton, home empty-state scroll fix`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** conflict UX chips, admin CSV export, detail skeleton, featured section fallback
+**Next action:** My Rentals skeleton/refresh, generator card available-from badge, owner requests empty state
 
 ---
 

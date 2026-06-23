@@ -307,6 +307,17 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                   ),
                 ],
 
+                // Next available suggestion when conflict detected
+                if (_conflictCount > 0 && _range != null) ...[
+                  _NextAvailableBanner(
+                    range: _range!,
+                    bookedRanges: bookedRanges,
+                    cs: cs,
+                    onTap: (suggested) => setState(() => _range = suggested),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
                 // Date picker
                 _SectionLabel('Rental dates'),
                 GestureDetector(
@@ -614,6 +625,94 @@ class _DateSummaryCardState extends State<_DateSummaryCard>
           ],
         ),
       ),
+    );
+  }
+}
+
+// Shows the next available window after a conflict, with a one-tap fill button.
+class _NextAvailableBanner extends StatelessWidget {
+  const _NextAvailableBanner({
+    required this.range,
+    required this.bookedRanges,
+    required this.cs,
+    required this.onTap,
+  });
+
+  final DateTimeRange range;
+  final List<DateTimeRange> bookedRanges;
+  final ColorScheme cs;
+  final ValueChanged<DateTimeRange> onTap;
+
+  DateTimeRange? _computeNext() {
+    final days = range.end.difference(range.start).inDays;
+    // Start searching the day after the last overlapping booking ends
+    DateTime cursor = range.start;
+    for (int i = 0; i < 90; i++) {
+      final candidate = DateTimeRange(
+        start: cursor,
+        end: cursor.add(Duration(days: days)),
+      );
+      final blocked = bookedRanges.any((b) =>
+          b.start.isBefore(candidate.end.add(const Duration(days: 1))) &&
+          b.end.isAfter(candidate.start.subtract(const Duration(days: 1))));
+      if (!blocked) return candidate;
+      // Advance past the blocking booking
+      for (final b in bookedRanges) {
+        if (b.start.isBefore(candidate.end.add(const Duration(days: 1))) &&
+            b.end.isAfter(candidate.start.subtract(const Duration(days: 1)))) {
+          if (b.end.isAfter(cursor)) {
+            cursor = b.end.add(const Duration(days: 1));
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  String _fmt(DateTime d) => '${d.day}/${d.month}/${d.year}';
+
+  @override
+  Widget build(BuildContext context) {
+    final next = _computeNext();
+    if (next == null) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.shade300),
+      ),
+      child: Row(children: [
+        Icon(Icons.lightbulb_outline, size: 18, color: Colors.amber.shade700),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Next available window',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.amber.shade900)),
+              const SizedBox(height: 2),
+              Text(
+                '${_fmt(next.start)} → ${_fmt(next.end)}',
+                style: TextStyle(fontSize: 12, color: Colors.amber.shade800),
+              ),
+            ],
+          ),
+        ),
+        TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.amber.shade800,
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+          ),
+          onPressed: () => onTap(next),
+          child: const Text('Use this'),
+        ),
+      ]),
     );
   }
 }
