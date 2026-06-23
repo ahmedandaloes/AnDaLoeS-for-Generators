@@ -1245,21 +1245,50 @@ class _HistoryTabState extends State<_HistoryTab> {
 
   Future<void> _exportCsv(
       BuildContext context, List<Map<String, dynamic>> rows) async {
-    final buf = StringBuffer('Generator,Customer,Start,End,Days,Total EGP\n');
+    final now = DateTime.now();
+    final dateLabel = '${now.day}/${now.month}/${now.year}';
+    final completed = rows.where((r) => r['status'] == 'completed').toList();
+    final totalEarnings = completed.fold<num>(
+        0, (s, r) => s + ((r['price_total'] as num?) ?? 0));
+
+    // ── CSV file ──────────────────────────────────────────────────────
+    final csv = StringBuffer('Generator,Customer,Start,End,Days,Total EGP\n');
     for (final r in rows) {
       final gen = (r['generators'] as Map?)?['title'] ?? '';
       final cust = (r['profiles'] as Map?)?['full_name'] ?? '';
-      final start = r['start_date'] ?? '';
-      final end = r['end_date'] ?? '';
-      final days = r['total_days'] ?? '';
-      final total = r['price_total'] ?? '';
-      buf.writeln('"$gen","$cust","$start","$end","$days","$total"');
+      csv.writeln('"$gen","${r['start_date'] ?? ''}","${r['end_date'] ?? ''}","${r['total_days'] ?? ''}","${r['price_total'] ?? ''}"');
     }
-    final file = File('${Directory.systemTemp.path}/earnings_export.csv');
-    await file.writeAsString(buf.toString());
+
+    // ── Text earnings statement ────────────────────────────────────────
+    final sep = '─' * 48;
+    final stmt = StringBuffer()
+      ..writeln('AnDaLoeS — Earnings Statement')
+      ..writeln('Generated: $dateLabel')
+      ..writeln(sep)
+      ..writeln('COMPLETED RENTALS: ${completed.length}')
+      ..writeln('TOTAL EARNINGS:    EGP ${totalEarnings.toStringAsFixed(2)}')
+      ..writeln(sep);
+    for (final r in completed) {
+      final gen = (r['generators'] as Map?)?['title'] ?? '-';
+      final cust = (r['profiles'] as Map?)?['full_name'] ?? '-';
+      final total = (r['price_total'] as num?)?.toStringAsFixed(0) ?? '0';
+      stmt.writeln('$gen  |  $cust  |  EGP $total');
+    }
+    stmt..writeln(sep)..writeln('AnDaLoeS Generator Rental Platform');
+
+    final csvFile = File('${Directory.systemTemp.path}/andaloes_earnings.csv');
+    final txtFile = File('${Directory.systemTemp.path}/andaloes_statement.txt');
+    await Future.wait([
+      csvFile.writeAsString(csv.toString()),
+      txtFile.writeAsString(stmt.toString()),
+    ]);
     await Share.shareXFiles(
-      [XFile(file.path, mimeType: 'text/csv')],
-      subject: 'AnDaLoeS Earnings Export',
+      [
+        XFile(csvFile.path, mimeType: 'text/csv'),
+        XFile(txtFile.path, mimeType: 'text/plain'),
+      ],
+      subject: 'AnDaLoeS Earnings Export — $dateLabel',
+      text: '${completed.length} completed rentals · EGP ${totalEarnings.toStringAsFixed(0)} total',
     );
   }
 }

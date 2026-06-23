@@ -11,6 +11,7 @@ import '../../../core/localization/locale_provider.dart';
 import '../../../core/theme/theme_mode_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../owner_dashboard/providers/owner_providers.dart' show myCompanyProvider;
 
 // Fetches the user's profile row (full_name, phone, role).
 final _profileDataProvider =
@@ -803,6 +804,43 @@ class ProfileScreen extends ConsumerWidget {
                             ),
                         onTap: () => context.push(AppRoutes.ownerDashboard),
                       );
+                      }),
+                      // View Company Profile — owners only
+                      Builder(builder: (_) {
+                        final role = profileAsync.valueOrNull?['role']?.toString() ?? 'customer';
+                        if (role != 'owner' && role != 'admin') return const SizedBox.shrink();
+                        return ref.watch(myCompanyProvider).maybeWhen(
+                          data: (company) {
+                            if (company == null) return const SizedBox.shrink();
+                            final cid = company['id']?.toString() ?? '';
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Divider(height: 1, indent: 56,
+                                    color: cs.outlineVariant.withValues(alpha: 0.4)),
+                                ListTile(
+                                  leading: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: cs.tertiaryContainer,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(Icons.storefront_outlined,
+                                        size: 18, color: cs.onTertiaryContainer),
+                                  ),
+                                  title: Text(company['name']?.toString() ?? 'My Company',
+                                      style: const TextStyle(fontWeight: FontWeight.w500)),
+                                  subtitle: const Text('Public company page',
+                                      style: TextStyle(fontSize: 12)),
+                                  trailing: Icon(Icons.open_in_new_rounded,
+                                      size: 16, color: cs.onSurfaceVariant),
+                                  onTap: () => context.push(AppRoutes.companyProfile(cid)),
+                                ),
+                              ],
+                            );
+                          },
+                          orElse: () => const SizedBox.shrink(),
+                        );
                       }),
                     ],
                   ),

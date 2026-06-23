@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Owner Dashboard: export earnings to PDF (currently CSV only)
 - [ ] Rental request: estimated delivery time field (hours after start date)
-- [ ] Generator cards: show company avg rating star badge
-- [ ] Profile: link to view own company page (for owners)
+- [ ] Generator detail: share now includes company name and rating
+- [ ] Owner Dashboard: bulk action — accept all pending with single tap confirmation
+- [ ] My Rentals: mark as received button for active rentals (customer side)
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: Top Rated Owners section, company avg rating on detail screen`
+**Last commit:** `feat: profile company link for owners, enriched earnings export with text statement`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 
