@@ -17,6 +17,40 @@ final _companyProfileProvider =
   return data;
 });
 
+// Returns (acceptanceRate: 0.0–1.0, avgResponseHours: double)
+// based on terminal-state rental requests for the company.
+final _companyRentalStatsProvider = FutureProvider.autoDispose
+    .family<({double acceptanceRate, double avgResponseHours}), String>(
+        (ref, companyId) async {
+  if (companyId.isEmpty) return (acceptanceRate: 0.0, avgResponseHours: 0.0);
+  final rows = await supabase
+      .from('rental_requests')
+      .select('status, created_at, updated_at')
+      .eq('company_id', companyId)
+      .inFilter('status', ['accepted', 'rejected', 'active', 'completed']);
+  final list = (rows as List).cast<Map<String, dynamic>>();
+  if (list.isEmpty) return (acceptanceRate: 0.0, avgResponseHours: 0.0);
+  final accepted = list
+      .where((r) => ['accepted', 'active', 'completed'].contains(r['status']))
+      .length;
+  final rate = accepted / list.length;
+  // avg hours between created_at and updated_at for accepted/rejected requests
+  final responded = list.where((r) {
+    final c = DateTime.tryParse(r['created_at']?.toString() ?? '');
+    final u = DateTime.tryParse(r['updated_at']?.toString() ?? '');
+    return c != null && u != null && u.isAfter(c);
+  }).toList();
+  final avgH = responded.isEmpty
+      ? 0.0
+      : responded.fold<double>(0, (s, r) {
+          final c = DateTime.parse(r['created_at'].toString());
+          final u = DateTime.parse(r['updated_at'].toString());
+          return s + u.difference(c).inMinutes / 60.0;
+        }) /
+          responded.length;
+  return (acceptanceRate: rate, avgResponseHours: avgH);
+});
+
 final _companyGeneratorsProvider =
     FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
         (ref, companyId) async {
@@ -276,6 +310,38 @@ class _CompanyBody extends StatelessWidget {
                         label: '$totalRentals completed rentals',
                         cs: cs,
                       ),
+                    ref
+                        .watch(_companyRentalStatsProvider(companyId))
+                        .maybeWhen(
+                          data: (stats) => Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (stats.acceptanceRate > 0)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(right: 8),
+                                  child: _StatChip(
+                                    icon: Icons.check_circle_outline,
+                                    label:
+                                        '${(stats.acceptanceRate * 100).round()}% acceptance',
+                                    cs: cs,
+                                    color: stats.acceptanceRate >= 0.8
+                                        ? Colors.green.shade700
+                                        : Colors.orange.shade700,
+                                  ),
+                                ),
+                              if (stats.avgResponseHours > 0)
+                                _StatChip(
+                                  icon: Icons.timer_outlined,
+                                  label: stats.avgResponseHours < 1
+                                      ? 'Responds in <1 hr'
+                                      : 'Responds in ~${stats.avgResponseHours.round()} hr',
+                                  cs: cs,
+                                ),
+                            ],
+                          ),
+                          orElse: () => const SizedBox.shrink(),
+                        ),
                   ],
                 ),
               ),
@@ -524,30 +590,38 @@ class _StatChip extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.cs,
+    this.color,
   });
   final IconData icon;
   final String label;
   final ColorScheme cs;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? cs.primary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
+        color: color != null
+            ? color!.withValues(alpha: 0.1)
+            : cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
+        border: color != null
+            ? Border.all(color: color!.withValues(alpha: 0.3))
+            : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: cs.primary),
+          Icon(icon, size: 13, color: effectiveColor),
           const SizedBox(width: 5),
           Text(
             label,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: cs.onSurfaceVariant,
+              color: color != null ? effectiveColor : cs.onSurfaceVariant,
             ),
           ),
         ],

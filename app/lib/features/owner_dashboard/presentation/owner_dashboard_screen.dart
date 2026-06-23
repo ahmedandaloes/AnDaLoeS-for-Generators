@@ -560,7 +560,9 @@ class _RequestsTab extends StatelessWidget {
 
 // _OwnerRequestCard moved to widgets/request_card.dart
 // ── Generators tab ────────────────────────────────────────────────────────────
-class _GeneratorsTab extends StatelessWidget {
+enum _GenSort { status, kva, price }
+
+class _GeneratorsTab extends StatefulWidget {
   const _GeneratorsTab(
       {required this.companyId, required this.cs, required this.ref});
   final String companyId;
@@ -568,18 +570,80 @@ class _GeneratorsTab extends StatelessWidget {
   final WidgetRef ref;
 
   @override
+  State<_GeneratorsTab> createState() => _GeneratorsTabState();
+}
+
+class _GeneratorsTabState extends State<_GeneratorsTab> {
+  _GenSort _sort = _GenSort.status;
+
+  List<Map<String, dynamic>> _sorted(List<Map<String, dynamic>> items) {
+    final copy = List<Map<String, dynamic>>.from(items);
+    switch (_sort) {
+      case _GenSort.status:
+        const order = ['available', 'pending', 'unavailable'];
+        copy.sort((a, b) {
+          final ai = order.indexOf(a['status']?.toString() ?? '');
+          final bi = order.indexOf(b['status']?.toString() ?? '');
+          return (ai < 0 ? 99 : ai).compareTo(bi < 0 ? 99 : bi);
+        });
+      case _GenSort.kva:
+        copy.sort((a, b) => ((b['capacity_kva'] as num?) ?? 0)
+            .compareTo((a['capacity_kva'] as num?) ?? 0));
+      case _GenSort.price:
+        copy.sort((a, b) => ((a['price_per_day'] as num?) ?? 0)
+            .compareTo((b['price_per_day'] as num?) ?? 0));
+    }
+    return copy;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final cs = widget.cs;
+    final ref = widget.ref;
+    final companyId = widget.companyId;
     final generatorsAsync = ref.watch(ownerGeneratorsProvider(companyId));
 
     return generatorsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('$e')),
       data: (items) {
+        final sorted = _sorted(items);
         return RefreshIndicator(
           onRefresh: () =>
               ref.refresh(ownerGeneratorsProvider(companyId).future),
           child: Column(
             children: [
+              // Sort controls
+              if (items.isNotEmpty)
+                Padding(
+                  padding:
+                      const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: Row(
+                    children: [
+                      Text('Sort:',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: cs.onSurfaceVariant)),
+                      const SizedBox(width: 8),
+                      Wrap(spacing: 6, children: [
+                        for (final s in _GenSort.values)
+                          ChoiceChip(
+                            label: Text(switch (s) {
+                              _GenSort.status => 'Status',
+                              _GenSort.kva => 'KVA ↓',
+                              _GenSort.price => 'Price ↑',
+                            }),
+                            selected: _sort == s,
+                            visualDensity: VisualDensity.compact,
+                            labelStyle:
+                                const TextStyle(fontSize: 12),
+                            onSelected: (_) =>
+                                setState(() => _sort = s),
+                          ),
+                      ]),
+                    ],
+                  ),
+                ),
               Expanded(
                 child: items.isEmpty
                     ? Center(
@@ -600,11 +664,11 @@ class _GeneratorsTab extends StatelessWidget {
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
-                        itemCount: items.length,
+                        itemCount: sorted.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: 12),
                         itemBuilder: (ctx, i) => _OwnerGeneratorTile(
-                          gen: items[i],
+                          gen: sorted[i],
                           cs: cs,
                           ref: ref,
                           companyId: companyId,
