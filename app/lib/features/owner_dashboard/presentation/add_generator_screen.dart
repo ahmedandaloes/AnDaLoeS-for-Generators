@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/config/supabase.dart';
+import '../../../core/constants/generator_sizes.dart';
 import '../../../core/constants/generator_use_cases.dart';
 
 const _governorates = [
@@ -199,7 +200,28 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
             _Section('Basic info'),
             _Field('Title *', 'e.g. Cummins 100 KVA Diesel', _titleController),
             const SizedBox(height: 12),
-            _NumField('Capacity (KVA) *', 'e.g. 100', _capacityController),
+            _Label('Capacity *'),
+            DropdownButtonFormField<int>(
+              value: int.tryParse(_capacityController.text),
+              isExpanded: true,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: cs.surfaceContainerLowest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                prefixIcon: const Icon(Icons.electric_bolt_outlined),
+              ),
+              hint: const Text('Select size (kVA / kW)'),
+              items: [
+                for (final kva in kGeneratorKvaSizes)
+                  DropdownMenuItem(
+                      value: kva, child: Text(generatorSizeLabel(kva))),
+              ],
+              onChanged: (v) => setState(
+                  () => _capacityController.text = v?.toString() ?? ''),
+            ),
             const SizedBox(height: 12),
             _Label('Fuel type *'),
             DropdownButtonFormField<String>(

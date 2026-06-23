@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/config/supabase.dart';
+import '../../../core/constants/generator_sizes.dart';
 import '../../../core/constants/generator_use_cases.dart';
 
 const _editGovernorates = [
@@ -285,8 +286,39 @@ class _EditGeneratorScreenState
                 _EditField('Title *', 'e.g. Cummins 100 KVA Diesel',
                     _titleController),
                 const SizedBox(height: 12),
-                _EditNumField(
-                    'Capacity (KVA) *', 'e.g. 100', _capacityController),
+                _EditLabel('Capacity *'),
+                Builder(builder: (_) {
+                  final current =
+                      double.tryParse(_capacityController.text)?.round();
+                  final sizes = [
+                    ...kGeneratorKvaSizes,
+                    if (current != null &&
+                        !kGeneratorKvaSizes.contains(current))
+                      current,
+                  ]..sort();
+                  return DropdownButtonFormField<int>(
+                    value: current,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: cs.surfaceContainerLowest,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      prefixIcon: const Icon(Icons.electric_bolt_outlined),
+                    ),
+                    hint: const Text('Select size (kVA / kW)'),
+                    items: [
+                      for (final kva in sizes)
+                        DropdownMenuItem(
+                            value: kva,
+                            child: Text(generatorSizeLabel(kva))),
+                    ],
+                    onChanged: (v) => setState(
+                        () => _capacityController.text = v?.toString() ?? ''),
+                  );
+                }),
                 const SizedBox(height: 12),
                 _EditLabel('Fuel type *'),
                 DropdownButtonFormField<String>(
