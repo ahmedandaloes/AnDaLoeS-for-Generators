@@ -1,6 +1,11 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/config/supabase.dart';
 
@@ -17,13 +22,44 @@ final _receiptProvider =
   return data;
 });
 
-class RentalReceiptScreen extends ConsumerWidget {
+class RentalReceiptScreen extends ConsumerStatefulWidget {
   const RentalReceiptScreen({super.key, required this.rentalId});
   final String rentalId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final receiptAsync = ref.watch(_receiptProvider(rentalId));
+  ConsumerState<RentalReceiptScreen> createState() =>
+      _RentalReceiptScreenState();
+}
+
+class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
+  final _cardKey = GlobalKey();
+  bool _sharing = false;
+
+  Future<void> _shareAsImage(BuildContext context) async {
+    final boundary =
+        _cardKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+    if (boundary == null) return;
+    setState(() => _sharing = true);
+    try {
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final bytes =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      if (bytes == null) return;
+      final dir = Directory.systemTemp;
+      final file = File('${dir.path}/receipt_${widget.rentalId.substring(0, 8)}.png');
+      await file.writeAsBytes(bytes.buffer.asUint8List());
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'image/png')],
+        subject: 'Rental Receipt',
+      );
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final receiptAsync = ref.watch(_receiptProvider(widget.rentalId));
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -35,6 +71,20 @@ class RentalReceiptScreen extends ConsumerWidget {
             tooltip: 'Copy receipt',
             onPressed: () => receiptAsync.whenData(
                 (r) => _copyReceipt(context, r)),
+          ),
+          receiptAsync.maybeWhen(
+            data: (_) => _sharing
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child:
+                        SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.share_outlined),
+                    tooltip: 'Share as image',
+                    onPressed: () => _shareAsImage(context),
+                  ),
+            orElse: () => const SizedBox.shrink(),
           ),
         ],
       ),
@@ -49,7 +99,9 @@ class RentalReceiptScreen extends ConsumerWidget {
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
-            child: Column(
+            child: RepaintBoundary(
+              key: _cardKey,
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Receipt header
@@ -86,7 +138,7 @@ class RentalReceiptScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Receipt #${rentalId.substring(0, 8).toUpperCase()}',
+                        'Receipt #${widget.rentalId.substring(0, 8).toUpperCase()}',
                         style: TextStyle(
                             fontSize: 12, color: cs.onSurfaceVariant),
                       ),
@@ -179,6 +231,7 @@ class RentalReceiptScreen extends ConsumerWidget {
                 ),
               ],
             ),
+            ), // RepaintBoundary
           );
         },
       ),
@@ -190,7 +243,7 @@ class RentalReceiptScreen extends ConsumerWidget {
     final gen = r['generators'] as Map<String, dynamic>?;
     final buffer = StringBuffer()
       ..writeln('AnDaLoeS for Generators — Rental Receipt')
-      ..writeln('Receipt #${rentalId.substring(0, 8).toUpperCase()}')
+      ..writeln('Receipt #${widget.rentalId.substring(0, 8).toUpperCase()}')
       ..writeln()
       ..writeln('Generator: ${gen?['title']} (${gen?['capacity_kva']} KVA)')
       ..writeln('Location: ${gen?['city']}, ${gen?['governorate']}')

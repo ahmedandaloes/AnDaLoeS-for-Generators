@@ -616,6 +616,23 @@ class _HistoryTab extends StatelessWidget {
         );
         final hasEarnings = completed.isNotEmpty && totalEarned > 0;
 
+        // Earnings per generator (for breakdown bars)
+        final genEarnings = <String, double>{};
+        final genTitles = <String, String>{};
+        for (final r in completed) {
+          final gen = r['generators'] as Map<String, dynamic>?;
+          final gid = r['generator_id']?.toString() ?? '';
+          genEarnings[gid] =
+              (genEarnings[gid] ?? 0) +
+              (double.tryParse(r['price_total']?.toString() ?? '0') ?? 0);
+          if (gen != null && !genTitles.containsKey(gid)) {
+            genTitles[gid] = gen['title']?.toString() ?? 'Generator';
+          }
+        }
+        final sortedGens = genEarnings.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+        final topGens = sortedGens.take(4).toList();
+
         return RefreshIndicator(
           onRefresh: () =>
               ref.refresh(ownerHistoryProvider(companyId).future),
@@ -640,46 +657,101 @@ class _HistoryTab extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Row(children: [
-                    const Icon(Icons.payments_outlined,
-                        color: Colors.white, size: 22),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Total earned',
-                              style: TextStyle(
-                                  color: Colors.white70, fontSize: 12)),
-                          Text(
-                            'EGP ${totalEarned.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        const Text('Jobs done',
-                            style: TextStyle(
-                                color: Colors.white70, fontSize: 12)),
-                        Text(
-                          '${completed.length}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        const Icon(Icons.payments_outlined,
+                            color: Colors.white, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Total earned',
+                                  style: TextStyle(
+                                      color: Colors.white70, fontSize: 12)),
+                              Text(
+                                'EGP ${totalEarned.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const Text('Jobs done',
+                                style: TextStyle(
+                                    color: Colors.white70, fontSize: 12)),
+                            Text(
+                              '${completed.length}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ]),
+                      if (topGens.length > 1) ...[
+                        const SizedBox(height: 14),
+                        const Divider(color: Colors.white24, height: 1),
+                        const SizedBox(height: 12),
+                        ...topGens.map((e) {
+                          final frac = totalEarned > 0
+                              ? (e.value / totalEarned).clamp(0.0, 1.0)
+                              : 0.0;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(children: [
+                                  Expanded(
+                                    child: Text(
+                                      genTitles[e.key] ?? 'Generator',
+                                      style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 11),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Text(
+                                    'EGP ${e.value.toStringAsFixed(0)}',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                ]),
+                                const SizedBox(height: 4),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(3),
+                                  child: LinearProgressIndicator(
+                                    value: frac,
+                                    minHeight: 5,
+                                    backgroundColor:
+                                        Colors.white.withValues(alpha: 0.2),
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                            Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
                       ],
-                    ),
-                  ]),
+                    ],
+                  ),
                 );
               }
 

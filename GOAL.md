@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Rental receipt: share-as-image using RepaintBoundary + share_plus
-- [ ] Home: recent searches chip row (up to 5 saved searches, tap to re-apply)
-- [ ] Owner: earnings breakdown chart by generator (bar chart in History tab)
 - [ ] Generator detail: "Similar generators" section at the bottom
+- [ ] My Rentals: pull-to-refresh reloads both active and history tabs
+- [ ] Owner Dashboard: request card swipe-left to quick-reject pending
+- [ ] Home: empty-state illustration when no generators match filters
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: generator photo on owner tile, featured carousel skeleton loader`
+**Last commit:** `feat: receipt share-as-image, earnings breakdown chart by generator`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 
