@@ -39,6 +39,42 @@ class OwnerRequestCard extends StatelessWidget {
           children: [
             Row(children: [
               _RequestStatusChip(status: status, cs: cs),
+              if (isPending) ...[
+                const SizedBox(width: 8),
+                Builder(builder: (_) {
+                  final raw = request['created_at']?.toString();
+                  final created = raw != null ? DateTime.tryParse(raw) : null;
+                  if (created == null) return const SizedBox.shrink();
+                  final mins = DateTime.now().difference(created).inMinutes;
+                  final Color c = mins < 60
+                      ? Colors.green.shade700
+                      : mins < 240
+                          ? Colors.orange.shade800
+                          : Colors.red.shade700;
+                  final label = mins < 60
+                      ? '${mins}m ago'
+                      : mins < 240
+                          ? '${mins ~/ 60}h ago'
+                          : '${mins ~/ 60}h ago · respond soon';
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: c.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.timer_outlined, size: 11, color: c),
+                      const SizedBox(width: 3),
+                      Text(label,
+                          style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: c)),
+                    ]),
+                  );
+                }),
+              ],
               const Spacer(),
               Text('EGP ${request['price_total'] ?? '-'}',
                   style: TextStyle(
