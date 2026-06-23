@@ -225,6 +225,28 @@ class _Body extends ConsumerWidget {
                             decorationColor: cs.primary.withValues(alpha: 0.4),
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        ref.watch(companyAvgRatingProvider(companyId)).maybeWhen(
+                          data: (r) => r.total == 0 ? const SizedBox.shrink() : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.star_rounded,
+                                  size: 13, color: Colors.amber.shade600),
+                              const SizedBox(width: 2),
+                              Text(r.avg.toStringAsFixed(1),
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: cs.onSurface)),
+                              const SizedBox(width: 2),
+                              Text('(${r.total})',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: cs.onSurfaceVariant)),
+                            ],
+                          ),
+                          orElse: () => const SizedBox.shrink(),
+                        ),
                       ],
                     ),
                   ),

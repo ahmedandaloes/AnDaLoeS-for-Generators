@@ -20,7 +20,8 @@ import '../providers/generators_providers.dart'
         autocompleteProvider,
         flashDealsProvider,
         nearMeProvider,
-        currentProfileProvider;
+        currentProfileProvider,
+        topRatedOwnersProvider;
 import '../../owner_dashboard/providers/owner_providers.dart'
     show ownerPendingCountProvider;
 import 'widgets/fuel_chip.dart' show fuelLabel;
@@ -541,6 +542,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // ── Near me ──────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: _NearMeSection(ref: ref, cs: cs),
+          ),
+
+          // ── Top Rated Owners ─────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: _TopRatedOwnersSection(ref: ref, cs: cs),
           ),
 
           // ── Section header + sort ─────────────────────────────────────
@@ -2151,4 +2157,111 @@ class _NearMePlaceholder extends StatelessWidget {
         color: cs.primaryContainer,
         child: Icon(Icons.bolt, color: cs.primary, size: 28),
       );
+}
+
+// ── Top Rated Owners Section ──────────────────────────────────────────────────
+class _TopRatedOwnersSection extends StatelessWidget {
+  const _TopRatedOwnersSection({required this.ref, required this.cs});
+  final WidgetRef ref;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(topRatedOwnersProvider);
+    return async.maybeWhen(
+      data: (owners) {
+        if (owners.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              child: Row(children: [
+                Icon(Icons.workspace_premium_rounded,
+                    size: 16, color: Colors.amber.shade700),
+                const SizedBox(width: 6),
+                Text('Top Rated Owners',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: cs.onSurface)),
+              ]),
+            ),
+            SizedBox(
+              height: 120,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                itemCount: owners.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, i) {
+                  final o = owners[i];
+                  final avg = (o['_avg'] as double);
+                  final ratings = o['_ratings'] as int;
+                  final genCount = o['_gen_count'] as int;
+                  final city = o['city']?.toString() ?? '';
+                  final name = o['name']?.toString() ?? '';
+                  return Container(
+                    width: 160,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                          color: Colors.amber.shade200.withValues(alpha: 0.6)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.storefront_outlined,
+                                size: 16, color: Colors.amber.shade700),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 13, fontWeight: FontWeight.w700)),
+                          ),
+                        ]),
+                        const SizedBox(height: 8),
+                        Row(children: [
+                          Icon(Icons.star_rounded,
+                              size: 14, color: Colors.amber.shade600),
+                          const SizedBox(width: 3),
+                          Text(avg.toStringAsFixed(1),
+                              style: const TextStyle(
+                                  fontSize: 13, fontWeight: FontWeight.w700)),
+                          const SizedBox(width: 4),
+                          Text('($ratings)',
+                              style: TextStyle(
+                                  fontSize: 11, color: cs.onSurfaceVariant)),
+                        ]),
+                        const SizedBox(height: 4),
+                        Text('$genCount generator${genCount == 1 ? '' : 's'}  •  $city',
+                            style: TextStyle(
+                                fontSize: 11, color: cs.onSurfaceVariant),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
 }

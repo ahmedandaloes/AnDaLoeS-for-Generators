@@ -51,6 +51,28 @@ final isFavProvider =
   return ref.read(generatorRepositoryProvider).fetchIsFav(uid, id);
 });
 
+// Weighted average rating across all generators in a company.
+final companyAvgRatingProvider =
+    FutureProvider.autoDispose.family<({double avg, int total}), String>(
+        (ref, companyId) async {
+  if (companyId.isEmpty) return (avg: 0.0, total: 0);
+  final data = await supabase
+      .from('generators')
+      .select('avg_score, rating_count')
+      .eq('company_id', companyId);
+  final gens = (data as List).cast<Map<String, dynamic>>();
+  double sum = 0;
+  int total = 0;
+  for (final g in gens) {
+    final cnt = (g['rating_count'] as num?)?.toInt() ?? 0;
+    final sc = (g['avg_score'] as num?)?.toDouble() ?? 0;
+    sum += sc * cnt;
+    total += cnt;
+  }
+  if (total == 0) return (avg: 0.0, total: 0);
+  return (avg: sum / total, total: total);
+});
+
 final similarGeneratorsProvider = FutureProvider.autoDispose
     .family<List<Map<String, dynamic>>, Map<String, dynamic>>(
         (ref, gen) async {

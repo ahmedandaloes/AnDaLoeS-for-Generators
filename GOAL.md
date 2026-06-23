@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Home: "Top Rated Owners" horizontal scroll section
-- [ ] Generator detail: show company rating average beside company name
 - [ ] Owner Dashboard: export earnings to PDF (currently CSV only)
 - [ ] Rental request: estimated delivery time field (hours after start date)
+- [ ] Generator cards: show company avg rating star badge
+- [ ] Profile: link to view own company page (for owners)
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `fix: cancel reason picker, similar-in-city generators fix (status + company filter)`
+**Last commit:** `feat: Top Rated Owners section, company avg rating on detail screen`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 

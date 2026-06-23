@@ -114,6 +114,34 @@ final nearMeProvider =
   );
 });
 
+// Top rated companies by avg generator rating (min 3 generators, min 5 ratings total).
+final topRatedOwnersProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final data = await supabase
+      .from('companies')
+      .select('id, name, city, verification_status, generators(avg_score, rating_count)')
+      .eq('verification_status', 'approved')
+      .limit(30);
+  final companies = (data as List).cast<Map<String, dynamic>>();
+  final scored = companies.map((c) {
+    final gens = (c['generators'] as List?) ?? [];
+    if (gens.length < 2) return null;
+    double totalScore = 0;
+    int totalRatings = 0;
+    for (final g in gens) {
+      final sc = (g['avg_score'] as num?)?.toDouble() ?? 0;
+      final cnt = (g['rating_count'] as num?)?.toInt() ?? 0;
+      totalScore += sc * cnt;
+      totalRatings += cnt;
+    }
+    if (totalRatings < 3) return null;
+    final avg = totalScore / totalRatings;
+    return {...c, '_avg': avg, '_ratings': totalRatings, '_gen_count': gens.length};
+  }).whereType<Map<String, dynamic>>().toList()
+    ..sort((a, b) => (b['_avg'] as double).compareTo(a['_avg'] as double));
+  return scored.take(8).toList();
+});
+
 // Shared current user profile — consumed by HomeScreen greeting + any other screen
 // that needs role/name without duplicating the Supabase call.
 final currentProfileProvider =
