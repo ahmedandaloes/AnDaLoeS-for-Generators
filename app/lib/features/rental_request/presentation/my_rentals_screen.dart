@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/utils/ics.dart';
 import '../../chat/providers/chat_providers.dart';
 import '../../../core/routing/app_routes.dart';
 
@@ -661,6 +662,30 @@ class _RentalCard extends ConsumerWidget {
                       style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
                     ),
                   ),
+                  if (status != 'cancelled' && status != 'rejected')
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Add to calendar',
+                      icon: Icon(Icons.event_available_outlined,
+                          size: 17, color: cs.primary),
+                      onPressed: () {
+                        final s = DateTime.tryParse(
+                            rental['start_date']?.toString() ?? '');
+                        final e = DateTime.tryParse(
+                            rental['end_date']?.toString() ?? '');
+                        if (s == null || e == null) return;
+                        shareRentalCalendar(
+                          id: rental['id'].toString(),
+                          title: gen?['title']?.toString() ?? 'Generator',
+                          start: s,
+                          end: e,
+                          location: gen?['city']?.toString(),
+                        );
+                      },
+                    ),
+                  const SizedBox(width: 4),
                   if (status == 'active') Builder(builder: (_) {
                     final raw = rental['end_date']?.toString();
                     final end = raw != null ? DateTime.tryParse(raw) : null;
