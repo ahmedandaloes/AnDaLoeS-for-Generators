@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] My Rentals: pull-to-refresh + skeleton loading cards
-- [ ] Generator card: "Available from" badge when generator has near-future bookings
-- [ ] Owner Dashboard: empty state for Requests tab when no pending requests
-- [ ] Admin: approvals with confirmation snackbar showing company name
+- [ ] Profile screen: edit name/phone inline (not a separate screen)
+- [ ] Generator detail: share button in app bar (share URL with title)
+- [ ] Owner: add generator form — photo preview before upload
+- [ ] Home: city/governorate quick-filter chips from user's profile location
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,9 +87,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: admin CSV export FAB, next-available conflict banner, detail skeleton, home empty-state scroll fix`
+**Last commit:** `feat: My Rentals skeleton, owner requests empty state, admin approve/reject snackbars`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** My Rentals skeleton/refresh, generator card available-from badge, owner requests empty state
+**Next action:** profile inline edit, share button, add-generator photo preview, city quick-filter chips
 
 ---
 

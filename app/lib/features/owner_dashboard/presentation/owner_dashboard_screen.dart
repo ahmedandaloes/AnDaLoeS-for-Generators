@@ -304,16 +304,69 @@ class _RequestsTab extends StatelessWidget {
       error: (e, _) => Center(child: Text('$e')),
       data: (items) {
         if (items.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.inbox_outlined, size: 48, color: cs.onSurfaceVariant),
-                const SizedBox(height: 16),
-                Text('No active requests',
-                    style: TextStyle(color: cs.onSurfaceVariant)),
-              ],
-            ),
+          return RefreshIndicator(
+            onRefresh: () =>
+                ref.refresh(ownerRequestsProvider(companyId).future),
+            child: ListView(children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.55,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(36),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Stack(alignment: Alignment.center, children: [
+                          Container(
+                            width: 96,
+                            height: 96,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: cs.primaryContainer.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: cs.primaryContainer.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: cs.primaryContainer,
+                            ),
+                            child: Icon(Icons.inbox_outlined,
+                                size: 26, color: cs.primary),
+                          ),
+                        ]),
+                        const SizedBox(height: 20),
+                        const Text('No requests yet',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Customers will appear here once they request a generator you own.',
+                          style: TextStyle(color: cs.onSurfaceVariant),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.bolt_outlined, size: 16),
+                          label: const Text('Add a generator'),
+                          onPressed: () => context.push(
+                              AppRoutes.addGenerator(companyId)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ]),
           );
         }
         return RefreshIndicator(

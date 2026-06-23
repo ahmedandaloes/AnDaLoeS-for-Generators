@@ -174,7 +174,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
           ),
         ),
         body: rentals.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => _RentalsSkeleton(cs: cs),
           error: (e, _) => Center(child: Text('$e')),
           data: (items) {
             if (items.isEmpty) {
@@ -990,6 +990,90 @@ class _EmptyRentals extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── Skeleton shown while rentals load ─────────────────────────────────────────
+class _RentalsSkeleton extends StatefulWidget {
+  const _RentalsSkeleton({required this.cs});
+  final ColorScheme cs;
+
+  @override
+  State<_RentalsSkeleton> createState() => _RentalsSkeletonState();
+}
+
+class _RentalsSkeletonState extends State<_RentalsSkeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 900))
+      ..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.25, end: 0.6).animate(
+        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = widget.cs;
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final c = cs.onSurface.withValues(alpha: _anim.value * 0.18);
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: 4,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (_, __) => Container(
+            height: 130,
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(children: [
+                  Container(
+                      width: 36, height: 36,
+                      decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(8))),
+                  const SizedBox(width: 12),
+                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Container(width: 160, height: 14,
+                        decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(4))),
+                    const SizedBox(height: 6),
+                    Container(width: 100, height: 11,
+                        decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(4))),
+                  ]),
+                  const Spacer(),
+                  Container(width: 60, height: 22,
+                      decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(11))),
+                ]),
+                Row(children: [
+                  Container(width: 90, height: 11,
+                      decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(4))),
+                  const Spacer(),
+                  Container(width: 70, height: 11,
+                      decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(4))),
+                ]),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

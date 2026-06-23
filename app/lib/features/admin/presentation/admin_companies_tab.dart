@@ -79,6 +79,7 @@ class _CompanyCardState extends State<_CompanyCard> {
 
   Future<void> _approve() async {
     setState(() => _loading = true);
+    final companyName = widget.company['name']?.toString() ?? 'Company';
     try {
       await supabase.from('companies').update({
         'verification_status': 'approved',
@@ -86,6 +87,24 @@ class _CompanyCardState extends State<_CompanyCard> {
         'reviewed_at': DateTime.now().toIso8601String(),
       }).eq('id', widget.company['id'].toString());
       widget.ref.invalidate(pendingCompaniesProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Row(children: [
+            const Icon(Icons.check_circle_outline,
+                color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text('"$companyName" approved',
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+            ),
+          ]),
+          backgroundColor: Colors.green.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 3),
+        ));
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -98,9 +117,14 @@ class _CompanyCardState extends State<_CompanyCard> {
 
   Future<void> _reject() async {
     final reason = _reasonController.text.trim();
+    final companyName = widget.company['name']?.toString() ?? 'Company';
     if (reason.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Enter a rejection reason')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text('Enter a rejection reason'),
+        behavior: SnackBarBehavior.floating,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ));
       return;
     }
     setState(() => _loading = true);
@@ -112,6 +136,22 @@ class _CompanyCardState extends State<_CompanyCard> {
         'reviewed_at': DateTime.now().toIso8601String(),
       }).eq('id', widget.company['id'].toString());
       widget.ref.invalidate(pendingCompaniesProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Row(children: [
+            const Icon(Icons.cancel_outlined, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text('"$companyName" rejected',
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+            ),
+          ]),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 3),
+        ));
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
