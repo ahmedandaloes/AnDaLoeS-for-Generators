@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
+import '../data/company_repository.dart';
 
 final _companyProfileProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>?, String>(
@@ -17,39 +18,8 @@ final _companyProfileProvider =
   return data;
 });
 
-// Returns (acceptanceRate: 0.0–1.0, avgResponseHours: double)
-// based on terminal-state rental requests for the company.
-final _companyRentalStatsProvider = FutureProvider.autoDispose
-    .family<({double acceptanceRate, double avgResponseHours}), String>(
-        (ref, companyId) async {
-  if (companyId.isEmpty) return (acceptanceRate: 0.0, avgResponseHours: 0.0);
-  final rows = await supabase
-      .from('rental_requests')
-      .select('status, created_at, updated_at')
-      .eq('company_id', companyId)
-      .inFilter('status', ['accepted', 'rejected', 'active', 'completed']);
-  final list = (rows as List).cast<Map<String, dynamic>>();
-  if (list.isEmpty) return (acceptanceRate: 0.0, avgResponseHours: 0.0);
-  final accepted = list
-      .where((r) => ['accepted', 'active', 'completed'].contains(r['status']))
-      .length;
-  final rate = accepted / list.length;
-  // avg hours between created_at and updated_at for accepted/rejected requests
-  final responded = list.where((r) {
-    final c = DateTime.tryParse(r['created_at']?.toString() ?? '');
-    final u = DateTime.tryParse(r['updated_at']?.toString() ?? '');
-    return c != null && u != null && u.isAfter(c);
-  }).toList();
-  final avgH = responded.isEmpty
-      ? 0.0
-      : responded.fold<double>(0, (s, r) {
-          final c = DateTime.parse(r['created_at'].toString());
-          final u = DateTime.parse(r['updated_at'].toString());
-          return s + u.difference(c).inMinutes / 60.0;
-        }) /
-          responded.length;
-  return (acceptanceRate: rate, avgResponseHours: avgH);
-});
+// Company acceptance / response / on-time stats come from the shared
+// companyReliabilityProvider (company/data) — one source of truth.
 
 final _companyGeneratorsProvider =
     FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
@@ -311,7 +281,7 @@ class _CompanyBody extends StatelessWidget {
                         cs: cs,
                       ),
                     ref
-                        .watch(_companyRentalStatsProvider(companyId))
+                        .watch(companyReliabilityProvider(companyId))
                         .maybeWhen(
                           data: (stats) => Row(
                             mainAxisSize: MainAxisSize.min,

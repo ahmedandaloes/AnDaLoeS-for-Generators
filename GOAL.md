@@ -173,7 +173,7 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 - [x] [NOW] Security deposit field (generator + rental_request, DB 0027) — owner sets it, shown to customer at booking, stored on the request
 - [ ] [NOW] Verified-owner badge from company-approval state on cards/detail (wire the unused company_documents)
 - [ ] [SOON] Fulfillment status timeline on the ticket (accepted→preparing→en route→delivered→active→returned)
-- [ ] [SOON] Owner reliability score (on-time %, acceptance, cancellation) shown on listings
+- [x] [NOW] Owner reliability — shared companyReliabilityProvider (acceptance, response, on-time, completed). On-time % badge added to generator detail; company profile migrated to the shared provider (removed duplicate).
 - [ ] [SOON] Two-sided dispute/claim flow (extend reports: damage/no-show/wrong-spec + evidence + admin adjudication)
 - [ ] [SOON] Cancellation policy + penalties (windows, strikes, auto-suspend repeat offenders)
 - [ ] [LATER] Backup-fulfillment fallback — suggest nearest equivalent when an accepted owner cancels late

@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../../core/constants/generator_use_cases.dart';
+import '../../company/data/company_repository.dart';
 import '../providers/detail_providers.dart';
 import 'widgets/detail_sections.dart';
 import 'widgets/photo_carousel.dart';
@@ -331,6 +332,42 @@ class _Body extends ConsumerWidget {
                                       color: color),
                                 ),
                               ]),
+                        ),
+                      );
+                    },
+                    orElse: () => const SizedBox.shrink(),
+                  ),
+                  // On-time delivery rate (reliability)
+                  ref.watch(companyReliabilityProvider(companyId)).maybeWhen(
+                    data: (rel) {
+                      if (rel.completed < 1 || rel.onTimeRate <= 0) {
+                        return const SizedBox.shrink();
+                      }
+                      final pct = (rel.onTimeRate * 100).round();
+                      final color = pct >= 80
+                          ? Colors.green.shade700
+                          : pct >= 50
+                              ? Colors.orange.shade700
+                              : Colors.red.shade700;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            Icon(Icons.local_shipping_outlined,
+                                size: 11, color: color),
+                            const SizedBox(width: 4),
+                            Text('$pct% on-time · ${rel.completed} rentals',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: color)),
+                          ]),
                         ),
                       );
                     },
