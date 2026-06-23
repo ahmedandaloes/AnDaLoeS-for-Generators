@@ -43,6 +43,7 @@ final appRouter = GoRouter(
         (loc.startsWith('/generators/') && loc.endsWith('/request')) ||
         loc.startsWith('/owner/') ||
         loc.startsWith('/rate/') ||
+        loc.startsWith('/receipt/') ||
         loc.startsWith('/report');
 
     if (!loggedIn && needsAuth) return '/login';
