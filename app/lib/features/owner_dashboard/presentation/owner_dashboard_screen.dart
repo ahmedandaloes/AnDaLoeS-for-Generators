@@ -692,14 +692,39 @@ class _HistoryTab extends StatelessWidget {
           ..sort((a, b) => b.value.compareTo(a.value));
         final topGens = sortedGens.take(4).toList();
 
+        // Monthly earnings (last 6 months)
+        final monthlyEarnings = <String, double>{};
+        for (final r in completed) {
+          final raw = r['updated_at']?.toString() ?? r['created_at']?.toString();
+          if (raw == null) continue;
+          try {
+            final dt = DateTime.parse(raw).toLocal();
+            final key = '${dt.year}-${dt.month.toString().padLeft(2, '0')}';
+            final amount = double.tryParse(r['price_total']?.toString() ?? '0') ?? 0;
+            monthlyEarnings[key] = (monthlyEarnings[key] ?? 0) + amount;
+          } catch (_) {}
+        }
+        final sortedMonths = monthlyEarnings.keys.toList()..sort();
+        final recentMonths = sortedMonths.length > 6
+            ? sortedMonths.sublist(sortedMonths.length - 6)
+            : sortedMonths;
+        final maxMonthly = recentMonths.isEmpty
+            ? 1.0
+            : recentMonths
+                .map((k) => monthlyEarnings[k]!)
+                .reduce((a, b) => a > b ? a : b);
+        final hasMonthly = recentMonths.length >= 2;
+
+        final extraCards = (hasEarnings ? 1 : 0) + (hasMonthly ? 1 : 0);
+
         return RefreshIndicator(
           onRefresh: () =>
               ref.refresh(ownerHistoryProvider(companyId).future),
           child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            itemCount: items.length + (hasEarnings ? 1 : 0),
+            itemCount: items.length + extraCards,
             separatorBuilder: (_, i) =>
-                SizedBox(height: i == 0 && hasEarnings ? 16 : 10),
+                SizedBox(height: i < extraCards ? 16 : 10),
             itemBuilder: (_, i) {
               // First item is the earnings summary card
               if (hasEarnings && i == 0) {
@@ -814,7 +839,79 @@ class _HistoryTab extends StatelessWidget {
                 );
               }
 
-              final r = items[hasEarnings ? i - 1 : i];
+              // Second extra card: monthly breakdown
+              if (hasMonthly && i == 1) {
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Icon(Icons.bar_chart_rounded,
+                              size: 16, color: cs.secondary),
+                          const SizedBox(width: 6),
+                          Text('Monthly earnings',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: cs.onSurface)),
+                        ]),
+                        const SizedBox(height: 16),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: recentMonths.map((month) {
+                            final val = monthlyEarnings[month] ?? 0;
+                            final frac =
+                                maxMonthly > 0 ? val / maxMonthly : 0.0;
+                            final parts = month.split('-');
+                            final label = parts.length == 2
+                                ? _monthAbbr(int.tryParse(parts[1]) ?? 1)
+                                : month;
+                            return Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 3),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      val >= 1000
+                                          ? '${(val / 1000).toStringAsFixed(1)}k'
+                                          : val.toStringAsFixed(0),
+                                      style: TextStyle(
+                                          fontSize: 9,
+                                          color: cs.onSurfaceVariant,
+                                          fontWeight: FontWeight.w600),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: Container(
+                                        height: 60 * frac + 4,
+                                        color: cs.primary
+                                            .withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(label,
+                                        style: TextStyle(
+                                            fontSize: 9,
+                                            color: cs.onSurfaceVariant),
+                                        textAlign: TextAlign.center),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              final r = items[i - extraCards];
               final gen = r['generators'] as Map<String, dynamic>?;
               final customer = r['profiles'] as Map<String, dynamic>?;
               final status = r['status']?.toString() ?? '';
@@ -955,6 +1052,11 @@ class _HistoryTab extends StatelessWidget {
     );
   }
 }
+
+String _monthAbbr(int m) => const [
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ][m];
 
 // ── Dashboard summary stats ───────────────────────────────────────────────────
 class _DashboardStats extends StatelessWidget {

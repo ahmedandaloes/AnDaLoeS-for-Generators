@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Owner: earnings tab monthly breakdown (group by month, animated bars)
-- [ ] Generator detail: availability calendar (blocked dates highlighted)
-- [ ] My Rentals: "track" button on active rental opens delivery address map
-- [ ] Admin: flag count badge on Reports tab icon
+- [ ] Generator detail: availability calendar mini-view (booked ranges highlighted)
+- [ ] My Rentals: "track" button on active rental opens delivery address in maps
+- [ ] Owner Dashboard: export earnings CSV button in History tab
+- [ ] Home screen: "Recently viewed" section above featured carousel
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: New badge on listings, delivery address field in rental request`
+**Last commit:** `feat: monthly earnings bar chart, admin reports badge`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 

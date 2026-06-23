@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/supabase.dart';
 import 'admin_companies_tab.dart';
 import 'admin_generators_tab.dart';
-import 'admin_reports_tab.dart';
+import 'admin_reports_tab.dart' show AdminReportsTab, openReportsProvider;
 import 'admin_stats_tab.dart';
 
 final _isAdminProvider = FutureProvider.autoDispose<bool>((ref) async {
@@ -77,11 +77,45 @@ class AdminScreen extends ConsumerWidget {
             length: 4,
             child: Column(
               children: [
-                const TabBar(tabs: [
-                  Tab(text: 'Companies'),
-                  Tab(text: 'Generators'),
-                  Tab(text: 'Reports'),
-                  Tab(text: 'Stats'),
+                TabBar(tabs: [
+                  const Tab(text: 'Companies'),
+                  const Tab(text: 'Generators'),
+                  Tab(
+                    child: Builder(builder: (ctx) {
+                      final count = ref
+                              .watch(openReportsProvider)
+                              .valueOrNull
+                              ?.length ??
+                          0;
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Reports'),
+                          if (count > 0) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Theme.of(ctx).colorScheme.error,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '$count',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color:
+                                      Theme.of(ctx).colorScheme.onError,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    }),
+                  ),
+                  const Tab(text: 'Stats'),
                 ]),
                 Expanded(
                   child: TabBarView(
