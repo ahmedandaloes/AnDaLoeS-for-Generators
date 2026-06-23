@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -520,17 +521,36 @@ class _RentalCard extends ConsumerWidget {
                   Icon(Icons.calendar_today_outlined,
                       size: 13, color: cs.onSurfaceVariant),
                   const SizedBox(width: 4),
-                  Text(
-                    '${_fmt(rental['start_date'])}  →  ${_fmt(rental['end_date'])}',
-                    style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+                  Expanded(
+                    child: Text(
+                      '${_fmt(rental['start_date'])}  →  ${_fmt(rental['end_date'])}',
+                      style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+                    ),
                   ),
-                  const SizedBox(width: 8),
                   Text(
                     '${rental['total_days']} day${rental['total_days'] == 1 ? '' : 's'}',
                     style: TextStyle(
                         fontSize: 12,
                         color: cs.onSurfaceVariant,
                         fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: rentalId));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: const Text('Rental ID copied'),
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 2),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ));
+                    },
+                    child: Tooltip(
+                      message: 'Copy rental ID for support',
+                      child: Icon(Icons.copy_outlined,
+                          size: 14, color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
+                    ),
                   ),
                 ],
               ),

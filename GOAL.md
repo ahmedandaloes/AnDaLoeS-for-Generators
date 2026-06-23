@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Home: city/governorate quick-filter chips from user's profile location
-- [ ] My Rentals: rental card — one-tap copy rental ID for support queries
-- [ ] Owner earnings: monthly breakdown chart (bar chart by month)
-- [ ] Company profile: verify phone number badge when phone is confirmed
+- [ ] Company profile: contact phone call/WhatsApp buttons
+- [ ] Generator detail: estimated delivery / pickup note from company
+- [ ] Home search: autocomplete suggestions from generator titles
+- [ ] Owner Dashboard: earnings summary card at top of History tab
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,9 +87,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: photo tap-to-preview fullscreen viewer on add/edit generator`
+**Last commit:** `feat: governorate quick-filter chips, rental ID copy button`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** home city quick-filter, rental ID copy, owner monthly earnings chart
+**Next action:** company profile call/WhatsApp buttons, home autocomplete, owner history earnings summary
 
 ---
 

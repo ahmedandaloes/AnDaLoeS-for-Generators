@@ -303,6 +303,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
 
+          // ── Governorate quick-filter chips ────────────────────────────
+          SliverToBoxAdapter(
+            child: _GovernorateChips(ref: ref, filter: filter),
+          ),
+
           // ── Quick KVA filters ─────────────────────────────────────────
           SliverToBoxAdapter(
             child: SizedBox(
@@ -1481,6 +1486,62 @@ class _RecentCard extends StatelessWidget {
             ),
           ),
         ]),
+      ),
+    );
+  }
+}
+
+// ── Governorate quick-filter chips ────────────────────────────────────────────
+// Derives the top-5 most frequent governorates from loaded generators and shows
+// them as one-tap filter chips so users can narrow by location instantly.
+class _GovernorateChips extends StatelessWidget {
+  const _GovernorateChips({required this.ref, required this.filter});
+  final WidgetRef ref;
+  final GeneratorFilter filter;
+
+  @override
+  Widget build(BuildContext context) {
+    final allAsync = ref.watch(generatorsProvider);
+    final all = allAsync.valueOrNull ?? [];
+    if (all.isEmpty) return const SizedBox.shrink();
+
+    // Count occurrences per governorate
+    final counts = <String, int>{};
+    for (final g in all) {
+      final gov = g['governorate']?.toString();
+      if (gov != null && gov.isNotEmpty) {
+        counts[gov] = (counts[gov] ?? 0) + 1;
+      }
+    }
+    // Take top 5 by count
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top = sorted.take(5).map((e) => e.key).toList();
+    if (top.isEmpty) return const SizedBox.shrink();
+
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        children: top.map((gov) {
+          final selected = filter.governorate == gov;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              avatar: Icon(Icons.location_on_outlined,
+                  size: 12,
+                  color: selected
+                      ? Theme.of(context).colorScheme.onSecondaryContainer
+                      : Theme.of(context).colorScheme.onSurfaceVariant),
+              label: Text(gov),
+              selected: selected,
+              onSelected: (on) => ref
+                  .read(filterProvider.notifier)
+                  .state = filter.withGovernorate(on ? gov : null),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
