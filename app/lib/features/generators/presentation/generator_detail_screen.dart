@@ -15,6 +15,21 @@ final _generatorDetailProvider =
   return data;
 });
 
+// Upcoming accepted/active bookings for this generator (next 90 days).
+final _bookedDatesProvider =
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+        (ref, generatorId) async {
+  final today = DateTime.now().toIso8601String().substring(0, 10);
+  final data = await supabase
+      .from('rental_requests')
+      .select('start_date, end_date, status')
+      .eq('generator_id', generatorId)
+      .inFilter('status', ['accepted', 'active'])
+      .gte('end_date', today)
+      .order('start_date');
+  return (data as List).cast<Map<String, dynamic>>();
+});
+
 final _generatorReviewsProvider =
     FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
         (ref, generatorId) async {
@@ -85,6 +100,7 @@ class _Body extends ConsumerWidget {
     final photos = (gen['photos'] as List?)?.cast<String>() ?? [];
     final generatorId = gen['id'].toString();
     final reviewsAsync = ref.watch(_generatorReviewsProvider(generatorId));
+    final bookedAsync = ref.watch(_bookedDatesProvider(generatorId));
 
     return CustomScrollView(
       slivers: [
@@ -233,6 +249,15 @@ class _Body extends ConsumerWidget {
                   const SizedBox(height: 20),
                 ],
 
+                // Booked dates
+                bookedAsync.maybeWhen(
+                  data: (bookings) => bookings.isEmpty
+                      ? const SizedBox.shrink()
+                      : _BookedDatesSection(bookings: bookings, cs: cs),
+                  orElse: () => const SizedBox.shrink(),
+                ),
+                const SizedBox(height: 8),
+
                 // Reviews
                 reviewsAsync.maybeWhen(
                   data: (reviews) => reviews.isEmpty
@@ -278,6 +303,80 @@ class _Body extends ConsumerWidget {
 }
 
 // ── Reviews section ───────────────────────────────────────────────────────────
+// ── Booked dates section ───────────────────────────────────────────────────────
+class _BookedDatesSection extends StatelessWidget {
+  const _BookedDatesSection(
+      {required this.bookings, required this.cs});
+  final List<Map<String, dynamic>> bookings;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Already booked',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+            color: cs.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: cs.errorContainer.withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: cs.error.withValues(alpha: 0.2), width: 1),
+          ),
+          child: Column(
+            children: bookings.map((b) {
+              final status = b['status']?.toString() ?? '';
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(children: [
+                  Icon(
+                    status == 'active'
+                        ? Icons.circle
+                        : Icons.calendar_today_outlined,
+                    size: 12,
+                    color: status == 'active'
+                        ? cs.error
+                        : cs.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${b['start_date']}  →  ${b['end_date']}',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurface,
+                        fontWeight: status == 'active'
+                            ? FontWeight.w600
+                            : FontWeight.normal),
+                  ),
+                  if (status == 'active') ...[
+                    const SizedBox(width: 6),
+                    Text('(active)',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: cs.error,
+                            fontWeight: FontWeight.w600)),
+                  ],
+                ]),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
 class _ReviewsSection extends StatelessWidget {
   const _ReviewsSection({required this.reviews, required this.cs});
   final List<Map<String, dynamic>> reviews;

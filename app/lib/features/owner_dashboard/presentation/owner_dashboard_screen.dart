@@ -45,6 +45,18 @@ final _ownerHistoryProvider =
   return (data as List).cast<Map<String, dynamic>>();
 });
 
+// Rental IDs the owner (current user) has already submitted a rating for.
+final _ownerRatedRentalIdsProvider =
+    FutureProvider.autoDispose<Set<String>>((ref) async {
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) return {};
+  final data = await supabase
+      .from('ratings')
+      .select('rental_request_id')
+      .eq('rater_id', uid);
+  return {for (final r in (data as List)) r['rental_request_id'].toString()};
+});
+
 final _ownerGeneratorsProvider =
     FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
         (ref, companyId) async {
@@ -815,6 +827,53 @@ class _HistoryTab extends StatelessWidget {
                               fontSize: 12, color: cs.onSurfaceVariant),
                         ),
                       ]),
+                      if (status == 'completed') ...[
+                        const SizedBox(height: 10),
+                        Builder(builder: (context) {
+                          final rentalId = r['id']?.toString() ?? '';
+                          final ratedIds = ref
+                              .watch(_ownerRatedRentalIdsProvider)
+                              .valueOrNull;
+                          final alreadyRated =
+                              ratedIds?.contains(rentalId) == true;
+                          final customerId =
+                              r['customer_id']?.toString() ?? '';
+                          final customerName =
+                              customer?['full_name']?.toString() ??
+                                  customer?['phone']?.toString() ??
+                                  'Customer';
+                          if (alreadyRated) {
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.star_rounded,
+                                    size: 14,
+                                    color: Colors.amber.shade600),
+                                const SizedBox(width: 4),
+                                Text('Customer rated',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.amber.shade700,
+                                        fontWeight: FontWeight.w500)),
+                              ],
+                            );
+                          }
+                          return OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(36),
+                              textStyle:
+                                  const TextStyle(fontSize: 12),
+                            ),
+                            onPressed: () => context.push(
+                              '/rate/$rentalId?ratee=$customerId&name=$customerName&owner=true',
+                            ),
+                            icon: const Icon(
+                                Icons.star_outline_rounded,
+                                size: 15),
+                            label: const Text('Rate customer'),
+                          );
+                        }),
+                      ],
                     ],
                   ),
                 ),
