@@ -468,7 +468,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             data: (items) {
               if (items.isEmpty) {
-                return SliverFillRemaining(
+                // Use SliverToBoxAdapter (not SliverFillRemaining) so the
+                // featured carousel above remains accessible via scroll.
+                return SliverToBoxAdapter(
                   child: hasFilter
                       ? _NoResultsState(
                           onClear: () => ref
