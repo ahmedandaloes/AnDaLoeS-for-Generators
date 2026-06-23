@@ -31,10 +31,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Rental request: animated date range confirmation (show summary card with animation when dates picked)
-- [ ] Pull-to-refresh on Owner Dashboard Requests + History tabs
-- [ ] Generator detail: share button shows generator title + KVA in share sheet
-- [ ] Admin: better stats display — pie/bar chart for rental status distribution
+- [ ] Push notifications: FCM integration with Supabase edge function (or OneSignal)
+- [ ] Deep linking: share generator page via dynamic URL
+- [ ] Home screen: "Near me" section — detect rough location, show generators in same governorate
+- [ ] Owner earnings: monthly revenue trend line chart (sparkline)
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -59,9 +59,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: status timeline, sticky FAB, typing indicator, Enter-to-send`
+**Last commit:** `feat: animated date confirmation card + admin rental status bar chart`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** Animated date confirmation on rental request + pull-to-refresh on Owner Dashboard + admin stats chart
+**Next action:** Owner earnings sparkline + home "Near me" section + deep linking
 
 ---
 
