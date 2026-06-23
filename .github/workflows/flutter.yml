@@ -2,9 +2,9 @@ name: Flutter CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, development]
   pull_request:
-    branches: [main]
+    branches: [main, development]
 
 jobs:
   analyze-test:
@@ -19,7 +19,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.x'
+          flutter-version: '3.44.3'
           channel: stable
           cache: true
 
@@ -50,7 +50,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.x'
+          flutter-version: '3.44.3'
           channel: stable
           cache: true
 
