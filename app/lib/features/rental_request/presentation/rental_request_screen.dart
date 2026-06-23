@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/config/supabase.dart';
+import 'payment_confirmation_screen.dart';
 
 final _generatorForRequestProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, id) async {
@@ -12,6 +12,24 @@ final _generatorForRequestProvider =
       .eq('id', id)
       .single();
   return data;
+});
+
+final _requestBookedRangesProvider =
+    FutureProvider.autoDispose.family<List<DateTimeRange>, String>(
+        (ref, generatorId) async {
+  final today = DateTime.now().toIso8601String().substring(0, 10);
+  final data = await supabase
+      .from('rental_requests')
+      .select('start_date, end_date')
+      .eq('generator_id', generatorId)
+      .inFilter('status', ['accepted', 'active'])
+      .gte('end_date', today)
+      .order('start_date');
+  return (data as List).map((r) {
+    final start = DateTime.parse(r['start_date'].toString());
+    final end = DateTime.parse(r['end_date'].toString());
+    return DateTimeRange(start: start, end: end);
+  }).toList();
 });
 
 /// Greedy best-price calculation.
@@ -36,11 +54,6 @@ double _bestPrice({
   return best;
 }
 
-String _rateBasis(int days) {
-  if (days >= 30) return 'month';
-  if (days >= 7) return 'week';
-  return 'day';
-}
 
 class RentalRequestScreen extends ConsumerStatefulWidget {
   const RentalRequestScreen({super.key, required this.generatorId});
@@ -54,7 +67,6 @@ class RentalRequestScreen extends ConsumerStatefulWidget {
 class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
   DateTimeRange? _range;
   final _noteController = TextEditingController();
-  bool _submitting = false;
   int _conflictCount = 0;
 
   @override
@@ -99,7 +111,7 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
     }
   }
 
-  Future<void> _submit(Map<String, dynamic> gen) async {
+  void _reviewAndConfirm(Map<String, dynamic> gen) {
     if (_range == null) {
       _snack('Please select rental dates');
       return;
@@ -116,31 +128,16 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
     final total = _bestPrice(
         days: days, perDay: perDay, perWeek: perWeek, perMonth: perMonth);
 
-    setState(() => _submitting = true);
-    try {
-      await supabase.from('rental_requests').insert({
-        'customer_id': supabase.auth.currentUser!.id,
-        'generator_id': gen['id'],
-        'company_id': gen['company_id'],
-        'start_date': _range!.start.toIso8601String().substring(0, 10),
-        'end_date': _range!.end.toIso8601String().substring(0, 10),
-        'total_days': days,
-        'price_total': total,
-        'rate_basis': _rateBasis(days),
-        'payment_method': 'cash',
-        'status': 'pending',
-        if (_noteController.text.trim().isNotEmpty)
-          'note': _noteController.text.trim(),
-      });
-      if (mounted) {
-        _snack('Request sent!');
-        context.go('/my-rentals');
-      }
-    } catch (e) {
-      _snack('Error: $e');
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => PaymentConfirmationScreen(
+        generator: gen,
+        startDate: _range!.start,
+        endDate: _range!.end,
+        days: days,
+        totalPrice: total,
+        note: _noteController.text.trim(),
+      ),
+    ));
   }
 
   void _snack(String msg) {
@@ -161,6 +158,8 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
   @override
   Widget build(BuildContext context) {
     final genAsync = ref.watch(_generatorForRequestProvider(widget.generatorId));
+    final bookedAsync =
+        ref.watch(_requestBookedRangesProvider(widget.generatorId));
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -182,6 +181,7 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                   perWeek: perWeek,
                   perMonth: perMonth)
               : 0.0;
+          final bookedRanges = bookedAsync.valueOrNull ?? [];
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -206,6 +206,55 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+
+                // Booked dates warning
+                if (bookedRanges.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: cs.errorContainer.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: cs.error.withValues(alpha: 0.2)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Icon(Icons.event_busy_outlined,
+                              size: 15, color: cs.error),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Already booked — avoid these dates',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: cs.error),
+                          ),
+                        ]),
+                        const SizedBox(height: 8),
+                        ...bookedRanges.map((r) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 2),
+                              child: Row(children: [
+                                Icon(Icons.remove,
+                                    size: 12,
+                                    color:
+                                        cs.onSurfaceVariant),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${_fmt(r.start)}  →  ${_fmt(r.end)}',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: cs.onSurface),
+                                ),
+                              ]),
+                            )),
+                      ],
+                    ),
+                  ),
+                ],
 
                 // Date picker
                 _SectionLabel('Rental dates'),
@@ -328,7 +377,7 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                           ]),
                           const SizedBox(height: 4),
                           Text(
-                            'Cash on delivery — you pay the owner directly.',
+                            'Best rate applied automatically.',
                             style: TextStyle(
                                 fontSize: 11,
                                 color: cs.onSurfaceVariant),
@@ -352,21 +401,19 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Submit
-                FilledButton(
-                  onPressed: _submitting ? null : () => _submit(gen),
-                  child: _submitting
-                      ? SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: cs.onPrimary),
-                        )
-                      : const Text('Send rental request'),
+                // Review & confirm
+                FilledButton.icon(
+                  onPressed: _range == null
+                      ? null
+                      : () => _reviewAndConfirm(gen),
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text('Review & confirm'),
+                  style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(50)),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'The owner will accept or reject your request.',
+                  'You\'ll choose payment method on the next screen.',
                   style: TextStyle(
                       fontSize: 12, color: cs.onSurfaceVariant),
                   textAlign: TextAlign.center,
