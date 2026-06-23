@@ -311,10 +311,19 @@ class _Body extends ConsumerWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: FilledButton.tonal(
-                            onPressed: () => launchUrl(
-                                Uri.parse(
-                                    'https://wa.me/$egPhone'),
-                                mode: LaunchMode.externalApplication),
+                            onPressed: () {
+                              final title =
+                                  gen['title']?.toString() ?? 'your generator';
+                              final kva = gen['capacity_kva'];
+                              final msg = Uri.encodeComponent(
+                                  'Hi, I\'m interested in renting your "$title"'
+                                  '${kva != null ? ' ($kva KVA)' : ''}'
+                                  ' listed on AnDaLoeS. Is it available?');
+                              launchUrl(
+                                  Uri.parse(
+                                      'https://wa.me/$egPhone?text=$msg'),
+                                  mode: LaunchMode.externalApplication);
+                            },
                             child: Row(
                               mainAxisAlignment:
                                   MainAxisAlignment.center,

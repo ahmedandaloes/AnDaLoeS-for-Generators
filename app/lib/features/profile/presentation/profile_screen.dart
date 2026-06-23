@@ -1,7 +1,9 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/config/supabase.dart';
@@ -435,6 +437,13 @@ class ProfileScreen extends ConsumerWidget {
                       },
                       orElse: () => const SizedBox.shrink(),
                     ),
+                  ],
+
+                  // Referral code
+                  if (!isAnon) ...[
+                    _SectionLabel('Refer a friend'),
+                    _ReferralCard(userId: user!.id, cs: cs),
+                    const SizedBox(height: 20),
                   ],
 
                   // Preferences
@@ -1084,6 +1093,105 @@ class _InfoRow extends StatelessWidget {
       subtitle: Text(value,
           style: const TextStyle(
               fontSize: 15, fontWeight: FontWeight.w500, height: 1.3)),
+    );
+  }
+}
+
+// ── Referral card ─────────────────────────────────────────────────────────────
+class _ReferralCard extends StatelessWidget {
+  const _ReferralCard({required this.userId, required this.cs});
+  final String userId;
+  final ColorScheme cs;
+
+  String get _code =>
+      'AL-${userId.replaceAll('-', '').substring(0, 6).toUpperCase()}';
+
+  @override
+  Widget build(BuildContext context) {
+    final code = _code;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            cs.primaryContainer.withValues(alpha: 0.8),
+            cs.secondaryContainer.withValues(alpha: 0.6),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.primary.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.card_giftcard_outlined, size: 18, color: cs.primary),
+            const SizedBox(width: 8),
+            Text('Your referral code',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: cs.primary)),
+          ]),
+          const SizedBox(height: 12),
+          Row(children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: cs.surface,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  code,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2,
+                    color: cs.primary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton.filled(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: code));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: const Text('Referral code copied'),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  duration: const Duration(seconds: 2),
+                ));
+              },
+              icon: const Icon(Icons.copy_outlined, size: 18),
+              tooltip: 'Copy code',
+            ),
+            IconButton.filled(
+              onPressed: () => Share.share(
+                'Join AnDaLoeS for Generators — Egypt\'s generator rental marketplace.'
+                '\n\nUse my referral code $code when you sign up!',
+                subject: 'AnDaLoeS Referral',
+              ),
+              style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFF25D366),
+                  foregroundColor: Colors.white),
+              icon: const Icon(Icons.share_outlined, size: 18),
+              tooltip: 'Share',
+            ),
+          ]),
+          const SizedBox(height: 10),
+          Text(
+            'Share with friends and get rewarded when they complete their first rental.',
+            style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant, height: 1.5),
+          ),
+        ],
+      ),
     );
   }
 }

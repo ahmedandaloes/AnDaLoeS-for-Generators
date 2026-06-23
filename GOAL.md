@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Notifications: mark-all-as-read button in AppBar
-- [ ] Generator detail: "Ask a question" pre-typed WhatsApp message
-- [ ] Owner Dashboard: average response time shown per request in card
-- [ ] Profile: referral code display + share button
+- [ ] Home: "New listings" badge on generators added in last 48h
+- [ ] Rental request: delivery address field (stored in note, prefixed)
+- [ ] Owner: earnings tab monthly breakdown (group by month, mini chart)
+- [ ] Generator detail: availability calendar (blocked dates highlighted)
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: owner quick-reject swipe, improved filter empty state`
+**Last commit:** `feat: pre-typed WhatsApp message, profile referral code + share`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 
