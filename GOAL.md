@@ -31,10 +31,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Push notifications: FCM integration with Supabase edge function (or OneSignal)
-- [ ] Deep linking: share generator page via dynamic URL
-- [ ] Home screen: "Near me" section — detect rough location, show generators in same governorate
-- [ ] Owner earnings: monthly revenue trend line chart (sparkline)
+- [ ] Company onboarding: add phone + description fields, live preview card
+- [ ] Generator detail: average response time badge (based on owner acceptance speed)
+- [ ] My Rentals: group by status tab bar (All / Active / Completed / Pending)
+- [ ] Profile screen: show total amount spent, total rentals count with trend
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -59,9 +59,9 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: animated date confirmation card + admin rental status bar chart`
+**Last commit:** `feat: top-rated carousel + animated sparkline earnings chart`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** Owner earnings sparkline + home "Near me" section + deep linking
+**Next action:** My Rentals tab bar + profile spending stats + company onboarding improvements
 
 ---
 
