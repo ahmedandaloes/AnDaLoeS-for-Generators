@@ -1,7 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/config/supabase.dart';
+
+/// Egypt standard VAT rate, applied to the platform's commission (its service
+/// fee) for accounting/reporting. Confirm treatment with an accountant.
+const double kVatRate = 0.14;
 
 /// Active platform commission rule (type + value).
 final commissionRateProvider =
@@ -125,12 +132,25 @@ class AdminRevenueTab extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
 
-          Text('COMMISSIONS',
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.6,
-                  color: cs.onSurfaceVariant)),
+          Row(children: [
+            Text('COMMISSIONS',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                    color: cs.onSurfaceVariant)),
+            const Spacer(),
+            commsAsync.maybeWhen(
+              data: (rows) => rows.isEmpty
+                  ? const SizedBox.shrink()
+                  : TextButton.icon(
+                      onPressed: () => _exportCsv(context, rows),
+                      icon: const Icon(Icons.download_outlined, size: 16),
+                      label: const Text('Export (VAT)'),
+                    ),
+              orElse: () => const SizedBox.shrink(),
+            ),
+          ]),
           const SizedBox(height: 8),
           commsAsync.when(
             loading: () =>
@@ -175,6 +195,47 @@ class AdminRevenueTab extends ConsumerWidget {
         .from('commissions')
         .update({'status': 'settled'}).eq('id', row['id']);
     wRef.invalidate(adminCommissionsProvider);
+  }
+
+  /// Exports the commission ledger with VAT for the accountant / tax filing.
+  Future<void> _exportCsv(
+      BuildContext context, List<Map<String, dynamic>> rows) async {
+    String esc(Object? v) => '"${v?.toString().replaceAll('"', '""') ?? ''}"';
+    final buf = StringBuffer(
+        'Date,Company,Generator,Commission (EGP),VAT 14% (EGP),Total incl VAT (EGP),Status\n');
+    double totalComm = 0, totalVat = 0;
+    for (final r in rows) {
+      final rr = r['rental_requests'] as Map<String, dynamic>?;
+      final company = (rr?['companies'] as Map?)?['name'] ?? '';
+      final gen = (rr?['generators'] as Map?)?['title'] ?? '';
+      final comm = (r['commission_amount'] as num?)?.toDouble() ?? 0;
+      final vat = comm * kVatRate;
+      totalComm += comm;
+      totalVat += vat;
+      final date = r['created_at']?.toString().split('T').first ?? '';
+      buf.writeln([
+        esc(date),
+        esc(company),
+        esc(gen),
+        comm.toStringAsFixed(2),
+        vat.toStringAsFixed(2),
+        (comm + vat).toStringAsFixed(2),
+        esc(r['status']),
+      ].join(','));
+    }
+    buf.writeln();
+    buf.writeln('${esc('TOTAL commission')},,,${totalComm.toStringAsFixed(2)},${totalVat.toStringAsFixed(2)},${(totalComm + totalVat).toStringAsFixed(2)},');
+    buf.writeln('${esc('VAT rate')},,,,,${(kVatRate * 100).toStringAsFixed(0)}%,');
+
+    final now = DateTime.now();
+    final label =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final file = File('${Directory.systemTemp.path}/andaloes_commission_vat_$label.csv');
+    await file.writeAsString(buf.toString());
+    await Share.shareXFiles(
+      [XFile(file.path, mimeType: 'text/csv')],
+      subject: 'AnDaLoeS commission + VAT — $label',
+    );
   }
 
   Future<void> _editRate(
