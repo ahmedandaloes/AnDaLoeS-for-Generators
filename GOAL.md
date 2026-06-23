@@ -58,13 +58,17 @@
 
 ---
 
-## Remaining Features (priority order)
+## FOCUS: Business Workflow (owner directive 2026-06-23)
+The loop now prioritizes the rental transaction lifecycle & revenue model
+over UI polish. Core workflow: browse → request → accept → pay → active →
+complete → commission → rate. Harden each transition + the money path.
 
 ### NEXT (this loop)
-- [ ] Generator detail: report button shows current report count (owner can't see)
-- [ ] Owner dashboard: generators tab sortable by status/kva/price
-- [ ] Home: recently searched chips below search bar for quick re-run
-- [ ] Company profile: show owner response time and acceptance rate badges
+- [ ] Commission: ensure a commission row is recorded on rental completion
+      (rate defined in one place; computed from price_total)
+- [ ] Status state machine: validate/guard transitions (no invalid jumps)
+- [ ] Double-booking: enforce no overlapping active rentals per generator
+- [ ] Pricing transparency: show fee/commission breakdown at request time
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
