@@ -39,6 +39,19 @@ class RentalRepository {
     return (data as List).cast<Map<String, dynamic>>();
   }
 
+  /// Count of accepted/active rentals overlapping [start]..[end] (yyyy-MM-dd).
+  Future<int> overlapCount(
+      String generatorId, String start, String end) async {
+    final data = await supabase
+        .from('rental_requests')
+        .select('id')
+        .eq('generator_id', generatorId)
+        .inFilter('status', ['accepted', 'active'])
+        .lte('start_date', end)
+        .gte('end_date', start);
+    return (data as List).length;
+  }
+
   /// Accepted rentals whose start date has passed but never went active.
   Future<List<Map<String, dynamic>>> overdueAccepted() async {
     final data = await supabase

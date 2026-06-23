@@ -5,6 +5,7 @@ import '../../../core/config/supabase.dart';
 import '../../../core/utils/pricing.dart';
 import '../../../core/widgets/press_scale.dart';
 import '../../generators/data/generator_repository.dart';
+import '../data/rental_repository.dart';
 import 'payment_confirmation_screen.dart';
 
 final _generatorForRequestProvider =
@@ -77,14 +78,10 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
     final start = range.start.toIso8601String().substring(0, 10);
     final end = range.end.toIso8601String().substring(0, 10);
     try {
-      final data = await supabase
-          .from('rental_requests')
-          .select('id')
-          .eq('generator_id', widget.generatorId)
-          .inFilter('status', ['accepted', 'active'])
-          .lte('start_date', end)
-          .gte('end_date', start);
-      if (mounted) setState(() => _conflictCount = (data as List).length);
+      final count = await ref
+          .read(rentalRepositoryProvider)
+          .overlapCount(widget.generatorId, start, end);
+      if (mounted) setState(() => _conflictCount = count);
     } catch (_) {
       // Non-blocking — don't surface to user
     }
