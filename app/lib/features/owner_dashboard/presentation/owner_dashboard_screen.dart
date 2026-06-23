@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../../features/ratings/presentation/rate_rental_screen.dart';
@@ -16,7 +17,7 @@ final _myCompanyProvider =
       .select()
       .eq('owner_user_id', uid)
       .maybeSingle();
-  return data as Map<String, dynamic>?;
+  return data;
 });
 
 final _ownerRequestsProvider =
@@ -44,11 +45,55 @@ final _ownerGeneratorsProvider =
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
-class OwnerDashboardScreen extends ConsumerWidget {
+class OwnerDashboardScreen extends ConsumerStatefulWidget {
   const OwnerDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OwnerDashboardScreen> createState() =>
+      _OwnerDashboardScreenState();
+}
+
+class _OwnerDashboardScreenState
+    extends ConsumerState<OwnerDashboardScreen> {
+  RealtimeChannel? _channel;
+  String? _watchedCompanyId;
+
+  void _subscribeToRequests(String companyId) {
+    if (_watchedCompanyId == companyId) return;
+    _channel?.unsubscribe();
+    _watchedCompanyId = companyId;
+    _channel = supabase
+        .channel('owner-requests-$companyId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'rental_requests',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'company_id',
+            value: companyId,
+          ),
+          callback: (_) {
+            ref.invalidate(_ownerRequestsProvider(companyId));
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('New rental request received!'),
+                behavior: SnackBarBehavior.floating,
+              ));
+            }
+          },
+        )
+        .subscribe();
+  }
+
+  @override
+  void dispose() {
+    _channel?.unsubscribe();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final companyAsync = ref.watch(_myCompanyProvider);
     final cs = Theme.of(context).colorScheme;
 
@@ -65,6 +110,8 @@ class OwnerDashboardScreen extends ConsumerWidget {
           if (status != 'approved') {
             return _PendingVerification(company: company, cs: cs);
           }
+          // Subscribe to new rental requests in real-time
+          _subscribeToRequests(company['id'].toString());
           return _Dashboard(company: company, cs: cs, ref: ref);
         },
       ),

@@ -11,7 +11,30 @@ final _generatorDetailProvider =
       .select('*, companies(name, city, verification_status)')
       .eq('id', id)
       .single();
-  return data as Map<String, dynamic>;
+  return data;
+});
+
+final _generatorReviewsProvider =
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+        (ref, generatorId) async {
+  // Step 1: get rental_request IDs for this generator
+  final rrData = await supabase
+      .from('rental_requests')
+      .select('id')
+      .eq('generator_id', generatorId);
+  final ids =
+      (rrData as List).map((r) => r['id'].toString()).toList();
+  if (ids.isEmpty) return [];
+
+  // Step 2: fetch ratings with comments for those requests
+  final data = await supabase
+      .from('ratings')
+      .select('score, comment, created_at')
+      .filter('rental_request_id', 'in', '(${ids.join(',')})')
+      .not('comment', 'is', null)
+      .order('created_at', ascending: false)
+      .limit(10);
+  return (data as List).cast<Map<String, dynamic>>();
 });
 
 class GeneratorDetailScreen extends ConsumerWidget {
@@ -50,16 +73,17 @@ class GeneratorDetailScreen extends ConsumerWidget {
   }
 }
 
-class _Body extends StatelessWidget {
+class _Body extends ConsumerWidget {
   const _Body({required this.gen, required this.cs});
   final Map<String, dynamic> gen;
   final ColorScheme cs;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final company = gen['companies'] as Map<String, dynamic>?;
     final photos = (gen['photos'] as List?)?.cast<String>() ?? [];
-    final loggedIn = supabase.auth.currentSession != null;
+    final generatorId = gen['id'].toString();
+    final reviewsAsync = ref.watch(_generatorReviewsProvider(generatorId));
 
     return CustomScrollView(
       slivers: [
@@ -76,8 +100,8 @@ class _Body extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          cs.primaryContainer.withOpacity(0.8),
-                          cs.secondaryContainer.withOpacity(0.5),
+                          cs.primaryContainer.withValues(alpha: 0.8),
+                          cs.secondaryContainer.withValues(alpha: 0.5),
                         ],
                       ),
                     ),
@@ -85,7 +109,7 @@ class _Body extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: cs.primary.withOpacity(0.15),
+                          color: cs.primary.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(Icons.bolt, size: 64, color: cs.primary),
@@ -199,6 +223,14 @@ class _Body extends StatelessWidget {
                   const SizedBox(height: 20),
                 ],
 
+                // Reviews
+                reviewsAsync.maybeWhen(
+                  data: (reviews) => reviews.isEmpty
+                      ? const SizedBox.shrink()
+                      : _ReviewsSection(reviews: reviews, cs: cs),
+                  orElse: () => const SizedBox.shrink(),
+                ),
+
                 // Info note
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -206,7 +238,7 @@ class _Body extends StatelessWidget {
                     color: cs.surfaceContainerLowest,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: cs.outlineVariant.withOpacity(0.4)),
+                        color: cs.outlineVariant.withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     children: [
@@ -231,6 +263,110 @@ class _Body extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── Reviews section ───────────────────────────────────────────────────────────
+class _ReviewsSection extends StatelessWidget {
+  const _ReviewsSection({required this.reviews, required this.cs});
+  final List<Map<String, dynamic>> reviews;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final avg = reviews.fold<double>(
+            0, (s, r) => s + ((r['score'] as num?)?.toDouble() ?? 0)) /
+        reviews.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            Text(
+              'Reviews',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+                color: cs.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.star_rounded, size: 16, color: Colors.amber.shade600),
+            const SizedBox(width: 2),
+            Text(
+              avg.toStringAsFixed(1),
+              style: const TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            Text(
+              '  (${reviews.length})',
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...reviews.map((r) => _ReviewCard(review: r, cs: cs)),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
+class _ReviewCard extends StatelessWidget {
+  const _ReviewCard({required this.review, required this.cs});
+  final Map<String, dynamic> review;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final score = (review['score'] as num?)?.toInt() ?? 0;
+    final comment = review['comment']?.toString() ?? '';
+    final date = review['created_at'] != null
+        ? DateTime.tryParse(review['created_at'].toString())
+        : null;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Row(
+                  children: List.generate(
+                    5,
+                    (i) => Icon(
+                      i < score ? Icons.star_rounded : Icons.star_outline_rounded,
+                      size: 16,
+                      color: i < score
+                          ? Colors.amber.shade600
+                          : cs.outlineVariant,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                if (date != null)
+                  Text(
+                    '${date.day}/${date.month}/${date.year}',
+                    style: TextStyle(
+                        fontSize: 11, color: cs.onSurfaceVariant),
+                  ),
+              ],
+            ),
+            if (comment.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(comment,
+                  style: const TextStyle(fontSize: 13, height: 1.5)),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -369,7 +505,7 @@ class _PhotoCarouselState extends State<_PhotoCarousel> {
                   decoration: BoxDecoration(
                     color: _current == i
                         ? Colors.white
-                        : Colors.white.withOpacity(0.5),
+                        : Colors.white.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),

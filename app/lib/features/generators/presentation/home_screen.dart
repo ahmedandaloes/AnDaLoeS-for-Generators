@@ -24,7 +24,7 @@ final generatorsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final data = await supabase
       .from('generators')
-      .select('id, title, capacity_kva, price_per_day, city, governorate')
+      .select('id, title, capacity_kva, price_per_day, city, governorate, photos')
       .eq('status', 'available')
       .order('created_at', ascending: false);
   return (data as List).cast<Map<String, dynamic>>();
@@ -166,10 +166,34 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
 
+          // ── Quick KVA filters ─────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 44,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                children: [
+                  for (final kva in [50.0, 100.0, 200.0, 500.0])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text('≤ ${kva.toInt()} KVA'),
+                        selected: filter.maxKva == kva,
+                        onSelected: (on) => ref
+                            .read(_filterProvider.notifier)
+                            .state = filter.withMaxKva(on ? kva : null),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
           // ── Section title ─────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
               child: Row(
                 children: [
                   Text(
