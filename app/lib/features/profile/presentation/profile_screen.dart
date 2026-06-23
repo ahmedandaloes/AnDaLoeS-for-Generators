@@ -713,7 +713,40 @@ class ProfileScreen extends ConsumerWidget {
                           height: 1,
                           indent: 56,
                           color: cs.outlineVariant.withValues(alpha: 0.4)),
-                      ListTile(
+                      Builder(builder: (_) {
+                        final role = profileAsync.valueOrNull?['role']?.toString() ?? 'customer';
+                        if (role == 'customer') {
+                          return ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.storefront_outlined,
+                                  size: 18, color: Colors.orange.shade700),
+                            ),
+                            title: const Text('List your generator',
+                                style: TextStyle(fontWeight: FontWeight.w600)),
+                            subtitle: const Text('Become an owner and earn',
+                                style: TextStyle(fontSize: 12)),
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade600,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text('Start',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white)),
+                            ),
+                            onTap: () => context.push(AppRoutes.ownerDashboard),
+                          );
+                        }
+                        return ListTile(
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
@@ -742,7 +775,8 @@ class ProfileScreen extends ConsumerWidget {
                                   color: cs.onSurfaceVariant),
                             ),
                         onTap: () => context.push(AppRoutes.ownerDashboard),
-                      ),
+                      );
+                      }),
                     ],
                   ),
                   const SizedBox(height: 20),

@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Role-based deep authorization: verify RLS policies cover all 3 roles
-- [ ] Owner-only screen guard: redirect customers trying to access owner routes
-- [ ] Profile: "Switch to Owner" CTA for customers who want to list generators
 - [ ] Home: personalized greeting card based on role (Customer/Owner/Admin)
+- [ ] Owner Dashboard: role update button — lets owners update their profile role to 'owner'
+- [ ] Admin Panel: user management tab showing all users with role badges
+- [ ] Profile: show account creation date and last sign-in time
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: notification filter chips, role badge on profile, avg spend stats`
+**Last commit:** `fix: role-scoped RLS, customer→owner CTA, profile role badge`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 
