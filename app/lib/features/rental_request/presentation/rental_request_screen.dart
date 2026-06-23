@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/supabase.dart';
 import '../../../core/utils/pricing.dart';
 import '../../../core/widgets/press_scale.dart';
+import '../../generators/data/generator_repository.dart';
 import 'payment_confirmation_screen.dart';
 
 final _generatorForRequestProvider =
@@ -19,19 +20,15 @@ final _generatorForRequestProvider =
 final _requestBookedRangesProvider =
     FutureProvider.autoDispose.family<List<DateTimeRange>, String>(
         (ref, generatorId) async {
-  final today = DateTime.now().toIso8601String().substring(0, 10);
-  final data = await supabase
-      .from('rental_requests')
-      .select('start_date, end_date')
-      .eq('generator_id', generatorId)
-      .inFilter('status', ['accepted', 'active'])
-      .gte('end_date', today)
-      .order('start_date');
-  return (data as List).map((r) {
-    final start = DateTime.parse(r['start_date'].toString());
-    final end = DateTime.parse(r['end_date'].toString());
-    return DateTimeRange(start: start, end: end);
-  }).toList();
+  // Reuse GeneratorRepository.fetchBooked — single source for booked ranges.
+  final rows =
+      await ref.read(generatorRepositoryProvider).fetchBooked(generatorId);
+  return rows
+      .map((r) => DateTimeRange(
+            start: DateTime.parse(r['start_date'].toString()),
+            end: DateTime.parse(r['end_date'].toString()),
+          ))
+      .toList();
 });
 
 class RentalRequestScreen extends ConsumerStatefulWidget {
