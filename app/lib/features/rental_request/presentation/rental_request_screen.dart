@@ -55,6 +55,7 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
   DateTimeRange? _range;
   final _noteController = TextEditingController();
   bool _submitting = false;
+  int _conflictCount = 0;
 
   @override
   void dispose() {
@@ -75,7 +76,27 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
         child: child!,
       ),
     );
-    if (picked != null) setState(() => _range = picked);
+    if (picked != null) {
+      setState(() => _range = picked);
+      _checkConflicts(picked);
+    }
+  }
+
+  Future<void> _checkConflicts(DateTimeRange range) async {
+    final start = range.start.toIso8601String().substring(0, 10);
+    final end = range.end.toIso8601String().substring(0, 10);
+    try {
+      final data = await supabase
+          .from('rental_requests')
+          .select('id')
+          .eq('generator_id', widget.generatorId)
+          .inFilter('status', ['accepted', 'active'])
+          .lte('start_date', end)
+          .gte('end_date', start);
+      if (mounted) setState(() => _conflictCount = (data as List).length);
+    } catch (_) {
+      // Non-blocking — don't surface to user
+    }
   }
 
   Future<void> _submit(Map<String, dynamic> gen) async {
@@ -243,7 +264,31 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+
+                // Conflict warning
+                if (_conflictCount > 0)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: cs.errorContainer.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(children: [
+                      Icon(Icons.warning_amber_rounded,
+                          color: cs.error, size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'These dates overlap with $_conflictCount already-accepted booking${_conflictCount > 1 ? 's' : ''}. The owner may reject your request.',
+                          style: TextStyle(fontSize: 12, color: cs.onErrorContainer),
+                        ),
+                      ),
+                    ]),
+                  ),
+                const SizedBox(height: 8),
 
                 // Price breakdown
                 if (_range != null && days > 0) ...[

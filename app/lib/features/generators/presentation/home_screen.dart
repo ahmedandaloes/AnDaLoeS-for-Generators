@@ -41,6 +41,10 @@ class _Filter {
 
 final _filterProvider = StateProvider<_Filter>((ref) => const _Filter());
 
+// Tracks recent non-empty search terms within the current session (max 5).
+final _recentSearchesProvider =
+    StateProvider<List<String>>((ref) => const []);
+
 final generatorsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final data = await supabase
@@ -51,14 +55,39 @@ final generatorsProvider =
   return (data as List).cast<Map<String, dynamic>>();
 });
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _saveRecentSearch(String term) {
+    final trimmed = term.trim();
+    if (trimmed.length < 2) return;
+    final current = ref.read(_recentSearchesProvider);
+    final updated = [
+      trimmed,
+      ...current.where((s) => s != trimmed),
+    ].take(5).toList();
+    ref.read(_recentSearchesProvider.notifier).state = updated;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final allGenerators = ref.watch(generatorsProvider);
     final filter = ref.watch(_filterProvider);
+    final recentSearches = ref.watch(_recentSearchesProvider);
     final loggedIn = supabase.auth.currentSession != null;
     final cs = Theme.of(context).colorScheme;
 
@@ -164,18 +193,28 @@ class HomeScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: TextField(
+                      controller: _searchController,
                       onChanged: (v) => ref
                           .read(_filterProvider.notifier)
                           .state = filter.withQuery(v),
+                      onSubmitted: (v) {
+                        if (v.trim().isNotEmpty) _saveRecentSearch(v);
+                      },
                       decoration: InputDecoration(
                         hintText: 'Search generators, city…',
                         prefixIcon: const Icon(Icons.search),
                         suffixIcon: filter.query.isNotEmpty
                             ? IconButton(
                                 icon: const Icon(Icons.clear),
-                                onPressed: () => ref
-                                    .read(_filterProvider.notifier)
-                                    .state = filter.withQuery(''),
+                                onPressed: () {
+                                  if (filter.query.trim().isNotEmpty) {
+                                    _saveRecentSearch(filter.query);
+                                  }
+                                  _searchController.clear();
+                                  ref
+                                      .read(_filterProvider.notifier)
+                                      .state = filter.withQuery('');
+                                },
                               )
                             : null,
                       ),
@@ -205,6 +244,35 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ),
+
+          // ── Recent searches ───────────────────────────────────────────
+          if (filter.query.isEmpty && recentSearches.isNotEmpty)
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 40,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  itemCount: recentSearches.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  itemBuilder: (_, i) {
+                    final term = recentSearches[i];
+                    return ActionChip(
+                      avatar: Icon(Icons.history,
+                          size: 14, color: cs.onSurfaceVariant),
+                      label: Text(term,
+                          style: const TextStyle(fontSize: 12)),
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () {
+                        _searchController.text = term;
+                        ref.read(_filterProvider.notifier).state =
+                            filter.withQuery(term);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
 
           // ── Quick KVA filters ─────────────────────────────────────────
           SliverToBoxAdapter(

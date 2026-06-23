@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/config/supabase.dart';
 
@@ -541,10 +542,22 @@ class GeneratorDetailWrapper extends ConsumerWidget {
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          // Share button
+          Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: FloatingActionButton.small(
+              heroTag: 'share',
+              backgroundColor: cs.surfaceContainerHighest,
+              foregroundColor: cs.onSurfaceVariant,
+              tooltip: 'Share',
+              onPressed: () => _shareGenerator(ref, id),
+              child: const Icon(Icons.share_outlined, size: 18),
+            ),
+          ),
           // Report button
           if (loggedIn)
             Padding(
-              padding: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.only(right: 10),
               child: FloatingActionButton.small(
                 heroTag: 'report',
                 backgroundColor: cs.errorContainer,
@@ -574,5 +587,15 @@ class GeneratorDetailWrapper extends ConsumerWidget {
       floatingActionButtonLocation:
           FloatingActionButtonLocation.centerFloat,
     );
+  }
+
+  Future<void> _shareGenerator(WidgetRef ref, String id) async {
+    final cached = ref.read(_generatorDetailProvider(id)).valueOrNull;
+    final title = cached?['title']?.toString() ?? 'a generator';
+    final kva = cached?['capacity_kva'];
+    final text = kva != null
+        ? 'Check out $title ($kva KVA) on AnDaLoeS for Generators!'
+        : 'Check out $title on AnDaLoeS for Generators!';
+    await Share.share(text, subject: title);
   }
 }
