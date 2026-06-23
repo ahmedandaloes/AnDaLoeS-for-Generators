@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/supabase.dart';
 
@@ -9,7 +10,7 @@ final _generatorDetailProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, id) async {
   final data = await supabase
       .from('generators')
-      .select('*, companies(name, city, verification_status)')
+      .select('*, companies(name, city, verification_status, contact_phone)')
       .eq('id', id)
       .single();
   return data;
@@ -223,7 +224,57 @@ class _Body extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                // Contact buttons
+                Builder(builder: (_) {
+                  final phone = company?['contact_phone']?.toString();
+                  if (phone == null || phone.isEmpty) {
+                    return const SizedBox(height: 24);
+                  }
+                  final cleaned = phone.replaceAll(RegExp(r'\D'), '');
+                  final egPhone = cleaned.startsWith('20')
+                      ? cleaned
+                      : '20${cleaned.startsWith('0') ? cleaned.substring(1) : cleaned}';
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 16, bottom: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => launchUrl(
+                                Uri.parse('tel:$phone'),
+                                mode: LaunchMode.externalApplication),
+                            icon: const Icon(Icons.call_outlined, size: 16),
+                            label: const Text('Call owner'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: FilledButton.tonal(
+                            onPressed: () => launchUrl(
+                                Uri.parse(
+                                    'https://wa.me/$egPhone'),
+                                mode: LaunchMode.externalApplication),
+                            child: Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.chat_outlined,
+                                    size: 16,
+                                    color: Colors.green.shade700),
+                                const SizedBox(width: 6),
+                                Text('WhatsApp',
+                                    style: TextStyle(
+                                        color:
+                                            Colors.green.shade700)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                const SizedBox(height: 16),
 
                 // Pricing card
                 _PricingCard(gen: gen, cs: cs),
