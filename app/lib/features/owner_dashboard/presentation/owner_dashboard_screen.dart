@@ -372,11 +372,17 @@ class _RequestsTab extends StatelessWidget {
             ]),
           );
         }
-        return RefreshIndicator(
+        final pendingItems =
+            items.where((r) => r['status']?.toString() == 'pending').toList();
+        final hasMultiplePending = pendingItems.length >= 2;
+
+        return Stack(
+          children: [
+            RefreshIndicator(
           onRefresh: () =>
               ref.refresh(ownerRequestsProvider(companyId).future),
           child: ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(16, hasMultiplePending ? 68 : 16, 16, 16),
             itemCount: items.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (ctx, i) {
@@ -441,9 +447,60 @@ class _RequestsTab extends StatelessWidget {
               );
             },
           ),
+        ),
+            if (hasMultiplePending)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  color: cs.surface,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(44),
+                      backgroundColor: Colors.green.shade600,
+                    ),
+                    onPressed: () =>
+                        _acceptAll(context, pendingItems, companyId),
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: Text(
+                        'Accept all ${pendingItems.length} pending requests'),
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );
+  }
+
+  Future<void> _acceptAll(BuildContext context,
+      List<Map<String, dynamic>> pending, String companyId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Accept all?'),
+        content: Text(
+            'Accept all ${pending.length} pending requests at once?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Accept all')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final ids = pending.map((r) => r['id'].toString()).toList();
+    await supabase
+        .from('rental_requests')
+        .update({'status': 'accepted'})
+        .inFilter('id', ids);
+    ref.invalidate(ownerRequestsProvider(companyId));
   }
 }
 

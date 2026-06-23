@@ -61,10 +61,10 @@
 ## Remaining Features (priority order)
 
 ### NEXT (this loop)
-- [ ] Home: "Near me" section — filter by user's governorate stored in profile
-- [ ] Owner Dashboard: bulk "accept all" for pending requests
-- [ ] Generator detail: contact owner panel with expandable WhatsApp + call buttons
-- [ ] Admin: company approval shows owner contact info inline
+- [ ] Notifications: mark individual notification as read on tap (not just all)
+- [ ] Owner: edit generator inline status toggle (available ↔ unavailable)
+- [ ] Home: price range quick filter chip (budget filter, e.g. "< 500 EGP")
+- [ ] Admin: generator approval/rejection directly from generators tab
 
 ### SOON
 - [ ] Push notifications: FCM integration with Supabase edge function
@@ -87,7 +87,7 @@
 
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
-**Last commit:** `feat: earnings CSV export, track delivery button in My Rentals`
+**Last commit:** `feat: Near Me section, bulk accept-all for owner pending requests`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
 **Next action:** ask-owner sheet, rental live cost preview, swipe-to-cancel pending rentals
 

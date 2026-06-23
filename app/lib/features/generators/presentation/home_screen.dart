@@ -366,6 +366,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: _RecentlyViewed(ref: ref, cs: cs),
           ),
 
+          // ── Near me ──────────────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: _NearMeSection(ref: ref, cs: cs),
+          ),
+
           // ── Section header + sort ─────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
@@ -1682,4 +1687,130 @@ class _GovernorateChips extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Near Me Section ───────────────────────────────────────────────────────────
+class _NearMeSection extends StatelessWidget {
+  const _NearMeSection({required this.ref, required this.cs});
+  final WidgetRef ref;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(nearMeProvider);
+    return async.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (result) {
+        if (result.governorate == null || result.generators.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Row(children: [
+                Icon(Icons.location_on_rounded,
+                    size: 16, color: cs.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'Near you · ${result.governorate}',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: cs.onSurface,
+                  ),
+                ),
+              ]),
+            ),
+            SizedBox(
+              height: 160,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: result.generators.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (ctx, i) {
+                  final g = result.generators[i];
+                  final photos =
+                      (g['photos'] as List?)?.cast<String>() ?? [];
+                  final kva = g['capacity_kva'];
+                  final price = g['price_per_day'];
+                  return GestureDetector(
+                    onTap: () =>
+                        context.push(AppRoutes.generatorDetail(g['id'].toString())),
+                    child: Container(
+                      width: 140,
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: cs.outlineVariant.withValues(alpha: 0.5)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(14)),
+                            child: photos.isNotEmpty
+                                ? Image.network(photos.first,
+                                    height: 80,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) =>
+                                        _NearMePlaceholder(cs: cs))
+                                : _NearMePlaceholder(cs: cs),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  g['title']?.toString() ?? '',
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${kva} KVA · EGP $price/d',
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      color: cs.onSurfaceVariant),
+                                  maxLines: 1,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _NearMePlaceholder extends StatelessWidget {
+  const _NearMePlaceholder({required this.cs});
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        height: 80,
+        width: double.infinity,
+        color: cs.primaryContainer,
+        child: Icon(Icons.bolt, color: cs.primary, size: 28),
+      );
 }
