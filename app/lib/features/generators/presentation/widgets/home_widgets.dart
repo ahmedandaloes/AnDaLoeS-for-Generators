@@ -144,8 +144,8 @@ class HomeBanner extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             cs.primaryContainer.withValues(alpha: 0.6),
             cs.secondaryContainer.withValues(alpha: 0.3),

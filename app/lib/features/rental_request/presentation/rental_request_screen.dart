@@ -556,8 +556,8 @@ class _DateSummaryCardState extends State<_DateSummaryCard>
               cs.primaryContainer.withValues(alpha: 0.7),
               cs.secondaryContainer.withValues(alpha: 0.5),
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
@@ -624,7 +624,7 @@ class _DateSummaryCardState extends State<_DateSummaryCard>
             ),
             const SizedBox(height: 4),
             Align(
-              alignment: Alignment.centerRight,
+              alignment: AlignmentDirectional.centerEnd,
               child: Text(
                 'Best rate applied automatically',
                 style: TextStyle(

@@ -127,8 +127,8 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                       colors: [
                         cs.primaryContainer.withValues(alpha: 0.7),
                         cs.secondaryContainer.withValues(alpha: 0.4),

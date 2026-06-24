@@ -267,7 +267,7 @@ class _FilterSheetState extends State<FilterSheet> {
           ),
           if (_maxKva != null && _maxKva == 1000)
             Align(
-              alignment: Alignment.centerRight,
+              alignment: AlignmentDirectional.centerEnd,
               child: TextButton(
                 onPressed: () => setState(() => _maxKva = null),
                 child: Text(l.removeLimit),
@@ -294,7 +294,7 @@ class _FilterSheetState extends State<FilterSheet> {
           ),
           if (_maxPrice != null)
             Align(
-              alignment: Alignment.centerRight,
+              alignment: AlignmentDirectional.centerEnd,
               child: TextButton(
                 onPressed: () => setState(() => _maxPrice = null),
                 child: Text(l.removeLimit),

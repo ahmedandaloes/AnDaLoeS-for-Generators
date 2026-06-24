@@ -171,8 +171,8 @@ class _InvoiceDocument extends StatelessWidget {
                     Colors.green.shade700,
                     Colors.green.shade500,
                   ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                 ),
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(12)),

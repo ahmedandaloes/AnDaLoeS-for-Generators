@@ -91,8 +91,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 padding: const EdgeInsets.fromLTRB(28, 48, 28, 36),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
                     colors: [
                       cs.primaryContainer.withValues(alpha: 0.7),
                       cs.secondaryContainer.withValues(alpha: 0.4),

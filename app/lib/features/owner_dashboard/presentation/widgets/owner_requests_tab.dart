@@ -167,7 +167,7 @@ class OwnerRequestsTab extends StatelessWidget {
                       }
                     },
                     background: Container(
-                      alignment: Alignment.centerLeft,
+                      alignment: AlignmentDirectional.centerStart,
                       padding:
                           const EdgeInsetsDirectional.only(start: 20),
                       decoration: BoxDecoration(
@@ -185,7 +185,7 @@ class OwnerRequestsTab extends StatelessWidget {
                       ]),
                     ),
                     secondaryBackground: Container(
-                      alignment: Alignment.centerRight,
+                      alignment: AlignmentDirectional.centerEnd,
                       padding: const EdgeInsetsDirectional.only(end: 20),
                       decoration: BoxDecoration(
                         color: cs.error.withValues(alpha: 0.12),

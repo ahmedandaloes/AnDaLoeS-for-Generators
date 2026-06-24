@@ -231,7 +231,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   key: ValueKey(id),
                   direction: DismissDirection.endToStart,
                   background: Container(
-                    alignment: Alignment.centerRight,
+                    alignment: AlignmentDirectional.centerEnd,
                     padding: const EdgeInsetsDirectional.only(end: 20),
                     color: cs.errorContainer,
                     child: Icon(Icons.delete_outline, color: cs.onErrorContainer),

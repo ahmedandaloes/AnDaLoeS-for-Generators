@@ -215,8 +215,8 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                               Colors.green.shade700,
                               Colors.green.shade500,
                             ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                            begin: AlignmentDirectional.topStart,
+                            end: AlignmentDirectional.bottomEnd,
                           ),
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -428,7 +428,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                         },
                         background: canViewDoc
                             ? Container(
-                                alignment: Alignment.centerLeft,
+                                alignment: AlignmentDirectional.centerStart,
                                 padding:
                                     const EdgeInsetsDirectional.only(
                                         start: 20),
@@ -456,7 +456,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                                 ]),
                               )
                             : Container(
-                                alignment: Alignment.centerRight,
+                                alignment: AlignmentDirectional.centerEnd,
                                 padding:
                                     const EdgeInsetsDirectional.only(
                                         end: 20),

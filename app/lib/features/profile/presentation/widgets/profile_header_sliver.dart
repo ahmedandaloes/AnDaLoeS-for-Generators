@@ -41,8 +41,8 @@ class ProfileHeaderSliver extends StatelessWidget {
         background: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
               colors: [
                 cs.primaryContainer.withValues(alpha: 0.8),
                 cs.secondaryContainer.withValues(alpha: 0.5),

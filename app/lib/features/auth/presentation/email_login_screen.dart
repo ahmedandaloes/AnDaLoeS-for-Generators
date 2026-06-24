@@ -90,7 +90,7 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
                 const SizedBox(height: 8),
                 // Back
                 Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: AlignmentDirectional.centerStart,
                   child: IconButton.outlined(
                     onPressed: () =>
                         context.canPop() ? context.pop() : null,
