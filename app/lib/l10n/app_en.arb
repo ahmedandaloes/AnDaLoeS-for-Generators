@@ -292,5 +292,20 @@
   "passwordLabel": "Password",
   "browseAsGuest": "Browse as guest",
   "passwordMinLength": "Password must be at least 6 characters.",
-  "invalidEmail": "Enter a valid email address."
+  "invalidEmail": "Enter a valid email address.",
+  "typeMessage": "Type a message…",
+  "failedToSend": "Failed to send. Please try again.",
+  "typing": "typing…",
+  "chatLabel": "Chat",
+  "noMessagesYet": "No messages yet.\nSay hello to {name}!",
+  "@noMessagesYet": { "placeholders": { "name": { "type": "String" } } },
+  "getStarted": "Get started",
+  "next": "Next",
+  "skip": "Skip",
+  "onboard1Title": "Power when you need it",
+  "onboard1Body": "Browse hundreds of generators across Egypt — from small 5 KVA units to industrial 500 KVA beasts.",
+  "onboard2Title": "Rent in minutes",
+  "onboard2Body": "Pick your dates, send a request, and the owner delivers and sets up the generator at your location.",
+  "onboard3Title": "Trusted owners only",
+  "onboard3Body": "Every company is verified. Real ratings from real rentals keep quality high across the platform."
 }

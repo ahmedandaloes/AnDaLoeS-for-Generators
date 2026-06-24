@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -120,7 +121,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Failed to send: $e'),
+              content: Text(AppLocalizations.of(context)!.failedToSend),
               behavior: SnackBarBehavior.floating),
         );
         _controller.text = body;
@@ -133,6 +134,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     final messagesAsync =
         ref.watch(_messagesProvider(widget.rentalRequestId));
 
@@ -148,7 +150,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               duration: const Duration(milliseconds: 200),
               child: _otherTyping
                   ? Text(
-                      'typing…',
+                      l.typing,
                       key: const ValueKey('typing'),
                       style: TextStyle(
                           fontSize: 11,
@@ -156,7 +158,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           fontStyle: FontStyle.italic),
                     )
                   : Text(
-                      'Chat',
+                      l.chatLabel,
                       key: const ValueKey('chat'),
                       style: TextStyle(
                           fontSize: 12, color: cs.onSurfaceVariant),
@@ -184,7 +186,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 cs.onSurfaceVariant.withValues(alpha: 0.4)),
                         const SizedBox(height: 12),
                         Text(
-                          'No messages yet.\nSay hello to ${widget.otherPartyName}!',
+                          l.noMessagesYet(widget.otherPartyName),
                           textAlign: TextAlign.center,
                           style: TextStyle(color: cs.onSurfaceVariant),
                         ),
@@ -273,7 +275,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => _send(),
                     decoration: InputDecoration(
-                      hintText: 'Type a message…',
+                      hintText: l.typeMessage,
                       filled: true,
                       fillColor: cs.surfaceContainerLow,
                       border: OutlineInputBorder(
