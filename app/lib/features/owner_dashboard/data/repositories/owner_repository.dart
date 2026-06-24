@@ -16,7 +16,7 @@ class OwnerRepository implements IOwnerRepository {
         .eq('owner_user_id', uid)
         .maybeSingle();
     if (data == null) return null;
-    return CompanyEntity.fromMap(data as Map<String, dynamic>);
+    return CompanyEntity.fromMap(data);
   }
 
   @override
