@@ -5,12 +5,13 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/config/supabase.dart';
 import '../../../../core/constants/generator_use_cases.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/status_colors.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../company/data/company_repository.dart';
+import '../../data/repositories/generator_repository.dart';
 import '../providers/detail_providers.dart';
 import '../widgets/detail_sections.dart';
 import '../widgets/photo_carousel.dart';
@@ -40,7 +41,9 @@ class GeneratorDetailBody extends ConsumerWidget {
     final similarAsync = ref.watch(similarGeneratorsProvider(gen));
     final isFav =
         ref.watch(isFavProvider(generatorId)).valueOrNull ?? false;
-    final loggedIn = supabase.auth.currentUser?.isAnonymous == false;
+    final loggedIn =
+        !ref.read(authRepositoryProvider).isCurrentUserAnonymous &&
+        ref.read(authRepositoryProvider).currentUserId != null;
 
     return CustomScrollView(
       controller: scrollController,
@@ -635,19 +638,11 @@ Future<void> _copyLink(BuildContext context, String id) async {
 
 Future<void> _toggleFav(WidgetRef ref, String id, bool isFav) async {
   HapticFeedback.lightImpact();
-  final uid = supabase.auth.currentUser?.id;
+  final uid = ref.read(authRepositoryProvider).currentUserId;
   if (uid == null) return;
-  if (isFav) {
-    await supabase
-        .from('user_favorites')
-        .delete()
-        .eq('user_id', uid)
-        .eq('generator_id', id);
-  } else {
-    await supabase
-        .from('user_favorites')
-        .upsert({'user_id': uid, 'generator_id': id});
-  }
+  await ref
+      .read(generatorRepositoryProvider)
+      .toggleFavorite(uid, id, isFav);
   ref.invalidate(isFavProvider(id));
 }
 

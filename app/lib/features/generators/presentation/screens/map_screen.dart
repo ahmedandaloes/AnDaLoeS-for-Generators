@@ -8,8 +8,8 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-import '../../../../core/config/supabase.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../data/repositories/generator_repository.dart';
 
 // Approximate center coordinates for Egyptian governorates
 const _govCoords = <String, LatLng>{
@@ -44,14 +44,7 @@ const _govCoords = <String, LatLng>{
 
 final _mapGeneratorsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final data = await supabase
-      .from('generators')
-      .select(
-          'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, status')
-      .eq('status', 'available')
-      .order('avg_score', ascending: false)
-      .limit(200);
-  return (data as List).cast<Map<String, dynamic>>();
+  return ref.read(generatorRepositoryProvider).fetchForMap();
 });
 
 class MapScreen extends ConsumerStatefulWidget {

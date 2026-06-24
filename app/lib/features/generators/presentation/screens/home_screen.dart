@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/config/supabase.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../notifications/providers/notifications_providers.dart'
     show unreadCountProvider;
 import '../providers/generators_providers.dart'
@@ -69,7 +69,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final recentSearches = ref.watch(recentSearchesProvider);
     final showFavoritesOnly = ref.watch(showFavoritesOnlyProvider);
     final favorites = ref.watch(favoritesProvider);
-    final loggedIn = supabase.auth.currentSession != null;
+    final loggedIn = ref.read(authRepositoryProvider).currentUserId != null;
     final cs = Theme.of(context).colorScheme;
 
     ref.listen<AsyncValue<Set<String>>>(remoteFavoritesProvider, (_, next) {
@@ -732,7 +732,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
     if (saved == true && nameCtrl.text.trim().isNotEmpty && context.mounted) {
       try {
-        await saveSearch(name: nameCtrl.text.trim(), filter: filter);
+        await saveSearch(ref: widgetRef, name: nameCtrl.text.trim(), filter: filter);
         widgetRef.invalidate(savedSearchesProvider);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -757,7 +757,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Navigator.pop(sheetCtx);
         },
         onDelete: (id) async {
-          await deleteSavedSearch(id);
+          await deleteSavedSearch(widgetRef, id);
           widgetRef.invalidate(savedSearchesProvider);
         },
         onSaveCurrent: currentFilter.hasActiveFilters
