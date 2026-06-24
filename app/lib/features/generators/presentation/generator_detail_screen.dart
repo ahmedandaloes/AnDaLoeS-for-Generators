@@ -615,30 +615,34 @@ Future<void> _shareGenerator(WidgetRef ref, String id) async {
   final companyName = (cached?['companies'] as Map?)?['name']?.toString();
   final avgScore = (cached?['avg_score'] as num?)?.toDouble();
   final ratingCount = (cached?['rating_count'] as num?)?.toInt() ?? 0;
+  final photos = (cached?['photos'] as List?)?.cast<String>() ?? [];
+  final photoUrl = photos.isNotEmpty ? photos.first : null;
   final location =
       [city, gov].where((v) => v != null && v.isNotEmpty).join(', ');
   final ratingStr = (avgScore != null && ratingCount > 0)
       ? '⭐ ${avgScore.toStringAsFixed(1)} ($ratingCount reviews)'
       : null;
+  final listingUrl = 'https://andaloes.app/generators/$id';
   final lines = <String>[
     '🔌 $title',
     if (kva != null || price != null)
       [
         if (kva != null) '$kva KVA',
-        if (price != null) 'EGP $price/day',
+        if (price != null) 'EGP ${price}/day',
       ].join(' · '),
     if (location.isNotEmpty) '📍 $location',
     if (companyName != null) '🏢 $companyName',
     if (ratingStr != null) ratingStr,
     '',
-    'Book on AnDaLoeS for Generators',
-    'https://andaloes.app/generator/$id',
+    'احجز الآن على AnDaLoeS | Book now on AnDaLoeS for Generators',
+    listingUrl,
+    if (photoUrl != null) photoUrl,
   ];
   await Share.share(lines.join('\n'), subject: title);
 }
 
 Future<void> _copyLink(BuildContext context, String id) async {
-  final link = 'https://andaloes.app/generator/$id';
+  final link = 'https://andaloes.app/generators/$id';
   await Clipboard.setData(ClipboardData(text: link));
   if (context.mounted) {
     final l = AppLocalizations.of(context)!;
