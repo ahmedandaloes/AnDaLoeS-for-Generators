@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -19,10 +20,11 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
   bool _obscure = true;
 
   Future<void> _submit() async {
+    final l = AppLocalizations.of(context)!;
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || password.length < 6) {
-      _show('Enter an email and a password of at least 6 characters.');
+      _show(l.enterEmailPassword);
       return;
     }
     setState(() => _loading = true);
@@ -73,6 +75,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: SafeArea(
@@ -108,9 +111,9 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                       color: cs.onPrimaryContainer, size: 28),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Developer login',
-                  style: TextStyle(
+                Text(
+                  l.developerLogin,
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.5,
@@ -118,7 +121,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'First time? We\'ll create your account automatically.',
+                  l.autoCreateAccount,
                   style: TextStyle(
                     fontSize: 14,
                     color: cs.onSurfaceVariant,
@@ -131,9 +134,9 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   autocorrect: false,
-                  decoration: const InputDecoration(
-                    hintText: 'Email address',
-                    prefixIcon: Icon(Icons.email_outlined),
+                  decoration: InputDecoration(
+                    hintText: l.emailAddress,
+                    prefixIcon: const Icon(Icons.email_outlined),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -142,7 +145,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                   controller: _passwordController,
                   obscureText: _obscure,
                   decoration: InputDecoration(
-                    hintText: 'Password',
+                    hintText: l.passwordLabel,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -165,7 +168,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: cs.onPrimary),
                         )
-                      : const Text('Sign in / Create account'),
+                      : Text(l.signInOrCreate),
                 ),
                 const SizedBox(height: 16),
                 Row(children: [
@@ -174,7 +177,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                           color: cs.outlineVariant.withValues(alpha: 0.5))),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('or',
+                    child: Text(l.orLabel,
                         style: TextStyle(
                             color: cs.onSurfaceVariant, fontSize: 13)),
                   ),
@@ -186,7 +189,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                 OutlinedButton.icon(
                   onPressed: _loading ? null : _guest,
                   icon: const Icon(Icons.person_outline, size: 18),
-                  label: const Text('Continue as guest'),
+                  label: Text(l.continueAsGuest),
                 ),
               ],
             ),
