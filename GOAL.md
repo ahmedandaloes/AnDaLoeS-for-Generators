@@ -327,7 +327,7 @@ FIXED this cycle:
 TODO (next cycles):
 - [ ] HIGH: "Mark as received" sets status=completed (wrong + RLS-rejected); make it informational or route via owner/Edge Fn + align RLS/copy (my_rentals ~865).
 - [ ] HIGH: role-gate /admin and /owner routes in GoRouter redirect (currently login-gated only; RLS now the real boundary). Consider cached role.
-- [ ] HIGH: guest (anonymous) can reach company onboarding + Rent Now; gate on currentUser.isAnonymous.
+- [x] HIGH: guest/anonymous gating — detail Rent Now/report/favorite require a real (non-anonymous) account (push login); company onboarding shows "create an account first" for anonymous users.
 - [ ] HIGH: VAT shown on invoice but not at booking; honor tax_config.applies_when; show VAT consistently.
 - [ ] MED: completion trigger doesn't clamp commission to price_total (negative net possible) — clamp in 0004 trigger.
 - [ ] MED: priced days (exclusive) vs blocked days (inclusive daterange) off-by-one; standardize.

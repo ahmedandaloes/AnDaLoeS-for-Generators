@@ -178,6 +178,42 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Owners must have a real (non-anonymous) account before listing.
+    final user = supabase.auth.currentUser;
+    if (user == null || user.isAnonymous) {
+      final cs = Theme.of(context).colorScheme;
+      return Scaffold(
+        appBar: AppBar(title: const Text('Register Company')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.account_circle_outlined,
+                    size: 56, color: cs.primary),
+                const SizedBox(height: 16),
+                const Text('Create an account first',
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                Text(
+                  'You need a registered account to list generators. '
+                  'Sign up with your email to continue.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: cs.onSurfaceVariant),
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () => context.push(AppRoutes.emailAuth),
+                  child: const Text('Create account'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(_step == 1 ? 'Register Company' : 'Upload Documents'),

@@ -595,7 +595,10 @@ class _GeneratorDetailWrapperState
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l = AppLocalizations.of(context)!;
-    final loggedIn = supabase.auth.currentSession != null;
+    // A real (non-anonymous) account is required to book/report — guests must
+    // sign in so the owner can contact them and the request isn't orphaned.
+    final user = supabase.auth.currentUser;
+    final loggedIn = user != null && !user.isAnonymous;
     final isFavAsync = ref.watch(isFavProvider(widget.id));
     final isFav = isFavAsync.valueOrNull ?? false;
     final id = widget.id;
