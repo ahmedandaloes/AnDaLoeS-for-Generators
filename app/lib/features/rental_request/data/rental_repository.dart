@@ -46,7 +46,9 @@ class RentalRepository {
         {'delivered_at': DateTime.now().toUtc().toIso8601String()}).eq('id', id);
   }
 
-  /// Count of accepted/active rentals overlapping [start]..[end] (yyyy-MM-dd).
+  /// Count of accepted/active rentals overlapping [start, end) — end_date is the
+  /// return day (exclusive), matching the DB exclusion constraint ('[)'), so two
+  /// rentals touching at one endpoint (A ends, B starts same day) do NOT overlap.
   Future<int> overlapCount(
       String generatorId, String start, String end) async {
     final data = await supabase
@@ -54,8 +56,8 @@ class RentalRepository {
         .select('id')
         .eq('generator_id', generatorId)
         .inFilter('status', ['accepted', 'active'])
-        .lte('start_date', end)
-        .gte('end_date', start);
+        .lt('start_date', end)
+        .gt('end_date', start);
     return (data as List).length;
   }
 
