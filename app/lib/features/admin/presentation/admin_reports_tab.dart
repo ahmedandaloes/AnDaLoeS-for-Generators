@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,6 +31,7 @@ class AdminReportsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final reportsAsync = ref.watch(openReportsProvider);
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return reportsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -46,7 +48,7 @@ class AdminReportsTab extends StatelessWidget {
                 const Text('No open reports',
                     style: TextStyle(fontSize: 16)),
                 const SizedBox(height: 4),
-                Text('All clear!',
+                Text(l.allClear,
                     style: TextStyle(color: cs.onSurfaceVariant)),
               ],
             ),
@@ -127,7 +129,7 @@ class AdminReportsTab extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8)),
                           ),
                           onPressed: () => _dismiss(r['id'].toString()),
-                          child: const Text('Dismiss',
+                          child: Text(l.dismiss,
                               style: TextStyle(fontSize: 11)),
                         ),
                         const SizedBox(width: 6),
@@ -140,7 +142,7 @@ class AdminReportsTab extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8)),
                           ),
                           onPressed: () => _resolve(r['id'].toString()),
-                          child: const Text('Resolve',
+                          child: Text(l.resolve,
                               style: TextStyle(fontSize: 11)),
                         ),
                       ]),

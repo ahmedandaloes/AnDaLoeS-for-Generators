@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/widgets/app_error_state.dart';
+import '../../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/supabase.dart';
@@ -29,13 +30,14 @@ class AdminScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAdminAsync = ref.watch(_isAdminProvider);
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Panel'),
+        title: Text(l.adminPanel),
         actions: [
           Container(
-            margin: const EdgeInsets.only(right: 12),
+            margin: const EdgeInsetsDirectional.only(end: 12),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: cs.errorContainer,
@@ -46,7 +48,7 @@ class AdminScreen extends ConsumerWidget {
                 Icon(Icons.shield_outlined,
                     size: 13, color: cs.onErrorContainer),
                 const SizedBox(width: 4),
-                Text('Admin',
+                Text(l.admin,
                     style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -67,11 +69,11 @@ class AdminScreen extends ConsumerWidget {
                 children: [
                   Icon(Icons.lock_outline, size: 48, color: cs.error),
                   const SizedBox(height: 16),
-                  const Text('Access denied',
+                  Text(l.accessDenied,
                       style: TextStyle(
                           fontSize: 18, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 8),
-                  Text('Admin access required.',
+                  Text(l.adminAccessRequired,
                       style: TextStyle(color: cs.onSurfaceVariant)),
                 ],
               ),
@@ -85,8 +87,8 @@ class AdminScreen extends ConsumerWidget {
                   isScrollable: true,
                   tabAlignment: TabAlignment.start,
                   tabs: [
-                  const Tab(text: 'Companies'),
-                  const Tab(text: 'Generators'),
+                  Tab(text: l.tabCompanies),
+                  Tab(text: l.tabGenerators),
                   Tab(
                     child: Builder(builder: (ctx) {
                       final count = ref
@@ -97,7 +99,7 @@ class AdminScreen extends ConsumerWidget {
                       return Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('Reports'),
+                          Text(l.tabReports),
                           if (count > 0) ...[
                             const SizedBox(width: 6),
                             Container(
@@ -122,10 +124,10 @@ class AdminScreen extends ConsumerWidget {
                       );
                     }),
                   ),
-                  const Tab(text: 'Ops'),
-                  const Tab(text: 'Revenue'),
-                  const Tab(text: 'Stats'),
-                  const Tab(text: 'Users'),
+                  Tab(text: l.tabOps),
+                  Tab(text: l.tabRevenue),
+                  Tab(text: l.tabStats),
+                  Tab(text: l.tabUsers),
                 ]),
                 Expanded(
                   child: TabBarView(

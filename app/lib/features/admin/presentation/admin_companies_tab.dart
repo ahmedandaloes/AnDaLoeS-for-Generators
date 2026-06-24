@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,6 +24,7 @@ class AdminCompaniesTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final companiesAsync = ref.watch(pendingCompaniesProvider);
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return companiesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -36,7 +38,7 @@ class AdminCompaniesTab extends StatelessWidget {
                 Icon(Icons.check_circle_outline,
                     size: 48, color: Colors.green),
                 const SizedBox(height: 16),
-                const Text('No pending companies'),
+                Text(l.noPendingCompanies),
               ],
             ),
           );
@@ -79,6 +81,7 @@ class _CompanyCardState extends State<_CompanyCard> {
   }
 
   Future<void> _approve() async {
+    final l = AppLocalizations.of(context)!;
     setState(() => _loading = true);
     final companyName = widget.company['name']?.toString() ?? 'Company';
     try {
@@ -95,7 +98,7 @@ class _CompanyCardState extends State<_CompanyCard> {
                 color: Colors.white, size: 18),
             const SizedBox(width: 8),
             Expanded(
-              child: Text('"$companyName" approved',
+              child: Text(l.companyApproved(companyName),
                   style: const TextStyle(fontWeight: FontWeight.w600)),
             ),
           ]),
@@ -117,11 +120,12 @@ class _CompanyCardState extends State<_CompanyCard> {
   }
 
   Future<void> _reject() async {
+    final l = AppLocalizations.of(context)!;
     final reason = _reasonController.text.trim();
     final companyName = widget.company['name']?.toString() ?? 'Company';
     if (reason.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Enter a rejection reason'),
+        content: Text(l.enterRejectionReason),
         behavior: SnackBarBehavior.floating,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -143,7 +147,7 @@ class _CompanyCardState extends State<_CompanyCard> {
             const Icon(Icons.cancel_outlined, color: Colors.white, size: 18),
             const SizedBox(width: 8),
             Expanded(
-              child: Text('"$companyName" rejected',
+              child: Text(l.companyRejected(companyName),
                   style: const TextStyle(fontWeight: FontWeight.w600)),
             ),
           ]),
@@ -166,6 +170,7 @@ class _CompanyCardState extends State<_CompanyCard> {
   @override
   Widget build(BuildContext context) {
     final cs = widget.cs;
+    final l = AppLocalizations.of(context)!;
     final company = widget.company;
     final owner = company['profiles'] as Map<String, dynamic>?;
     final status = company['verification_status']?.toString() ?? 'pending';
@@ -273,7 +278,7 @@ class _CompanyCardState extends State<_CompanyCard> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content:
-                                      Text('$label URL copied to clipboard'),
+                                      Text(l.urlCopied(label)),
                                   behavior: SnackBarBehavior.floating,
                                   duration: const Duration(seconds: 3),
                                 ),
@@ -318,7 +323,7 @@ class _CompanyCardState extends State<_CompanyCard> {
                       onPressed: _loading
                           ? null
                           : () => setState(() => _showReject = true),
-                      child: const Text('Reject'),
+                      child: Text(l.reject),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -333,7 +338,7 @@ class _CompanyCardState extends State<_CompanyCard> {
                               width: 18,
                               child: CircularProgressIndicator(
                                   strokeWidth: 2))
-                          : const Text('Approve'),
+                          : Text(l.approve),
                     ),
                   ),
                 ],
