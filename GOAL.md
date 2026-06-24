@@ -329,6 +329,6 @@ TODO (next cycles):
 - [ ] HIGH: role-gate /admin and /owner routes in GoRouter redirect (currently login-gated only; RLS now the real boundary). Consider cached role.
 - [x] HIGH: guest/anonymous gating — detail Rent Now/report/favorite require a real (non-anonymous) account (push login); company onboarding shows "create an account first" for anonymous users.
 - [ ] HIGH: VAT shown on invoice but not at booking; honor tax_config.applies_when; show VAT consistently.
-- [ ] MED: completion trigger doesn't clamp commission to price_total (negative net possible) — clamp in 0004 trigger.
+- [x] MED: completion trigger now clamps commission to [0, price_total] (DB 0033) — owner net never negative.
 - [ ] MED: priced days (exclusive) vs blocked days (inclusive daterange) off-by-one; standardize.
 - [ ] MED: rate screen / receipt screen lack status gate when reached by route.
