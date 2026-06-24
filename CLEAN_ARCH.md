@@ -33,21 +33,21 @@ Cross-cutting (stays in `lib/core/`):
 - File max 400 lines (800 hard limit)
 - Every new user-facing string → app_en.arb + app_ar.arb
 
-## Migration status
+## ✅ MIGRATION COMPLETE
 
 | Feature | Models | Domain Entity | Domain Repo | Data Repo | Providers | Screens/Widgets |
 |---------|--------|---------------|-------------|-----------|-----------|-----------------|
 | generators | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | rental_request | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| owner_dashboard | ❌ | ❌ | ❌ | ❌ | partial | needs split |
-| admin | ❌ | ❌ | ❌ | ❌ | ❌ | needs split |
-| auth | ❌ | ✅ | ✅ | ✅ | ✅ | ok (screens in presentation/) |
-| company | ✅ | ✅ | ✅ | ✅ | ✅ | ok (screens in presentation/) |
+| owner_dashboard | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| admin | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| auth | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| company | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | notifications | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| chat | ❌ | ❌ | ❌ | ❌ | partial | ok |
-| profile | ❌ | ✅ | ✅ | ✅ | ✅ | ok (screen in presentation/) |
-| ratings | ❌ | ❌ | ❌ | ❌ | ❌ | ok |
-| reports | ❌ | ❌ | ❌ | ❌ | ❌ | ok |
+| chat | ✅ | ✅ | ✅ | n/a | ✅ | ✅ |
+| profile | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| ratings | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| reports | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ## Migration order (dependency-safe)
 
