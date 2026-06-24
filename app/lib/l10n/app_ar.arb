@@ -178,6 +178,7 @@
   "activeCount": "{n} نشط",
   "totalDoneCount": "{n} إجمالي منجز",
   "youReceiveEgp": "تحصل على {amount} ج.م",
+  "collectDepositOnDelivery": "اجمع عربون {amount} ج.م عند التسليم",
   "customer": "العميل",
   "outForDelivery": "قيد التوصيل",
   "confirmDeliveredStart": "تأكيد التسليم · بدء الإيجار",

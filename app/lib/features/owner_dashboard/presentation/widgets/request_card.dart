@@ -167,6 +167,43 @@ class OwnerRequestCard extends StatelessWidget {
                 ),
               ]),
             ],
+            // Deposit collection reminder for active/accepted rentals
+            Builder(builder: (_) {
+              final deposit =
+                  (request['deposit_amount'] as num?)?.toDouble() ?? 0;
+              if (deposit <= 0 ||
+                  !['accepted', 'active'].contains(status)) {
+                return const SizedBox.shrink();
+              }
+              final amt = deposit.toStringAsFixed(0);
+              return Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: Colors.amber.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(children: [
+                    Icon(Icons.payments_outlined,
+                        size: 14, color: Colors.amber.shade800),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        l.collectDepositOnDelivery(amt),
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.amber.shade900),
+                      ),
+                    ),
+                  ]),
+                ),
+              );
+            }),
             if (request['note'] != null &&
                 request['note'].toString().isNotEmpty) ...[
               const SizedBox(height: 8),

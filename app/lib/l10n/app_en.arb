@@ -186,6 +186,8 @@
   "@totalDoneCount": { "placeholders": { "n": { "type": "int" } } },
   "youReceiveEgp": "You receive EGP {amount}",
   "@youReceiveEgp": { "placeholders": { "amount": { "type": "String" } } },
+  "collectDepositOnDelivery": "Collect EGP {amount} deposit on delivery",
+  "@collectDepositOnDelivery": { "placeholders": { "amount": { "type": "String" } } },
   "customer": "Customer",
   "outForDelivery": "Out for delivery",
   "confirmDeliveredStart": "Confirm delivered · start rental",
