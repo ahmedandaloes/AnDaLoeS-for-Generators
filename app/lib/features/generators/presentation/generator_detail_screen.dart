@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../../core/constants/generator_use_cases.dart';
+import '../../../core/theme/status_colors.dart';
 import '../../company/data/company_repository.dart';
 import '../providers/detail_providers.dart';
 import 'widgets/detail_sections.dart';
@@ -291,11 +292,7 @@ class _Body extends ConsumerWidget {
                       if (rate == null || rate <= 0) {
                         return const SizedBox.shrink();
                       }
-                      final color = rate >= 80
-                          ? Colors.green.shade700
-                          : rate >= 50
-                              ? Colors.orange.shade700
-                              : Colors.red.shade700;
+                      final color = qualityColor(rate);
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Container(
@@ -331,11 +328,7 @@ class _Body extends ConsumerWidget {
                         return const SizedBox.shrink();
                       }
                       final pct = (rel.onTimeRate * 100).round();
-                      final color = pct >= 80
-                          ? Colors.green.shade700
-                          : pct >= 50
-                              ? Colors.orange.shade700
-                              : Colors.red.shade700;
+                      final color = qualityColor(pct);
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Container(
