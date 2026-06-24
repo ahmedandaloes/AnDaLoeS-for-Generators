@@ -32,12 +32,42 @@ import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/rental_request/presentation/rental_offer_screen.dart';
 import '../../features/rental_request/presentation/invoice_screen.dart';
 
-GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
+/// Cached role for the signed-in user (defense-in-depth route gating on top of
+/// RLS). Refreshed on every auth state change; null while unknown/loading — in
+/// which case routes are allowed and RLS + in-screen gates remain the real guard.
+final ValueNotifier<String?> _roleCache = ValueNotifier<String?>(null);
+
+Future<void> _refreshRole() async {
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) {
+    _roleCache.value = null;
+    return;
+  }
+  try {
+    final data = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', uid)
+        .maybeSingle();
+    _roleCache.value = data?['role']?.toString();
+  } catch (_) {
+    _roleCache.value = null;
+  }
+}
+
+GoRouter buildAppRouter([String initialLocation = '/']) {
+  // Keep the cached role in sync with auth changes (and load it once now).
+  _refreshRole();
+  supabase.auth.onAuthStateChange.listen((_) => _refreshRole());
+
+  return GoRouter(
   initialLocation: initialLocation,
-  refreshListenable: _GoRouterRefreshStream(supabase.auth.onAuthStateChange),
+  refreshListenable: Listenable.merge(
+      [_GoRouterRefreshStream(supabase.auth.onAuthStateChange), _roleCache]),
   redirect: (context, state) {
     final loggedIn = supabase.auth.currentSession != null;
     final loc = state.matchedLocation;
+    final role = _roleCache.value;
 
     const protected = {
       AppRoutes.profile,
@@ -64,6 +94,14 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
             loc == AppRoutes.emailAuth ||
             loc == AppRoutes.devLogin)) {
       return AppRoutes.home;
+    }
+    // Role gating (defense-in-depth; only when role is known). Admin can access
+    // everything. /owner-dashboard stays open (entry to becoming an owner).
+    if (loggedIn && role != null) {
+      if (loc == AppRoutes.admin && role != 'admin') return AppRoutes.home;
+      if (loc.startsWith('/owner/') && role != 'owner' && role != 'admin') {
+        return AppRoutes.home;
+      }
     }
     return null;
   },
@@ -166,6 +204,7 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
     ),
   ],
 );
+}
 
 class _GoRouterRefreshStream extends ChangeNotifier {
   _GoRouterRefreshStream(Stream<AuthState> stream) {

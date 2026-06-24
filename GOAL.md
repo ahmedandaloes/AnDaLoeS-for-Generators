@@ -326,7 +326,7 @@ FIXED this cycle:
 - [x] HIGH: HomeScreen price/capacity sort crashed on null fields — null-safe numeric sort.
 TODO (next cycles):
 - [ ] HIGH: "Mark as received" sets status=completed (wrong + RLS-rejected); make it informational or route via owner/Edge Fn + align RLS/copy (my_rentals ~865).
-- [ ] HIGH: role-gate /admin and /owner routes in GoRouter redirect (currently login-gated only; RLS now the real boundary). Consider cached role.
+- [x] HIGH: router role-gating — cached role provider (refreshed on auth change); GoRouter redirect sends non-admins away from /admin and non-owners/non-admins away from /owner/* (defense-in-depth on RLS). /owner-dashboard stays open (onboarding entry).
 - [x] HIGH: guest/anonymous gating — detail Rent Now/report/favorite require a real (non-anonymous) account (push login); company onboarding shows "create an account first" for anonymous users.
 - [ ] HIGH: VAT shown on invoice but not at booking; honor tax_config.applies_when; show VAT consistently.
 - [x] MED: completion trigger now clamps commission to [0, price_total] (DB 0033) — owner net never negative.
