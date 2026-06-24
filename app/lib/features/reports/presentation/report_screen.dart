@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/utils/db_error.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/data/repositories/auth_repository.dart';
 import '../data/repositories/reports_repository.dart';
@@ -74,7 +75,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         context.pop();
       }
     } catch (e) {
-      _snack('Error: $e');
+      _snack(friendlyDbError(e));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

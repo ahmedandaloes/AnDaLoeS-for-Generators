@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/status_colors.dart';
+import '../../../core/utils/db_error.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/repositories/admin_repository.dart';
 
@@ -45,7 +46,7 @@ class AdminRentalsTab extends ConsumerWidget {
           child: rentalsAsync.when(
             loading: () =>
                 const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('$e')),
+            error: (e, _) => Center(child: Text(friendlyDbError(e))),
             data: (items) {
               final filtered = query.isEmpty
                   ? items

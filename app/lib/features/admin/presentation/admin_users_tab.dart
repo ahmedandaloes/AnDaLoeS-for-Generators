@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/utils/db_error.dart';
 import '../../../core/widgets/app_error_state.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/repositories/admin_repository.dart';
@@ -27,8 +29,7 @@ class AdminUsersTab extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppSnackBar.error(context, friendlyDbError(e));
       }
     }
   }

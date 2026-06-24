@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/config/tax_config_provider.dart';
+import '../../../core/utils/db_error.dart';
 import '../data/repositories/admin_repository.dart';
 
 /// Egypt standard VAT rate, applied to the platform's commission (its service
@@ -185,7 +186,7 @@ class AdminRevenueTab extends ConsumerWidget {
                 const Center(child: Padding(
                     padding: EdgeInsets.all(24),
                     child: CircularProgressIndicator())),
-            error: (e, _) => Text('$e'),
+            error: (e, _) => Text(friendlyDbError(e)),
             data: (rows) {
               if (rows.isEmpty) {
                 return Padding(

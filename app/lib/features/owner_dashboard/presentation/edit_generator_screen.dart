@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/constants/generator_sizes.dart';
+import '../../../core/utils/db_error.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import 'providers/owner_providers.dart' show ownerRepositoryProvider;
@@ -198,7 +199,7 @@ class _EditGeneratorScreenState
         context.pop();
       }
     } catch (e) {
-      _snack('Error: $e');
+      _snack(friendlyDbError(e));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -457,7 +458,7 @@ class _EditGeneratorScreenState
           .deleteGenerator(widget.generatorId);
       if (mounted) context.pop();
     } catch (e) {
-      _snack('Error: $e');
+      _snack(friendlyDbError(e));
     }
   }
 }

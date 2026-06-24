@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/utils/db_error.dart';
 import '../../rental_request/data/repositories/rental_repository.dart';
 import '../data/repositories/admin_repository.dart';
 
@@ -137,7 +138,7 @@ class _Section extends StatelessWidget {
             loading: () => const Padding(
                 padding: EdgeInsets.all(12),
                 child: Center(child: CircularProgressIndicator())),
-            error: (e, _) => Text('$e',
+            error: (e, _) => Text(friendlyDbError(e),
                 style: TextStyle(fontSize: 12, color: cs.error)),
             data: (rows) {
               if (rows.isEmpty) {

@@ -7,7 +7,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/status_colors.dart';
+import '../../../../core/utils/db_error.dart';
 import '../../../../core/utils/ics.dart';
+import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/repositories/rental_repository.dart'
     show rentalHandoversProvider;
@@ -719,8 +721,7 @@ class RentalCard extends ConsumerWidget {
       ref.invalidate(myRentalsProvider);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')));
+        AppSnackBar.error(context, friendlyDbError(e));
       }
     }
   }

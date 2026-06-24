@@ -22,6 +22,7 @@ import '../widgets/generator_filter.dart';
 import '../widgets/home_widgets.dart';
 import '../widgets/search_autocomplete.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/utils/db_error.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -583,7 +584,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             error: (e, _) => SliverFillRemaining(
               child: HomeErrorState(
-                  message: '$e',
+                  message: friendlyDbError(e),
                   onRetry: () => ref.invalidate(generatorsProvider)),
             ),
             data: (items) {

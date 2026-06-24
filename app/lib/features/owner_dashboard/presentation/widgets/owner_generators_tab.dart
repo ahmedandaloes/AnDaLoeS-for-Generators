@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/utils/db_error.dart';
 import '../../../../core/widgets/app_error_state.dart';
+import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/owner_providers.dart'
     show ownerGeneratorsProvider, activeRentalCountsProvider, ownerRepositoryProvider;
@@ -249,8 +251,7 @@ class _OwnerGeneratorTile extends StatelessWidget {
       ref.invalidate(ownerGeneratorsProvider(companyId));
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppSnackBar.error(context, friendlyDbError(e));
       }
     }
   }

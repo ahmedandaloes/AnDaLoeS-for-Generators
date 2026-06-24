@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/constants/generator_sizes.dart';
 import '../../../core/constants/generator_use_cases.dart';
+import '../../../core/utils/db_error.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import 'providers/owner_providers.dart' show ownerRepositoryProvider;
 
@@ -204,7 +205,7 @@ class _AddGeneratorScreenState extends ConsumerState<AddGeneratorScreen> {
         }
       }
     } catch (e) {
-      _snack('Error: $e');
+      _snack(friendlyDbError(e));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
