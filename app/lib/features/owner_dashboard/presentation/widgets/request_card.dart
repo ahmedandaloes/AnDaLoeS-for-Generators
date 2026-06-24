@@ -385,6 +385,7 @@ class OwnerRequestCard extends StatelessWidget {
     );
     if (confirmed == true) {
       final note = noteController.text.trim();
+      if (!context.mounted) return;
       await _updateStatus(context, requestId, 'accepted',
           ownerNote: note.isNotEmpty ? note : null);
     }
@@ -432,6 +433,7 @@ class OwnerRequestCard extends StatelessWidget {
     );
     if (confirmed == true) {
       final note = noteController.text.trim();
+      if (!context.mounted) return;
       await _updateStatus(context, requestId, 'rejected',
           ownerNote: note.isNotEmpty ? note : null);
     }

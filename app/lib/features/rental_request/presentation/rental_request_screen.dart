@@ -86,7 +86,7 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
   Future<void> _reviewAndConfirm(Map<String, dynamic> gen) async {
     final acked = await SafetyAckDialog.checkAndShow(context);
     if (!acked) return;
-    if (!context.mounted) return;
+    if (!mounted) return;
     final l = AppLocalizations.of(context)!;
     if (_range == null) {
       _snack(l.selectDatesFirst);
