@@ -699,8 +699,10 @@ class _GridGeneratorCard extends StatelessWidget {
     final price = generator['price_per_day'];
     final score = (generator['avg_score'] as num?)?.toDouble() ?? 0;
     final ratingCount = (generator['rating_count'] as num?)?.toInt() ?? 0;
-    final company =
-        (generator['companies'] as Map?)?['name']?.toString() ?? '';
+    final companyMap = generator['companies'] as Map?;
+    final company = companyMap?['name']?.toString() ?? '';
+    final isVerified =
+        companyMap?['verification_status']?.toString() == 'approved';
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -754,15 +756,17 @@ class _GridGeneratorCard extends StatelessWidget {
                             fontSize: 11.5, color: cs.onSurfaceVariant)),
                     const SizedBox(height: 6),
                     Row(children: [
-                      Icon(Icons.verified, size: 13, color: cs.secondary),
-                      const SizedBox(width: 3),
-                      Text(l.verified,
-                          style: TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w600,
-                              color: cs.secondary)),
+                      if (isVerified) ...[
+                        Icon(Icons.verified, size: 13, color: cs.secondary),
+                        const SizedBox(width: 3),
+                        Text(l.verified,
+                            style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                                color: cs.secondary)),
+                        if (ratingCount > 0) const SizedBox(width: 8),
+                      ],
                       if (ratingCount > 0) ...[
-                        const SizedBox(width: 8),
                         Icon(Icons.star_rounded,
                             size: 13, color: Colors.amber.shade600),
                         const SizedBox(width: 2),
