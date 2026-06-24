@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -87,6 +88,7 @@ class AdminStatsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final statsAsync = ref.watch(platformStatsProvider);
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return statsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -95,7 +97,7 @@ class AdminStatsTab extends StatelessWidget {
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _exportCsv(context, stats),
           icon: const Icon(Icons.download_outlined),
-          label: const Text('Export CSV'),
+          label: Text(l.exportCsv),
         ),
         body: RefreshIndicator(
           onRefresh: () => ref.refresh(platformStatsProvider.future),
@@ -103,7 +105,7 @@ class AdminStatsTab extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
             children: [
               const SizedBox(height: 8),
-              Text('PLATFORM OVERVIEW',
+              Text(l.platformOverview,
                   style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -121,7 +123,7 @@ class AdminStatsTab extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Conversion Funnel',
+                      Text(l.conversionFunnel,
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
@@ -176,7 +178,7 @@ class AdminStatsTab extends StatelessWidget {
                             if (i < steps.length - 1) ...[
                               Padding(
                                 padding:
-                                    const EdgeInsets.only(left: 3, top: 2, bottom: 2),
+                                    const EdgeInsetsDirectional.only(start: 3, top: 2, bottom: 2),
                                 child: Container(
                                     width: 2,
                                     height: 12,
@@ -197,7 +199,7 @@ class AdminStatsTab extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Commission earned',
+                      Text(l.commissionEarned,
                           style: TextStyle(
                               fontSize: 12,
                               color: cs.onSurfaceVariant,
@@ -234,7 +236,7 @@ class AdminStatsTab extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Supply by governorate',
+                          Text(l.supplyByGovernorate,
                               style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
@@ -258,7 +260,7 @@ class AdminStatsTab extends StatelessWidget {
                                         style: const TextStyle(fontSize: 13))),
                                 if (e.value < 3)
                                   Container(
-                                    margin: const EdgeInsets.only(right: 8),
+                                    margin: const EdgeInsetsDirectional.only(end: 8),
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
@@ -300,12 +302,13 @@ class _StatGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final items = [
-      ('Users', '${stats['users']}', Icons.people_outline, cs.primary),
-      ('Generators', '${stats['generators']}', Icons.bolt, cs.secondary),
-      ('Total rentals', '${stats['total_rentals']}',
+      (l.tabUsers, '${stats['users']}', Icons.people_outline, cs.primary),
+      (l.tabGenerators, '${stats['generators']}', Icons.bolt, cs.secondary),
+      (l.totalRentals, '${stats['total_rentals']}',
           Icons.receipt_long_outlined, cs.tertiary),
-      ('Completed', '${stats['completed_rentals']}',
+      (l.statusCompleted, '${stats['completed_rentals']}',
           Icons.check_circle_outline, Colors.green.shade700),
     ];
     return GridView.count(
@@ -381,6 +384,7 @@ class _RentalStatusChartState extends State<_RentalStatusChart>
   @override
   Widget build(BuildContext context) {
     final cs = widget.cs;
+    final l = AppLocalizations.of(context)!;
     final total = (widget.stats['total_rentals'] as int?) ?? 1;
 
     final bars = [
@@ -399,7 +403,7 @@ class _RentalStatusChartState extends State<_RentalStatusChart>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Rental Status Distribution',
+            Text(l.rentalStatusDistribution,
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -459,7 +463,7 @@ class _RentalStatusChartState extends State<_RentalStatusChart>
               );
             }),
             const SizedBox(height: 4),
-            Text('Total: $total rentals',
+            Text(l.totalRentalsCount(total),
                 style:
                     TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
           ],

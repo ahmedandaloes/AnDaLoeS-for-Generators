@@ -234,5 +234,12 @@
   "roleUpdatedTo": "تم تحديث الدور إلى {role}",
   "roleCustomer": "عميل",
   "roleOwner": "مالك",
-  "roleAdmin": "مدير"
+  "roleAdmin": "مدير",
+  "totalRentals": "إجمالي الإيجارات",
+  "platformOverview": "نظرة عامة على المنصة",
+  "conversionFunnel": "مسار التحويل",
+  "commissionEarned": "العمولة المكتسبة",
+  "supplyByGovernorate": "العرض حسب المحافظة",
+  "rentalStatusDistribution": "توزيع حالات الإيجار",
+  "totalRentalsCount": "الإجمالي: {count} إيجار"
 }

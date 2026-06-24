@@ -251,5 +251,13 @@
   "@roleUpdatedTo": { "placeholders": { "role": { "type": "String" } } },
   "roleCustomer": "Customer",
   "roleOwner": "Owner",
-  "roleAdmin": "Admin"
+  "roleAdmin": "Admin",
+  "totalRentals": "Total rentals",
+  "platformOverview": "PLATFORM OVERVIEW",
+  "conversionFunnel": "Conversion Funnel",
+  "commissionEarned": "Commission earned",
+  "supplyByGovernorate": "Supply by governorate",
+  "rentalStatusDistribution": "Rental Status Distribution",
+  "totalRentalsCount": "Total: {count} rentals",
+  "@totalRentalsCount": { "placeholders": { "count": { "type": "int" } } }
 }
