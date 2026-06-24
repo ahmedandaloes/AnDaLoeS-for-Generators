@@ -183,5 +183,22 @@
   "activeCount": "{n} active",
   "@activeCount": { "placeholders": { "n": { "type": "int" } } },
   "totalDoneCount": "{n} total done",
-  "@totalDoneCount": { "placeholders": { "n": { "type": "int" } } }
+  "@totalDoneCount": { "placeholders": { "n": { "type": "int" } } },
+  "youReceiveEgp": "You receive EGP {amount}",
+  "@youReceiveEgp": { "placeholders": { "amount": { "type": "String" } } },
+  "customer": "Customer",
+  "outForDelivery": "Out for delivery",
+  "confirmDeliveredStart": "Confirm delivered · start rental",
+  "markAsCompleted": "Mark as completed",
+  "acceptRequest": "Accept request",
+  "optionalMessageToCustomer": "Add an optional message to the customer:",
+  "rejectRequest": "Reject request",
+  "letCustomerKnowWhy": "Let the customer know why (optional):",
+  "chatWithCustomer": "Chat with customer",
+  "minsAgo": "{m}m ago",
+  "@minsAgo": { "placeholders": { "m": { "type": "int" } } },
+  "hrsAgo": "{h}h ago",
+  "@hrsAgo": { "placeholders": { "h": { "type": "int" } } },
+  "hrsAgoRespond": "{h}h ago · respond soon",
+  "@hrsAgoRespond": { "placeholders": { "h": { "type": "int" } } }
 }

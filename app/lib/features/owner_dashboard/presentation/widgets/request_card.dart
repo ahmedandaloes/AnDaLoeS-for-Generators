@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/status_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -28,6 +29,7 @@ class OwnerRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     final gen = request['generators'] as Map<String, dynamic>?;
     final customer = request['profiles'] as Map<String, dynamic>?;
     final status = request['status']?.toString() ?? 'pending';
@@ -54,10 +56,10 @@ class OwnerRequestCard extends StatelessWidget {
                           ? Colors.orange.shade800
                           : Colors.red.shade700;
                   final label = mins < 60
-                      ? '${mins}m ago'
+                      ? l.minsAgo(mins)
                       : mins < 240
-                          ? '${mins ~/ 60}h ago'
-                          : '${mins ~/ 60}h ago · respond soon';
+                          ? l.hrsAgo(mins ~/ 60)
+                          : l.hrsAgoRespond(mins ~/ 60);
                   return Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 3),
@@ -96,7 +98,7 @@ class OwnerRequestCard extends StatelessWidget {
                         Icon(Icons.account_balance_wallet_outlined,
                             size: 13, color: Colors.green.shade700),
                         const SizedBox(width: 4),
-                        Text('You receive EGP ${p.net.toStringAsFixed(0)}',
+                        Text(l.youReceiveEgp(p.net.toStringAsFixed(0)),
                             style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w700,
@@ -125,7 +127,7 @@ class OwnerRequestCard extends StatelessWidget {
               Text(
                 customer?['full_name'] ??
                     customer?['phone'] ??
-                    'Customer',
+                    l.customer,
                 style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
               ),
             ]),
@@ -201,7 +203,7 @@ class OwnerRequestCard extends StatelessWidget {
                     ),
                     onPressed: () =>
                         _rejectWithNote(context, request['id'].toString()),
-                    child: const Text('Reject'),
+                    child: Text(l.reject),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -214,7 +216,7 @@ class OwnerRequestCard extends StatelessWidget {
                           minimumSize: const Size.fromHeight(40)),
                       onPressed: () =>
                           _acceptWithNote(context, request['id'].toString()),
-                      child: const Text('Accept'),
+                      child: Text(l.accept),
                     ),
                   ),
                 ),
@@ -230,7 +232,7 @@ class OwnerRequestCard extends StatelessWidget {
                 onPressed: () =>
                     context.push(AppRoutes.offer(request['id'].toString())),
                 icon: const Icon(Icons.description_outlined, size: 15),
-                label: const Text('View Offer',
+                label: Text(l.viewOffer,
                     style: TextStyle(fontSize: 13)),
               ),
               const SizedBox(height: 4),
@@ -248,7 +250,7 @@ class OwnerRequestCard extends StatelessWidget {
                 onPressed: () =>
                     context.push(AppRoutes.invoice(request['id'].toString())),
                 icon: const Icon(Icons.receipt_long_outlined, size: 15),
-                label: const Text('View Invoice',
+                label: Text(l.viewInvoice,
                     style: TextStyle(fontSize: 13)),
               ),
             ],
@@ -260,14 +262,14 @@ class OwnerRequestCard extends StatelessWidget {
                       minimumSize: const Size.fromHeight(48)),
                   onPressed: () => _markOutForDelivery(context),
                   icon: const Icon(Icons.local_shipping_outlined, size: 18),
-                  label: const Text('Out for delivery'),
+                  label: Text(l.outForDelivery),
                 )
               else ...[
                 Row(children: [
                   Icon(Icons.local_shipping_outlined,
                       size: 14, color: cs.primary),
                   const SizedBox(width: 6),
-                  Text('Out for delivery',
+                  Text(l.outForDelivery,
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -279,7 +281,7 @@ class OwnerRequestCard extends StatelessWidget {
                       minimumSize: const Size.fromHeight(48)),
                   onPressed: () => _updateStatus(
                       context, request['id'].toString(), 'active'),
-                  child: const Text('Confirm delivered · start rental'),
+                  child: Text(l.confirmDeliveredStart),
                 ),
               ],
             ],
@@ -290,7 +292,7 @@ class OwnerRequestCard extends StatelessWidget {
                     minimumSize: const Size.fromHeight(48)),
                 onPressed: () => _updateStatus(
                     context, request['id'].toString(), 'completed'),
-                child: const Text('Mark as completed'),
+                child: Text(l.markAsCompleted),
               ),
             ],
           ],
@@ -301,16 +303,17 @@ class OwnerRequestCard extends StatelessWidget {
 
   Future<void> _acceptWithNote(
       BuildContext context, String requestId) async {
+    final l = AppLocalizations.of(context)!;
     final noteController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Accept request'),
+        title: Text(l.acceptRequest),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Add an optional message to the customer:',
+            Text(l.optionalMessageToCustomer,
                 style: TextStyle(fontSize: 13)),
             const SizedBox(height: 12),
             TextField(
@@ -327,10 +330,10 @@ class OwnerRequestCard extends StatelessWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+              child: Text(l.cancel)),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Accept')),
+              child: Text(l.accept)),
         ],
       ),
     );
@@ -343,16 +346,17 @@ class OwnerRequestCard extends StatelessWidget {
 
   Future<void> _rejectWithNote(
       BuildContext context, String requestId) async {
+    final l = AppLocalizations.of(context)!;
     final noteController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Reject request'),
+        title: Text(l.rejectRequest),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Let the customer know why (optional):',
+            Text(l.letCustomerKnowWhy,
                 style: TextStyle(fontSize: 13)),
             const SizedBox(height: 12),
             TextField(
@@ -370,12 +374,12 @@ class OwnerRequestCard extends StatelessWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+              child: Text(l.cancel)),
           FilledButton(
             style: FilledButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.error),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reject'),
+            child: Text(l.reject),
           ),
         ],
       ),
@@ -453,6 +457,7 @@ class _OwnerChatButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef wRef) {
+    final l = AppLocalizations.of(context)!;
     final rentalId = request['id'].toString();
     final unread =
         wRef.watch(unreadMessagesProvider(rentalId)).valueOrNull ?? 0;
@@ -468,7 +473,7 @@ class _OwnerChatButton extends ConsumerWidget {
         onPressed: () => context.push(
             '/chat/$rentalId?name=${Uri.encodeComponent(name)}'),
         icon: const Icon(Icons.chat_outlined, size: 16),
-        label: const Text('Chat with customer'),
+        label: Text(l.chatWithCustomer),
       ),
     );
   }

@@ -176,5 +176,18 @@
   "rateCustomer": "قيّم العميل",
   "exportCsv": "تصدير CSV",
   "activeCount": "{n} نشط",
-  "totalDoneCount": "{n} إجمالي منجز"
+  "totalDoneCount": "{n} إجمالي منجز",
+  "youReceiveEgp": "تحصل على {amount} ج.م",
+  "customer": "العميل",
+  "outForDelivery": "قيد التوصيل",
+  "confirmDeliveredStart": "تأكيد التسليم · بدء الإيجار",
+  "markAsCompleted": "وضع علامة مكتمل",
+  "acceptRequest": "قبول الطلب",
+  "optionalMessageToCustomer": "أضف رسالة اختيارية للعميل:",
+  "rejectRequest": "رفض الطلب",
+  "letCustomerKnowWhy": "أخبر العميل بالسبب (اختياري):",
+  "chatWithCustomer": "محادثة العميل",
+  "minsAgo": "منذ {m} دقيقة",
+  "hrsAgo": "منذ {h} ساعة",
+  "hrsAgoRespond": "منذ {h} ساعة · يُرجى الرد قريبًا"
 }
