@@ -215,6 +215,34 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 
 ---
 
+## 🎨 Page Improvement Plan (product-owner + UX experts, 2026-06-24)
+Per-page review of the live code. Implement NOW items in the auto-loop on `development`.
+
+### Cross-cutting [NOW] — highest leverage (clear many items at once)
+- [ ] Shared `AppErrorState` widget (friendly message + Retry; no raw `$e`) — replaces bare `Text('$e')` on detail, rental request, my_rentals, offer/invoice/receipt, all owner-dashboard tabs, owner earnings, notifications, chat (~10 screens).
+- [ ] Tokenize status/trust colors — recurring hardcoded `Colors.green/orange/red/amber/grey.shadeXXX` (detail badges, rental statuses, owner stats/gradients, favorites pill, document scaffolds) drift off the blue/green system + break dark mode. Centralize status→color + positive/verified→cs.secondary/tertiary.
+- [ ] ≥48dp tap-target pass — home sort/favorites/login pills, detail small FABs, owner request-card buttons, dashboard Earnings button (32px), _MonthChip, my_rentals report/receipt/calendar controls.
+- [ ] Chat: move `_scrollToBottom()` out of build → addPostFrameCallback keyed on message count (correctness; respects no-work-in-build rule).
+
+### Business wins [NOW] (product owner)
+- [ ] Detail: guest can pick dates/address first; require auth only at "Send request" (recovers the biggest browse→request drop-off).
+- [ ] Owner request card: delivery-confirmation step ("Out for delivery" → customer "Received") instead of accepted→active in one tap — the core on-time fulfillment gap; feeds reliability badges real data.
+- [ ] Payment confirmation: itemized total (rate × days + deposit line + grand total) + sticky bottom total/CTA bar.
+- [ ] Detail: hoist a compact verified + on-time/acceptance trust row above the fold (unify the 3 inconsistent badge styles).
+- [ ] My Rentals: read structured delivery_address (stop regex-parsing the note); show deposit status; friendly error.
+- [ ] Owner request card: echo deposit "collect EGP X on delivery" reminder; owner dashboard acceptance/on-time chips.
+- [ ] Home: persist filters/sort across sessions (shared_preferences); friendly states.
+
+### [SOON]
+- [ ] Detail: move share/copy/report into AppBar so Rent Now dominates. Add cancellation/terms acknowledgement at payment.
+- [ ] My Rentals: reduce 7 stacked buttons to one primary + overflow; show cancellation reason on cancelled cards.
+- [ ] Company profile: show review text + documents-verified indicator. Add Generator: clone listing + local draft.
+- [ ] Login: friendly auth errors + resend-code. Notifications: list skeleton + stronger unread signal.
+- [ ] Document screens (invoice/receipt/offer): theme the scaffold/greens (dark-mode), friendly errors, format ISO dates.
+- [ ] Home: min-kVA filter + fuel/verified on card; saved-search alerts (favorites + use_cases + notifications).
+
+---
+
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
 **Working branch:** `development` (main is integration/release)
