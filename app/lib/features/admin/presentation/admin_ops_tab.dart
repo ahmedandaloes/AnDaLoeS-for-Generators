@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/config/supabase.dart';
 import '../../rental_request/data/rental_repository.dart';
 
 final _overdueActiveProvider = FutureProvider.autoDispose(
@@ -53,6 +54,28 @@ class AdminOpsTab extends ConsumerWidget {
             color: Colors.deepPurple.shade400,
             async: wRef.watch(_overdueAcceptedProvider),
             cs: cs,
+          ),
+          const SizedBox(height: 24),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.timer_off_outlined),
+            label: Text(l.runExpiry),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              foregroundColor: cs.error,
+              side: BorderSide(color: cs.error.withValues(alpha: 0.5)),
+            ),
+            onPressed: () async {
+              final result = await supabase
+                  .rpc('expire_stale_pending_requests');
+              final count = (result as int?) ?? 0;
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(l.expiryResult(count)),
+                  behavior: SnackBarBehavior.floating,
+                ));
+                wRef.invalidate(_stalePendingProvider);
+              }
+            },
           ),
         ],
       ),

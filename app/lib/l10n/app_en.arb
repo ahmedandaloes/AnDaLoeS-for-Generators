@@ -580,5 +580,12 @@
   "platformSection": "Platform",
   "tabRentals": "Rentals",
   "adminSearchHint": "Search by name or phone",
-  "noRentalsFound": "No rentals found"
+  "noRentalsFound": "No rentals found",
+  "runExpiry": "Run Expiry Now",
+  "expiryResult": "Expired {count} stale pending requests",
+  "@expiryResult": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

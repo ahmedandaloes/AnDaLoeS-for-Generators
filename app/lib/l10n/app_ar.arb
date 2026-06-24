@@ -546,5 +546,7 @@
   "platformSection": "المنصة",
   "tabRentals": "الإيجارات",
   "adminSearchHint": "ابحث بالاسم أو رقم الهاتف",
-  "noRentalsFound": "لا توجد إيجارات"
+  "noRentalsFound": "لا توجد إيجارات",
+  "runExpiry": "تشغيل انتهاء الصلاحية الآن",
+  "expiryResult": "تم إلغاء {count} طلب منتهي الصلاحية"
 }
