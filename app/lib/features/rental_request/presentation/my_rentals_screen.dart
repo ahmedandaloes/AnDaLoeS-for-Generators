@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/status_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -524,7 +525,7 @@ class _RentalCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef wRef) {
     final gen = rental['generators'] as Map<String, dynamic>?;
     final status = rental['status']?.toString() ?? 'pending';
-    final statusColor = _statusColor(status, cs);
+    final statusColor = rentalStatusColor(status, cs);
     final photos = (gen?['photos'] as List?)?.cast<String>() ?? [];
     final firstPhoto = photos.isNotEmpty ? photos.first : null;
     final rentalId = rental['id']?.toString() ?? '';
@@ -1123,18 +1124,6 @@ class _RentalCard extends ConsumerWidget {
           SnackBar(content: Text('Error: $e')));
       }
     }
-  }
-
-  Color _statusColor(String status, ColorScheme cs) {
-    return switch (status) {
-      'pending' => Colors.orange,
-      'accepted' => Colors.green,
-      'active' => cs.primary,
-      'completed' => Colors.green.shade700,
-      'rejected' => cs.error,
-      'cancelled' => cs.onSurfaceVariant,
-      _ => cs.onSurfaceVariant,
-    };
   }
 
   String _statusLabel(String status) {

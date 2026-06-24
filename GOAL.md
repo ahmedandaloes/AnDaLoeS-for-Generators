@@ -220,7 +220,7 @@ Per-page review of the live code. Implement NOW items in the auto-loop on `devel
 
 ### Cross-cutting [NOW] — highest leverage (clear many items at once)
 - [x] Shared AppErrorState rolled out app-wide — all ~19 screens (detail, my_rentals, notifications, owner dashboard + tabs, earnings, edit-generator, chat, offer/receipt/invoice, all admin tabs, map, company profile) now show a friendly error + retry instead of raw $e.
-- [ ] Tokenize status/trust colors — recurring hardcoded `Colors.green/orange/red/amber/grey.shadeXXX` (detail badges, rental statuses, owner stats/gradients, favorites pill, document scaffolds) drift off the blue/green system + break dark mode. Centralize status→color + positive/verified→cs.secondary/tertiary.
+- [~] Status colors tokenized — shared core/theme/status_colors.dart (rentalStatusColor + qualityColor) replaces duplicated mappings in My Rentals + owner request card. More screens to adopt qualityColor/cs tokens next.
 - [ ] ≥48dp tap-target pass — home sort/favorites/login pills, detail small FABs, owner request-card buttons, dashboard Earnings button (32px), _MonthChip, my_rentals report/receipt/calendar controls.
 - [x] Chat: auto-scroll only on new messages (guarded by message-count change) — no longer fires every rebuild or fights user scroll-up.
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/status_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -444,14 +445,15 @@ class _RequestStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (color, label) = switch (status) {
-      'pending' => (Colors.orange, 'Pending'),
-      'accepted' => (Colors.green, 'Accepted'),
-      'active' => (cs.primary, 'Active'),
-      'completed' => (Colors.green.shade700, 'Completed'),
-      'rejected' => (cs.error, 'Rejected'),
-      'cancelled' => (cs.onSurfaceVariant, 'Cancelled'),
-      _ => (cs.onSurfaceVariant, status),
+    final color = rentalStatusColor(status, cs);
+    final label = switch (status) {
+      'pending' => 'Pending',
+      'accepted' => 'Accepted',
+      'active' => 'Active',
+      'completed' => 'Completed',
+      'rejected' => 'Rejected',
+      'cancelled' => 'Cancelled',
+      _ => status,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
