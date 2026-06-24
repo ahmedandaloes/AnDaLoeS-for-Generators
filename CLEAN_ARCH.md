@@ -37,8 +37,8 @@ Cross-cutting (stays in `lib/core/`):
 
 | Feature | Models | Domain Entity | Domain Repo | Data Repo | Providers | Screens/Widgets |
 |---------|--------|---------------|-------------|-----------|-----------|-----------------|
-| generators | ❌ | ❌ | ❌ | partial | partial | needs split |
-| rental_request | ❌ | ❌ | ❌ | partial | ❌ | needs split |
+| generators | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| rental_request | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | owner_dashboard | ❌ | ❌ | ❌ | ❌ | partial | needs split |
 | admin | ❌ | ❌ | ❌ | ❌ | ❌ | needs split |
 | auth | ❌ | ❌ | ❌ | ❌ | ❌ | needs split |
