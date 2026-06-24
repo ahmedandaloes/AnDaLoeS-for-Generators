@@ -855,56 +855,9 @@ class _RentalCard extends ConsumerWidget {
                   label: Text(l.viewOffer,
                       style: TextStyle(fontSize: 13)),
                 ),
-                if (status == 'active') ...[
-                  const SizedBox(height: 4),
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(40),
-                      backgroundColor: Colors.green.shade600,
-                    ),
-                    onPressed: () async {
-                      final ok = await showDialog<bool>(
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          title: Text(l.markReceivedQ),
-                          content: const Text(
-                              'Confirm the generator was delivered and is in use. '
-                              'The owner will be notified.'),
-                          actions: [
-                            TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: Text(l.notYet)),
-                            FilledButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: Text(l.yesReceived)),
-                          ],
-                        ),
-                      );
-                      if (ok != true || !context.mounted) return;
-                      try {
-                        await supabase
-                            .from('rental_requests')
-                            .update({'status': 'completed'})
-                            .eq('id', rental['id'].toString());
-                        ref.invalidate(myRentalsProvider);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text(l.markedReceived)),
-                          );
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: $e')));
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.check_circle_outline, size: 15),
-                    label: Text(l.markAsReceived,
-                        style: TextStyle(fontSize: 13)),
-                  ),
-                ],
+                // (Removed the customer "Mark as received" button: completion is
+                // owner-driven via the delivery handshake → "Mark completed".
+                // A customer status='completed' write is also blocked by RLS.)
                 Builder(builder: (_) {
                   // Structured delivery address (no more regex-parsing the note).
                   final address =
