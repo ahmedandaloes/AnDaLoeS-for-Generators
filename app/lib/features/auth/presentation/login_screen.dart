@@ -226,7 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   _codeSent = false;
                                   _codeController.clear();
                                 }),
-                        child: const Text('Change phone number'),
+                        child: Text(l.changePhoneNumber),
                       ),
                     ],
                     const SizedBox(height: 32),
@@ -237,7 +237,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   cs.outlineVariant.withValues(alpha: 0.5))),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text('or',
+                        child: Text(l.orLabel,
                             style: TextStyle(
                                 color: cs.onSurfaceVariant, fontSize: 13)),
                       ),
@@ -250,14 +250,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     FilledButton.tonalIcon(
                       onPressed: () => context.push(AppRoutes.emailAuth),
                       icon: const Icon(Icons.email_outlined, size: 18),
-                      label: const Text('Continue with email'),
+                      label: Text(l.continueWithEmail),
                     ),
                     // Dev-only shortcut (auto sign-up, no email verification).
                     if (kDebugMode) ...[
                       const SizedBox(height: 8),
                       OutlinedButton(
                         onPressed: () => context.push(AppRoutes.devLogin),
-                        child: const Text('Developer sign-in'),
+                        child: Text(l.developerSignIn),
                       ),
                     ],
                   ],

@@ -280,5 +280,17 @@
   "markCollected": "Mark collected",
   "owedAccrued": "Owed to you (accrued)",
   "collectedSettled": "Collected (settled)",
-  "notSet": "Not set"
+  "notSet": "Not set",
+  "changePhoneNumber": "Change phone number",
+  "orLabel": "or",
+  "continueWithEmail": "Continue with email",
+  "developerSignIn": "Developer sign-in",
+  "welcomeBack": "Welcome back",
+  "signUpEmailDesc": "Sign up with your email to rent or list generators.",
+  "signInToContinue": "Sign in to continue.",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "browseAsGuest": "Browse as guest",
+  "passwordMinLength": "Password must be at least 6 characters.",
+  "invalidEmail": "Enter a valid email address."
 }

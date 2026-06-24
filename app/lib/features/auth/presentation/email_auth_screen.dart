@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -53,14 +54,15 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
   }
 
   Future<void> _submit() async {
+    final l = AppLocalizations.of(context)!;
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || !email.contains('@')) {
-      _snack('Enter a valid email address.');
+      _snack(l.invalidEmail);
       return;
     }
     if (password.length < 6) {
-      _snack('Password must be at least 6 characters.');
+      _snack(l.passwordMinLength);
       return;
     }
     setState(() => _loading = true);
@@ -102,8 +104,9 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: Text(_signUpMode ? 'Create account' : 'Sign in')),
+      appBar: AppBar(title: Text(_signUpMode ? l.createAccount : l.loginTitle)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
@@ -111,14 +114,14 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
             Icon(Icons.bolt_rounded, size: 48, color: cs.primary),
             const SizedBox(height: 12),
             Text(
-              _signUpMode ? 'Create your account' : 'Welcome back',
+              _signUpMode ? l.createYourAccount : l.welcomeBack,
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 4),
             Text(
               _signUpMode
-                  ? 'Sign up with your email to rent or list generators.'
-                  : 'Sign in to continue.',
+                  ? l.signUpEmailDesc
+                  : l.signInToContinue,
               style: TextStyle(color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 24),
@@ -126,9 +129,9 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               autocorrect: false,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                prefixIcon: Icon(Icons.email_outlined),
+              decoration: InputDecoration(
+                labelText: l.emailLabel,
+                prefixIcon: const Icon(Icons.email_outlined),
               ),
             ),
             const SizedBox(height: 12),
@@ -136,7 +139,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
               controller: _passwordController,
               obscureText: _obscure,
               decoration: InputDecoration(
-                labelText: 'Password',
+                labelText: l.passwordLabel,
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -153,7 +156,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(_signUpMode ? 'Create account' : 'Sign in'),
+                  : Text(_signUpMode ? l.createAccount : l.loginTitle),
             ),
             const SizedBox(height: 8),
             TextButton(
@@ -171,7 +174,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
                       color: cs.outlineVariant.withValues(alpha: 0.5))),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text('or',
+                child: Text(l.orLabel,
                     style:
                         TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
               ),
@@ -183,7 +186,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
             OutlinedButton.icon(
               onPressed: _loading ? null : _guest,
               icon: const Icon(Icons.explore_outlined, size: 18),
-              label: const Text('Browse as guest'),
+              label: Text(l.browseAsGuest),
             ),
           ],
         ),

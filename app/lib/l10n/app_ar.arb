@@ -261,5 +261,17 @@
   "markCollected": "تحصيل",
   "owedAccrued": "مستحق لك (متراكم)",
   "collectedSettled": "محصّل (مسوّى)",
-  "notSet": "غير محدد"
+  "notSet": "غير محدد",
+  "changePhoneNumber": "تغيير رقم الموبايل",
+  "orLabel": "أو",
+  "continueWithEmail": "المتابعة بالبريد الإلكتروني",
+  "developerSignIn": "دخول المطوّر",
+  "welcomeBack": "مرحبًا بعودتك",
+  "signUpEmailDesc": "سجّل ببريدك الإلكتروني لاستئجار أو إضافة المولدات.",
+  "signInToContinue": "سجّل الدخول للمتابعة.",
+  "emailLabel": "البريد الإلكتروني",
+  "passwordLabel": "كلمة المرور",
+  "browseAsGuest": "التصفّح كضيف",
+  "passwordMinLength": "يجب أن تكون كلمة المرور 6 أحرف على الأقل.",
+  "invalidEmail": "أدخل بريدًا إلكترونيًا صحيحًا."
 }
