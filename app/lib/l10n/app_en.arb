@@ -56,5 +56,19 @@
   "emptyGeneratorsSubtitle": "Generators listed by owners will appear here.",
   "noMatchTitle": "No generators match",
   "noMatchSubtitle": "Try a different capacity, city, or price range.",
-  "clearAllFilters": "Clear all filters"
+  "clearAllFilters": "Clear all filters",
+  "callOwner": "Call owner",
+  "share": "Share",
+  "copyLink": "Copy link",
+  "removeFromSaved": "Remove from saved",
+  "reportProblem": "Report a problem",
+  "rentNow": "Rent Now",
+  "linkCopied": "Link copied to clipboard",
+  "priceEstimate": "Price estimate",
+  "acceptanceRatePct": "{rate}% acceptance rate",
+  "@acceptanceRatePct": { "placeholders": { "rate": { "type": "int" } } },
+  "onTimeStat": "{pct}% on-time · {count} rentals",
+  "@onTimeStat": { "placeholders": { "pct": { "type": "int" }, "count": { "type": "int" } } },
+  "reportProblemWith": "Report a problem with \"{name}\"",
+  "@reportProblemWith": { "placeholders": { "name": { "type": "String" } } }
 }

@@ -56,5 +56,16 @@
   "emptyGeneratorsSubtitle": "ستظهر هنا المولدات التي يضيفها المُلّاك.",
   "noMatchTitle": "لا توجد مولدات مطابقة",
   "noMatchSubtitle": "جرّب قدرة أو مدينة أو نطاق سعر مختلف.",
-  "clearAllFilters": "مسح كل الفلاتر"
+  "clearAllFilters": "مسح كل الفلاتر",
+  "callOwner": "اتصل بالمالك",
+  "share": "مشاركة",
+  "copyLink": "نسخ الرابط",
+  "removeFromSaved": "إزالة من المحفوظات",
+  "reportProblem": "الإبلاغ عن مشكلة",
+  "rentNow": "استأجر الآن",
+  "linkCopied": "تم نسخ الرابط",
+  "priceEstimate": "تقدير السعر",
+  "acceptanceRatePct": "نسبة القبول {rate}%",
+  "onTimeStat": "{pct}% في الموعد · {count} عملية إيجار",
+  "reportProblemWith": "الإبلاغ عن مشكلة في \"{name}\""
 }

@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/supabase.dart';
 import '../../../core/constants/generator_use_cases.dart';
 import '../../../core/theme/status_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../company/data/company_repository.dart';
 import '../providers/detail_providers.dart';
 import 'widgets/detail_sections.dart';
@@ -49,6 +50,7 @@ class _Body extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context)!;
     final company = gen['companies'] as Map<String, dynamic>?;
     final photos = (gen['photos'] as List?)?.cast<String>() ?? [];
     final generatorId = gen['id'].toString();
@@ -309,7 +311,7 @@ class _Body extends ConsumerWidget {
                                     size: 11, color: color),
                                 const SizedBox(width: 4),
                                 Text(
-                                  '$rate% acceptance rate',
+                                  l.acceptanceRatePct(rate.round()),
                                   style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -342,7 +344,7 @@ class _Body extends ConsumerWidget {
                             Icon(Icons.local_shipping_outlined,
                                 size: 11, color: color),
                             const SizedBox(width: 4),
-                            Text('$pct% on-time · ${rel.completed} rentals',
+                            Text(l.onTimeStat(pct, rel.completed),
                                 style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -420,7 +422,7 @@ class _Body extends ConsumerWidget {
                                 Uri.parse('tel:$phone'),
                                 mode: LaunchMode.externalApplication),
                             icon: const Icon(Icons.call_outlined, size: 16),
-                            label: const Text('Call owner'),
+                            label: Text(l.callOwner),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -592,6 +594,7 @@ class _GeneratorDetailWrapperState
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     final loggedIn = supabase.auth.currentSession != null;
     final isFavAsync = ref.watch(isFavProvider(widget.id));
     final isFav = isFavAsync.valueOrNull ?? false;
@@ -611,30 +614,30 @@ class _GeneratorDetailWrapperState
             children: [
               // Share button
               Padding(
-                padding: const EdgeInsets.only(right: 10),
+                padding: const EdgeInsetsDirectional.only(end: 10),
                 child: FloatingActionButton.small(
                   heroTag: 'share',
                   backgroundColor: cs.surfaceContainerHighest,
                   foregroundColor: cs.onSurfaceVariant,
-                  tooltip: 'Share',
+                  tooltip: l.share,
                   onPressed: () => _shareGenerator(ref, id),
                   child: const Icon(Icons.share_outlined, size: 18),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(right: 10),
+                padding: const EdgeInsetsDirectional.only(end: 10),
                 child: FloatingActionButton.small(
                   heroTag: 'copy_link',
                   backgroundColor: cs.surfaceContainerHighest,
                   foregroundColor: cs.onSurfaceVariant,
-                  tooltip: 'Copy link',
+                  tooltip: l.copyLink,
                   onPressed: () => _copyLink(context, id),
                   child: const Icon(Icons.link_rounded, size: 18),
                 ),
               ),
               // Favorite button
               Padding(
-                padding: const EdgeInsets.only(right: 10),
+                padding: const EdgeInsetsDirectional.only(end: 10),
                 child: FloatingActionButton.small(
                   heroTag: 'fav',
                   backgroundColor: isFav
@@ -642,7 +645,7 @@ class _GeneratorDetailWrapperState
                       : cs.surfaceContainerHighest,
                   foregroundColor:
                       isFav ? Colors.red.shade400 : cs.onSurfaceVariant,
-                  tooltip: isFav ? 'Remove from saved' : 'Save',
+                  tooltip: isFav ? l.removeFromSaved : l.save,
                   onPressed: () => _toggleFav(ref, id, isFav),
                   child: TweenAnimationBuilder<double>(
                     key: ValueKey(isFav),
@@ -665,12 +668,12 @@ class _GeneratorDetailWrapperState
               // Report button
               if (loggedIn)
                 Padding(
-                  padding: const EdgeInsets.only(right: 10),
+                  padding: const EdgeInsetsDirectional.only(end: 10),
                   child: FloatingActionButton.small(
                     heroTag: 'report',
                     backgroundColor: cs.errorContainer,
                     foregroundColor: cs.onErrorContainer,
-                    tooltip: 'Report a problem',
+                    tooltip: l.reportProblem,
                     onPressed: () => _showReportSheet(context, ref, id, cs),
                     child: const Icon(Icons.flag_outlined, size: 18),
                   ),
@@ -686,7 +689,7 @@ class _GeneratorDetailWrapperState
                   context.push(AppRoutes.generatorRequest(id));
                 },
                 icon: const Icon(Icons.calendar_month_outlined),
-                label: const Text('Rent Now'),
+                label: Text(l.rentNow),
                 backgroundColor: cs.primary,
                 foregroundColor: cs.onPrimary,
               ),
@@ -703,6 +706,7 @@ class _GeneratorDetailWrapperState
       BuildContext context, WidgetRef ref, String id, ColorScheme cs) {
     final gen = ref.read(generatorDetailProvider(id)).valueOrNull;
     final name = gen?['title']?.toString() ?? 'Generator';
+    final l = AppLocalizations.of(context)!;
 
     const issues = [
       ('misrepresentation', Icons.info_outline, 'Specs mismatch',
@@ -738,7 +742,7 @@ class _GeneratorDetailWrapperState
                 Icon(Icons.flag_outlined, size: 18, color: cs.error),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Report a problem with "$name"',
+                  child: Text(l.reportProblemWith(name),
                       style: const TextStyle(
                           fontSize: 14, fontWeight: FontWeight.w700)),
                 ),
@@ -773,10 +777,11 @@ class _GeneratorDetailWrapperState
     final link = 'https://andaloes.app/generator/$id';
     await Clipboard.setData(ClipboardData(text: link));
     if (context.mounted) {
+      final l = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Link copied to clipboard'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(l.linkCopied),
+          duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -979,6 +984,7 @@ class _RentalCalculatorState extends State<_RentalCalculator> {
   Widget build(BuildContext context) {
     final total = (widget.pricePerDay * _days).round();
     final cs = widget.cs;
+    final l = AppLocalizations.of(context)!;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -996,7 +1002,7 @@ class _RentalCalculatorState extends State<_RentalCalculator> {
             Icon(Icons.calculate_outlined,
                 size: 16, color: cs.primary),
             const SizedBox(width: 6),
-            Text('Price estimate',
+            Text(l.priceEstimate,
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
