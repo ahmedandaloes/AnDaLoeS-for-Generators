@@ -38,6 +38,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _focusNode = FocusNode();
   bool _sending = false;
   bool _otherTyping = false;
+  int _lastMessageCount = 0;
   Timer? _typingClearTimer;
   RealtimeChannel? _typingChannel;
   final _uid = supabase.auth.currentUser?.id ?? '';
@@ -192,7 +193,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   );
                 }
 
-                _scrollToBottom();
+                // Only auto-scroll when new messages arrive — not on every
+                // rebuild (which would fight the user scrolling up).
+                if (messages.length != _lastMessageCount) {
+                  _lastMessageCount = messages.length;
+                  _scrollToBottom();
+                }
 
                 return ListView.builder(
                   controller: _scrollController,
