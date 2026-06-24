@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -205,6 +206,7 @@ class _FilterSheetState extends State<FilterSheet> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.fromLTRB(
           20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
@@ -214,14 +216,14 @@ class _FilterSheetState extends State<FilterSheet> {
         children: [
           Row(
             children: [
-              const Text('Filter',
+              Text(l.filterTitle,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
               const Spacer(),
-              TextButton(onPressed: _clear, child: const Text('Clear all')),
+              TextButton(onPressed: _clear, child: Text(l.clearAll)),
             ],
           ),
           const SizedBox(height: 16),
-          const Text('Governorate',
+          Text(l.governorate,
               style: TextStyle(
                   fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
           const SizedBox(height: 8),
@@ -236,9 +238,9 @@ class _FilterSheetState extends State<FilterSheet> {
               ),
               prefixIcon: const Icon(Icons.location_on_outlined),
             ),
-            hint: const Text('Any governorate'),
+            hint: Text(l.anyGovernorate),
             items: [
-              const DropdownMenuItem(value: null, child: Text('Any')),
+              DropdownMenuItem(value: null, child: Text(l.any)),
               ...egyptGovernorates
                   .map((g) => DropdownMenuItem(value: g, child: Text(g))),
             ],
@@ -246,12 +248,12 @@ class _FilterSheetState extends State<FilterSheet> {
           ),
           const SizedBox(height: 20),
           Row(children: [
-            const Text('Max capacity (KVA)',
+            Text(l.maxCapacityKva,
                 style: TextStyle(
                     fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
             const Spacer(),
             Text(
-              _maxKva == null ? 'Any' : '≤ ${_maxKva!.toInt()} KVA',
+              _maxKva == null ? l.any : l.maxKvaValue(_maxKva!.toInt()),
               style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
             ),
           ]),
@@ -260,7 +262,7 @@ class _FilterSheetState extends State<FilterSheet> {
             min: 10,
             max: 1000,
             divisions: 99,
-            label: _maxKva == null ? 'Any' : '${_maxKva!.toInt()} KVA',
+            label: _maxKva == null ? l.any : '${_maxKva!.toInt()} KVA',
             onChanged: (v) => setState(() => _maxKva = v),
           ),
           if (_maxKva != null && _maxKva == 1000)
@@ -268,17 +270,17 @@ class _FilterSheetState extends State<FilterSheet> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () => setState(() => _maxKva = null),
-                child: const Text('Remove limit'),
+                child: Text(l.removeLimit),
               ),
             ),
           const SizedBox(height: 16),
           Row(children: [
-            const Text('Max daily price (EGP)',
+            Text(l.maxDailyPriceEgp,
                 style: TextStyle(
                     fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
             const Spacer(),
             Text(
-              _maxPrice == null ? 'Any' : '≤ ${_maxPrice!.toInt()} EGP',
+              _maxPrice == null ? l.any : l.maxPriceValue(_maxPrice!.toInt()),
               style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
             ),
           ]),
@@ -287,7 +289,7 @@ class _FilterSheetState extends State<FilterSheet> {
             min: 100,
             max: 5000,
             divisions: 49,
-            label: _maxPrice == null ? 'Any' : '${_maxPrice!.toInt()} EGP',
+            label: _maxPrice == null ? l.any : '${_maxPrice!.toInt()} EGP',
             onChanged: (v) => setState(() => _maxPrice = v < 5000 ? v : null),
           ),
           if (_maxPrice != null)
@@ -295,11 +297,11 @@ class _FilterSheetState extends State<FilterSheet> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () => setState(() => _maxPrice = null),
-                child: const Text('Remove limit'),
+                child: Text(l.removeLimit),
               ),
             ),
           const SizedBox(height: 20),
-          const Text('FUEL TYPE',
+          Text(l.fuelTypeUpper,
               style: TextStyle(
                   fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
           const SizedBox(height: 10),
@@ -323,7 +325,7 @@ class _FilterSheetState extends State<FilterSheet> {
             }).toList(),
           ),
           const SizedBox(height: 20),
-          const Text('USE CASE',
+          Text(l.useCaseUpper,
               style: TextStyle(
                   fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
           const SizedBox(height: 10),
@@ -349,7 +351,7 @@ class _FilterSheetState extends State<FilterSheet> {
             }).toList(),
           ),
           const SizedBox(height: 16),
-          FilledButton(onPressed: _apply, child: const Text('Apply filters')),
+          FilledButton(onPressed: _apply, child: Text(l.applyFilters)),
         ],
       ),
     );
