@@ -52,6 +52,7 @@ flutter build apk --debug --no-pub # Full compile check
 4. **Apply migrations via MCP** — use `mcp__claude_ai_Supabase__apply_migration` for DB changes
 
 ### Code rules:
+- **Feature-based architecture (ALWAYS)**: every screen/widget/provider/repository lives under its feature in `lib/features/<feature>/` (`presentation/`, `providers/`, `data/`, `widgets/`). Truly cross-cutting code (theme, config, routing, shared widgets/utils, constants) goes in `lib/core/`. Never add screens or feature logic outside a `features/` subdirectory, never organize by type at the top level, and keep features self-contained (low coupling, high cohesion). New work follows this structure by default.
 - **All state immutable**: use `Set<String>.from(current)` not spread cascade
 - **`withValues(alpha:)`** not deprecated `.withOpacity()`
 - **`publishableKey:`** not deprecated `anonKey:` in Supabase.initialize
