@@ -389,8 +389,8 @@ class AdminRevenueTab extends ConsumerWidget {
               const SizedBox(height: 4),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Only when customer requests an invoice',
-                    style: TextStyle(fontSize: 13)),
+                title: Text(l.onlyWhenInvoiceRequested,
+                    style: const TextStyle(fontSize: 13)),
                 value: onInvoiceOnly,
                 onChanged: (v) => setD(() => onInvoiceOnly = v),
               ),

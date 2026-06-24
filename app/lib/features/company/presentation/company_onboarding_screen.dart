@@ -315,7 +315,7 @@ class _StepOne extends StatelessWidget {
                       Icon(Icons.business_outlined, color: cs.onPrimary, size: 22),
                 ),
                 const SizedBox(height: 12),
-                const Text('Step 1 of 2 — Company info',
+                Text(l.step1Of2,
                     style:
                         TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
@@ -412,7 +412,7 @@ class _StepOne extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      Text('Preview',
+                      Text(l.previewLabel,
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -425,7 +425,7 @@ class _StepOne extends StatelessWidget {
                           color: cs.primaryContainer,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text('LIVE',
+                        child: Text(l.liveLabel,
                             style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w800,
@@ -563,7 +563,7 @@ class _StepTwo extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Step 2 of 2 — Verification documents',
+                      Text(l.step2Of2,
                           style: TextStyle(
                               fontSize: 15, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 4),
