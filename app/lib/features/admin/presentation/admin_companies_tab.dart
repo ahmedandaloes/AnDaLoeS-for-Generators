@@ -302,9 +302,9 @@ class _CompanyCardState extends State<_CompanyCard> {
               TextField(
                 controller: _reasonController,
                 maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Rejection reason',
-                  hintText: 'Tell the owner why they were rejected…',
+                decoration: InputDecoration(
+                  labelText: l.rejectionReason,
+                  hintText: l.rejectionReasonHint,
                 ),
               ),
             ],
@@ -349,7 +349,7 @@ class _CompanyCardState extends State<_CompanyCard> {
                   Expanded(
                     child: TextButton(
                       onPressed: () => setState(() => _showReject = false),
-                      child: const Text('Cancel'),
+                      child: Text(l.cancel),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -365,7 +365,7 @@ class _CompanyCardState extends State<_CompanyCard> {
                               width: 18,
                               child: CircularProgressIndicator(
                                   strokeWidth: 2, color: Colors.white))
-                          : const Text('Confirm reject'),
+                          : Text(l.confirmReject),
                     ),
                   ),
                 ],

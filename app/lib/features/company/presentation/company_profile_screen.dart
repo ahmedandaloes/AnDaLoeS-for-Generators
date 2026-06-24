@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -43,6 +44,7 @@ class CompanyProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final companyAsync = ref.watch(_companyProfileProvider(companyId));
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: companyAsync.when(
@@ -50,7 +52,7 @@ class CompanyProfileScreen extends ConsumerWidget {
         error: (e, _) => const AppErrorState(),
         data: (company) {
           if (company == null) {
-            return const Center(child: Text('Company not found'));
+            return Center(child: Text(l.companyNotFound));
           }
           return _CompanyBody(
               company: company, companyId: companyId, cs: cs, ref: ref);
@@ -74,6 +76,7 @@ class _CompanyBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final name = company['name']?.toString() ?? 'Company';
     final city = company['city']?.toString() ?? '';
     final governorate = company['governorate']?.toString() ?? '';
@@ -376,7 +379,7 @@ class _CompanyBody extends StatelessWidget {
                         Icon(Icons.bolt_outlined,
                             size: 48, color: cs.onSurfaceVariant),
                         const SizedBox(height: 16),
-                        Text('No available generators',
+                        Text(l.noAvailableGenerators,
                             style: TextStyle(color: cs.onSurfaceVariant)),
                       ],
                     ),
@@ -531,6 +534,7 @@ class _ContactButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     if (phone == null || phone!.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -538,7 +542,7 @@ class _ContactButtons extends StatelessWidget {
         Expanded(
           child: OutlinedButton.icon(
             icon: const Icon(Icons.phone_outlined, size: 16),
-            label: const Text('Call'),
+            label: Text(l.callLabel),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.green.shade700,
               side: BorderSide(color: Colors.green.withValues(alpha: 0.4)),
