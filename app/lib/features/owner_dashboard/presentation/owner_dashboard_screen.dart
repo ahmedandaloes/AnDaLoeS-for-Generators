@@ -1181,9 +1181,9 @@ class _HistoryTabState extends State<_HistoryTab> {
                 _ => cs.error,
               };
               final statusLabel = switch (status) {
-                'completed' => 'Completed',
-                'cancelled' => 'Cancelled',
-                _ => 'Rejected',
+                'completed' => l.statusCompleted,
+                'cancelled' => l.statusCancelled,
+                _ => l.statusRejected,
               };
               return Card(
                 child: Padding(

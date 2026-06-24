@@ -486,14 +486,15 @@ class _RequestStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final color = rentalStatusColor(status, cs);
     final label = switch (status) {
-      'pending' => 'Pending',
-      'accepted' => 'Accepted',
-      'active' => 'Active',
-      'completed' => 'Completed',
-      'rejected' => 'Rejected',
-      'cancelled' => 'Cancelled',
+      'pending' => l.statusPending,
+      'accepted' => l.statusAccepted,
+      'active' => l.statusActive,
+      'completed' => l.statusCompleted,
+      'rejected' => l.statusRejected,
+      'cancelled' => l.statusCancelled,
       _ => status,
     };
     return Container(

@@ -310,7 +310,7 @@ class _InvoiceDocument extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  DocSectionLabel('Services Rendered'),
+                  DocSectionLabel(l.servicesRendered),
                   const SizedBox(height: 8),
                   // Table header
                   Container(
@@ -368,7 +368,7 @@ class _InvoiceDocument extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              gen?['title']?.toString() ?? 'Generator rental',
+                              gen?['title']?.toString() ?? l.generatorRentalItem,
                               style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600),
@@ -494,7 +494,7 @@ class _InvoiceDocument extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  DocSectionLabel('Rental Details'),
+                  DocSectionLabel(l.rentalDetails),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(14),
@@ -507,7 +507,7 @@ class _InvoiceDocument extends StatelessWidget {
                       children: [
                         DocRow(l.rentalPeriod,
                             '${_fmt(data['start_date'])} → ${_fmt(data['end_date'])}'),
-                        DocRow(l.durationLabel, l.daysCount('$days')),
+                        DocRow(l.durationLabel, l.daysCount(days)),
                         DocRow(l.filterStatus, l.completedCheck),
                       ],
                     ),

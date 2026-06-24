@@ -303,7 +303,7 @@ class _OfferDocument extends StatelessWidget {
                       children: [
                         DocRow(l.startDate, _fmt(data['start_date'])),
                         DocRow(l.endDate, _fmt(data['end_date'])),
-                        DocRow(l.totalDays, l.daysCount('$days')),
+                        DocRow(l.totalDays, l.daysCount(days)),
                       ],
                     ),
                   ),
@@ -343,7 +343,7 @@ class _OfferDocument extends StatelessWidget {
                                   fontWeight: FontWeight.w900,
                                   color: cs.primary,
                                   letterSpacing: -1)),
-                          Text(l.forNDays('$days'),
+                          Text(l.forNDays(days),
                               style: TextStyle(
                                   fontSize: 11,
                                   color: cs.onSurfaceVariant)),
@@ -380,7 +380,7 @@ class _OfferDocument extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    DocSectionLabel('Note from Owner'),
+                    DocSectionLabel(l.noteFromOwner),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(14),

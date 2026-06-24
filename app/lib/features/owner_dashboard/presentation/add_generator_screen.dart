@@ -231,7 +231,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                   () => _capacityController.text = v?.toString() ?? ''),
             ),
             const SizedBox(height: 12),
-            _Label('Fuel type *'),
+            _Label(l.fuelTypeRequired),
             DropdownButtonFormField<String>(
               value: _fuelType,
               decoration: InputDecoration(
@@ -254,7 +254,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
               onChanged: (v) => setState(() => _fuelType = v ?? 'diesel'),
             ),
             const SizedBox(height: 12),
-            _Label('Best for (use cases)'),
+            _Label(l.bestForUseCases),
             const SizedBox(height: 4),
             Wrap(
               spacing: 8,
@@ -284,7 +284,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
             _Section(l.location),
             _Field(l.cityLabel, l.cityHint, _cityController),
             const SizedBox(height: 12),
-            _Label('Governorate *'),
+            _Label(l.governorateRequired),
             DropdownButtonFormField<String>(
               value: _governorate,
               decoration: InputDecoration(

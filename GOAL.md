@@ -338,3 +338,8 @@ The app now launches in **Arabic with full RTL** by default (Arabic-first).
 - Every screen is localized with real, natural Arabic; DB values stay English.
 - Arabic plurals use proper categories (zero/one/two/few/many/other).
 - **To switch to English:** Profile → Language → English. The choice persists across launches and overrides the Arabic default.
+
+## ✅ Post-rollout QA (both agents) — addressed
+Functional/regression QA: 0 CRITICAL/HIGH (wiring, ICU args, l-scope/null-safety, DB-value separation all verified correct).
+Arabic/RTL QA: Arabic quality high; fixed — directional arrow glyph removed (continueToDocuments), chat bubbles/typing indicator now AlignmentDirectional + BorderRadiusDirectional, ≤→حتى, forNDays/daysCount converted to proper Arabic plurals, طلبًا. Localized leftover English: invoice section labels (Services Rendered/Rental Details/Generator rental), offer Note-from-Owner, my-rentals Offer, profile Account, add/edit-generator labels (Fuel type/Best for/Governorate), owner status chips (request_card + dashboard), and the customer search hint. ~16 new ARB keys.
+Remaining LOW (optional): owner sort chips, raw 'Error: $e' snackbars, dev/admin minor labels, EGP-vs-ج.م currency token consistency.

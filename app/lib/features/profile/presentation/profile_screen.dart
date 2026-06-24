@@ -354,7 +354,7 @@ class ProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 20),
                   // Account info card
                   if (!isAnon) ...[
-                    _SectionLabel('Account'),
+                    _SectionLabel(l.accountSection),
                     _Card(
                       children: [
                         if (email != null)

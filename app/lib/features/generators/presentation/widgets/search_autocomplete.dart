@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../../providers/generators_providers.dart' show autocompleteProvider;
 import 'generator_filter.dart' show filterProvider, GeneratorFilter;
 
@@ -51,6 +52,7 @@ class _SearchAutocompleteState extends ConsumerState<SearchAutocomplete> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     final query = widget.filter.query;
     final suggestions =
         ref.watch(autocompleteProvider(query)).valueOrNull ?? [];
@@ -70,7 +72,7 @@ class _SearchAutocompleteState extends ConsumerState<SearchAutocomplete> {
             setState(() => _showSuggestions = false);
           },
           decoration: InputDecoration(
-            hintText: 'Search generators, city…',
+            hintText: l.searchHint,
             prefixIcon: const Icon(Icons.search),
             suffixIcon: query.isNotEmpty
                 ? IconButton(

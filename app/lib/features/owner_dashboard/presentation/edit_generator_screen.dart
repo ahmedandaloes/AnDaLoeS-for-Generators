@@ -331,7 +331,7 @@ class _EditGeneratorScreenState
                   );
                 }),
                 const SizedBox(height: 12),
-                _EditLabel('Fuel type *'),
+                _EditLabel(l.fuelTypeRequired),
                 DropdownButtonFormField<String>(
                   value: _fuelType,
                   decoration: InputDecoration(
@@ -356,7 +356,7 @@ class _EditGeneratorScreenState
                       setState(() => _fuelType = v ?? 'diesel'),
                 ),
                 const SizedBox(height: 12),
-                _EditLabel('Best for (use cases)'),
+                _EditLabel(l.bestForUseCases),
                 const SizedBox(height: 4),
                 Wrap(
                   spacing: 8,

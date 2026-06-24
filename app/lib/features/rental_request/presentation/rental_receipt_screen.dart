@@ -192,7 +192,7 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
                       r['start_date']?.toString() ?? '-'),
                   _Row(l.endDate,
                       r['end_date']?.toString() ?? '-'),
-                  _Row(l.durationLabel, l.daysCount('$days')),
+                  _Row(l.durationLabel, l.daysCount(days)),
                   _Row(l.rateBasis,
                       r['rate_basis']?.toString() ?? '-'),
                   _Row(l.paymentMethod, l.cashOnDelivery),
