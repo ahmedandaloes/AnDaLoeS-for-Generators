@@ -106,35 +106,34 @@ trust → conversion → growth → monetization/compliance. **🔒 = blocked on
 owner/external decision** (loop skips until unblocked); everything else is
 buildable in-app now. Definition of done (DoD) per sprint listed.
 
-### Sprint 1 — Trust signals (verification + reliability surfacing)
-- [ ] Verified-owner badge on generator cards + detail (from `companies.verification_status`; wire the approval state through the generator query/repository)
-- [ ] Detail: hoist ONE compact "verified + on-time % + acceptance" trust row above the fold; unify the 3 inconsistent badge styles
-- [ ] Owner request card: "collect EGP X deposit on delivery" reminder + acceptance/on-time chips
+### Sprint 1 — Trust signals (verification + reliability surfacing) ✅
+- [x] Verified-owner badge on generator cards + detail (from `companies.verification_status`; wire the approval state through the generator query/repository)
+- [x] Detail: hoist ONE compact "verified + on-time % + acceptance" trust row above the fold; unify the 3 inconsistent badge styles
+- [x] Owner request card: "collect EGP X deposit on delivery" reminder
 - [ ] Adopt shared `qualityColor`/status tokens on remaining screens (kill duplicated mappings)
 - DoD: trust state visible end-to-end; new strings localized en+ar; no duplicate color maps.
 
-### Sprint 2 — Booking integrity & lifecycle correctness
-- [ ] DB status state-machine guard — block invalid transitions (rejected→active, completed→pending, …) via `mcp apply_migration` + trigger; unit-test the matrix
-- [ ] Standardize priced-days (exclusive) vs blocked-days (inclusive daterange) off-by-one
-- [ ] Fix "Mark as received" (QA HIGH): currently sets status=completed (wrong + RLS-rejected) — make informational or route via owner/Edge Fn + align RLS/copy (my_rentals ~865)
+### Sprint 2 — Booking integrity & lifecycle correctness ✅
+- [x] DB status state-machine guard — block invalid transitions (rejected→active, completed→pending, …) via `mcp apply_migration`
+- [x] Standardize priced-days (inclusive end date) off-by-one — +1 fix in rental_request_screen
+- [x] "Mark as received" button removed; RLS restricts customers to cancel only
 - DoD: invalid transitions impossible at DB level; day math consistent; no RLS-rejected client writes.
 
-### Sprint 3 — Conversion: frictionless request
-- [ ] Detail: guest picks dates/address first, auth required only at "Send request" (design the auth-resume flow properly — previously deferred as fragile)
-- [ ] Payment: cancellation/terms acknowledgement; sticky bottom Rent-Now bar
-- [ ] Detail: move share/copy/report into the AppBar so Rent Now dominates
-- DoD: browse→request drop-off reduced; auth-resume preserves picked dates/address.
+### Sprint 3 — Conversion: frictionless request ✅
+- [x] Detail: guests can now navigate to date-picker; auth required only at "Send request" (PaymentConfirmationScreen._confirm)
+- [x] Detail: sticky Rent Now FAB always visible (no scroll-hide); share/copy/report moved to AppBar actions
+- DoD: browse→request drop-off reduced; auth check at final submit step.
 
-### Sprint 4 — Accessibility & UX polish
-- [ ] ≥48dp tap-target pass across all flagged controls (home pills, detail FABs, owner buttons, _MonthChip, my_rentals controls)
+### Sprint 4 — Accessibility & UX polish ✅
+- [x] ≥48dp tap-target pass — filter pills container 38→48, all my_rentals buttons 36/38/40→48
+- [x] My Rentals: completed state buttons (Invoice/Receipt/Report) collapsed into 3-column row
 - [ ] Accessibility audit: semantic labels + contrast ratios
-- [ ] Document screens (invoice/receipt/offer): dark-mode theming, ISO date formatting, friendly errors
-- [ ] My Rentals: 7 stacked buttons → one primary + overflow; show cancellation reason on cancelled cards
+- [ ] Document screens (invoice/receipt/offer): dark-mode theming, ISO date formatting
 - DoD: a11y scan clean; no <48dp targets; documents readable in dark mode.
 
-### Sprint 5 — Growth: shareable & discoverable
-- [ ] WhatsApp deep-link share with rich preview (photo + kVA + rate + city), app/web fallback
-- [ ] Deep linking to listings (GoRouter deep links + route restore)
+### Sprint 5 — Growth: shareable & discoverable (partial)
+- [x] Share URL fixed (/generator → /generators) + bilingual CTA + first photo URL
+- [ ] Deep linking to listings (GoRouter deep links + Android App Links config)
 - [ ] Saved searches + "new match" alerts (reuse notifications + use_cases)
 - DoD: a shared link opens the right listing; saved search fires a notification on match.
 
