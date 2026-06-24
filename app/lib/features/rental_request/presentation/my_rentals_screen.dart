@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../../core/utils/ics.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../chat/providers/chat_providers.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/widgets/app_error_state.dart';
@@ -39,13 +40,14 @@ final _myRatedRentalIdsProvider =
   };
 });
 
-const _statusLabels = {
-  'accepted': 'Rental accepted',
-  'rejected': 'Rental rejected',
-  'active': 'Rental is now active',
-  'completed': 'Rental completed',
-  'cancelled': 'Rental cancelled',
-};
+String? _statusMessage(String status, AppLocalizations l) => switch (status) {
+      'accepted' => l.rentalAccepted,
+      'rejected' => l.rentalRejected,
+      'active' => l.rentalActiveMsg,
+      'completed' => l.rentalCompletedMsg,
+      'cancelled' => l.rentalCancelledMsg,
+      _ => null,
+    };
 
 class MyRentalsScreen extends ConsumerStatefulWidget {
   const MyRentalsScreen({super.key});
@@ -77,8 +79,9 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
             ref.invalidate(myRentalsProvider);
             final newStatus =
                 (payload.newRecord['status'] as String?) ?? '';
-            final label = _statusLabels[newStatus];
-            if (label != null && mounted) {
+            if (!mounted) return;
+            final label = _statusMessage(newStatus, AppLocalizations.of(context)!);
+            if (label != null) {
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text(label),
                 behavior: SnackBarBehavior.floating,
@@ -121,6 +124,8 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
   Widget build(BuildContext context) {
     final rentals = ref.watch(myRentalsProvider);
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
+    final tabLabels = [l.tabAll, l.tabActive, l.tabPending, l.tabDone];
     final all = rentals.valueOrNull ?? [];
 
     // Build per-tab counts for badges
@@ -143,7 +148,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
       length: _tabs.length,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('My Rentals'),
+          title: Text(l.myRentals),
           bottom: TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,
@@ -153,7 +158,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(_tabs[i]),
+                    Text(tabLabels[i]),
                     if (counts[i] > 0) ...[
                       const SizedBox(width: 6),
                       Container(
@@ -207,7 +212,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                                       .withValues(alpha: 0.4)),
                               const SizedBox(height: 12),
                               Text(
-                                'No ${_tabs[tabIndex].toLowerCase()} rentals',
+                                '${tabLabels[tabIndex]} — ${l.noRentalsYet}',
                                 style: TextStyle(color: cs.onSurfaceVariant),
                               ),
                             ],
@@ -262,7 +267,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                           crossAxisAlignment:
                               CrossAxisAlignment.start,
                           children: [
-                            const Text('Total spent',
+                            Text(l.totalSpent,
                                 style: TextStyle(
                                     color: Colors.white70,
                                     fontSize: 11)),
@@ -279,7 +284,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                           crossAxisAlignment:
                               CrossAxisAlignment.end,
                           children: [
-                            const Text('Rentals completed',
+                            Text(l.rentalsCompleted,
                                 style: TextStyle(
                                     color: Colors.white70,
                                     fontSize: 11)),
@@ -423,21 +428,21 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                             final confirm = await showDialog<bool>(
                               context: ctx,
                               builder: (_) => AlertDialog(
-                                title: const Text('Cancel request?'),
+                                title: Text(l.cancelRequestQ),
                                 content: const Text(
                                     'This will cancel your rental request.'),
                                 actions: [
                                   TextButton(
                                     onPressed: () =>
                                         Navigator.pop(ctx, false),
-                                    child: const Text('No'),
+                                    child: Text(l.no),
                                   ),
                                   FilledButton(
                                     onPressed: () =>
                                         Navigator.pop(ctx, true),
                                     style: FilledButton.styleFrom(
                                         backgroundColor: cs.error),
-                                    child: const Text('Yes, cancel'),
+                                    child: Text(l.yesCancel),
                                   ),
                                 ],
                               ),
@@ -456,7 +461,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                         background: canViewDoc
                             ? Container(
                                 alignment: Alignment.centerLeft,
-                                padding: const EdgeInsets.only(left: 20),
+                                padding: const EdgeInsetsDirectional.only(start: 20),
                                 decoration: BoxDecoration(
                                   color: cs.primary.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(16),
@@ -471,7 +476,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                                   const SizedBox(width: 8),
                                   Text(
                                     status == 'completed'
-                                        ? 'Invoice'
+                                        ? l.invoice
                                         : 'Offer',
                                     style: TextStyle(
                                         color: cs.primary,
@@ -481,7 +486,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                               )
                             : Container(
                                 alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 20),
+                                padding: const EdgeInsetsDirectional.only(end: 20),
                                 decoration: BoxDecoration(
                                   color: cs.error.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(16),
@@ -493,7 +498,7 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                                       Icon(Icons.cancel_outlined,
                                           color: cs.error),
                                       const SizedBox(width: 8),
-                                      Text('Cancel',
+                                      Text(l.cancel,
                                           style: TextStyle(
                                               color: cs.error,
                                               fontWeight: FontWeight.w700)),
@@ -523,6 +528,7 @@ class _RentalCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef wRef) {
+    final l = AppLocalizations.of(context)!;
     final gen = rental['generators'] as Map<String, dynamic>?;
     final status = rental['status']?.toString() ?? 'pending';
     final statusColor = rentalStatusColor(status, cs);
@@ -562,7 +568,7 @@ class _RentalCard extends ConsumerWidget {
                   const Icon(Icons.warning_amber_rounded,
                       size: 14, color: Colors.white),
                   const SizedBox(width: 6),
-                  const Text('Overdue — please contact owner',
+                  Text(l.overdueContactOwner,
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -575,11 +581,11 @@ class _RentalCard extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 6),
                 color: cs.primary,
-                child: const Row(children: [
-                  Icon(Icons.local_shipping_outlined,
+                child: Row(children: [
+                  const Icon(Icons.local_shipping_outlined,
                       size: 14, color: Colors.white),
-                  SizedBox(width: 6),
-                  Text('Out for delivery — on its way to you',
+                  const SizedBox(width: 6),
+                  Text(l.outForDeliveryBanner,
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -635,7 +641,7 @@ class _RentalCard extends ConsumerWidget {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
-                                _statusLabel(status),
+                                _statusLabel(status, l),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
@@ -689,7 +695,7 @@ class _RentalCard extends ConsumerWidget {
                       visualDensity: VisualDensity.compact,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                      tooltip: 'Add to calendar',
+                      tooltip: l.addToCalendar,
                       icon: Icon(Icons.event_available_outlined,
                           size: 17, color: cs.primary),
                       onPressed: () {
@@ -754,7 +760,7 @@ class _RentalCard extends ConsumerWidget {
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: rentalId));
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: const Text('Rental ID copied'),
+                        content: Text(l.rentalIdCopied),
                         behavior: SnackBarBehavior.floating,
                         duration: const Duration(seconds: 2),
                         shape: RoundedRectangleBorder(
@@ -784,7 +790,7 @@ class _RentalCard extends ConsumerWidget {
                     side: BorderSide(color: cs.error.withValues(alpha: 0.4)),
                   ),
                   onPressed: () => _cancel(context, rental['id']),
-                  child: const Text('Cancel request'),
+                  child: Text(l.cancelRequest),
                 ),
               ],
               if (status == 'accepted') ...[
@@ -846,7 +852,7 @@ class _RentalCard extends ConsumerWidget {
                   onPressed: () =>
                       context.push(AppRoutes.offer(rental['id'].toString())),
                   icon: const Icon(Icons.description_outlined, size: 15),
-                  label: const Text('View Offer',
+                  label: Text(l.viewOffer,
                       style: TextStyle(fontSize: 13)),
                 ),
                 if (status == 'active') ...[
@@ -860,17 +866,17 @@ class _RentalCard extends ConsumerWidget {
                       final ok = await showDialog<bool>(
                         context: context,
                         builder: (_) => AlertDialog(
-                          title: const Text('Mark as received?'),
+                          title: Text(l.markReceivedQ),
                           content: const Text(
                               'Confirm the generator was delivered and is in use. '
                               'The owner will be notified.'),
                           actions: [
                             TextButton(
                                 onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Not yet')),
+                                child: Text(l.notYet)),
                             FilledButton(
                                 onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Yes, received')),
+                                child: Text(l.yesReceived)),
                           ],
                         ),
                       );
@@ -883,8 +889,8 @@ class _RentalCard extends ConsumerWidget {
                         ref.invalidate(myRentalsProvider);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Marked as received!')),
+                            SnackBar(
+                                content: Text(l.markedReceived)),
                           );
                         }
                       } catch (e) {
@@ -895,7 +901,7 @@ class _RentalCard extends ConsumerWidget {
                       }
                     },
                     icon: const Icon(Icons.check_circle_outline, size: 15),
-                    label: const Text('Mark as Received',
+                    label: Text(l.markAsReceived,
                         style: TextStyle(fontSize: 13)),
                   ),
                 ],
@@ -919,7 +925,7 @@ class _RentalCard extends ConsumerWidget {
                             mode: LaunchMode.externalApplication);
                       },
                       icon: const Icon(Icons.map_outlined, size: 15),
-                      label: const Text('Track Delivery',
+                      label: Text(l.trackDelivery,
                           style: TextStyle(fontSize: 13)),
                     ),
                   );
@@ -1029,7 +1035,7 @@ class _RentalCard extends ConsumerWidget {
                         Icon(Icons.star_rounded,
                             size: 16, color: Colors.amber.shade600),
                         const SizedBox(width: 6),
-                        Text('You rated this rental',
+                        Text(l.youRatedThis,
                             style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.amber.shade800,
@@ -1048,7 +1054,7 @@ class _RentalCard extends ConsumerWidget {
                       );
                     },
                     icon: const Icon(Icons.star_outline, size: 16),
-                    label: const Text('Rate this rental'),
+                    label: Text(l.rateThisRental),
                   ),
               ],
               if (status == 'completed') ...[
@@ -1064,7 +1070,7 @@ class _RentalCard extends ConsumerWidget {
                       context.push(AppRoutes.invoice(rental['id'].toString())),
                   icon: const Icon(Icons.receipt_long_outlined,
                       size: 15),
-                  label: const Text('View Invoice',
+                  label: Text(l.viewInvoice,
                       style: TextStyle(fontSize: 13)),
                 ),
                 const SizedBox(height: 4),
@@ -1076,7 +1082,7 @@ class _RentalCard extends ConsumerWidget {
                   onPressed: () =>
                       context.push(AppRoutes.receipt(rental['id'].toString())),
                   icon: const Icon(Icons.receipt_outlined, size: 15),
-                  label: const Text('View receipt',
+                  label: Text(l.viewReceipt,
                       style: TextStyle(fontSize: 13)),
                 ),
               ],
@@ -1091,7 +1097,7 @@ class _RentalCard extends ConsumerWidget {
                     '/report?type=company&id=${rental['company_id']}&rental=${rental['id']}&name=Owner',
                   ),
                   icon: const Icon(Icons.flag_outlined, size: 15),
-                  label: const Text('Report an issue',
+                  label: Text(l.reportAnIssue,
                       style: TextStyle(fontSize: 13)),
                 ),
               ],
@@ -1105,6 +1111,7 @@ class _RentalCard extends ConsumerWidget {
   }
 
   Future<void> _cancel(BuildContext context, String id) async {
+    final l = AppLocalizations.of(context)!;
     const reasons = [
       'Changed my mind',
       'Found a better option',
@@ -1118,12 +1125,12 @@ class _RentalCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) => AlertDialog(
-          title: const Text('Cancel request'),
+          title: Text(l.cancelRequest),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Why are you cancelling?',
+              Text(l.whyCancelling,
                   style: TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 12),
               for (final reason in reasons)
@@ -1140,12 +1147,12 @@ class _RentalCard extends ConsumerWidget {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Keep request')),
+                child: Text(l.keepRequest)),
             FilledButton(
                 onPressed: selectedReason == null
                     ? null
                     : () => Navigator.pop(ctx, true),
-                child: const Text('Cancel request')),
+                child: Text(l.cancelRequest)),
           ],
         ),
       ),
@@ -1165,14 +1172,14 @@ class _RentalCard extends ConsumerWidget {
     }
   }
 
-  String _statusLabel(String status) {
+  String _statusLabel(String status, AppLocalizations l) {
     return switch (status) {
-      'pending' => 'PENDING',
-      'accepted' => 'ACCEPTED',
-      'active' => 'ACTIVE',
-      'completed' => 'COMPLETED',
-      'rejected' => 'REJECTED',
-      'cancelled' => 'CANCELLED',
+      'pending' => l.statusPending,
+      'accepted' => l.statusAccepted,
+      'active' => l.statusActive,
+      'completed' => l.statusCompleted,
+      'rejected' => l.statusRejected,
+      'cancelled' => l.statusCancelled,
       _ => status.toUpperCase(),
     };
   }
@@ -1272,6 +1279,7 @@ class _EmptyRentals extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -1324,7 +1332,7 @@ class _EmptyRentals extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            Text('No rentals yet',
+            Text(l.noRentalsYet,
                 style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -1342,7 +1350,7 @@ class _EmptyRentals extends StatelessWidget {
             FilledButton.icon(
               onPressed: onBrowse,
               icon: const Icon(Icons.search_rounded),
-              label: const Text('Browse generators'),
+              label: Text(l.browseGenerators),
               style: FilledButton.styleFrom(
                   minimumSize: const Size(200, 48)),
             ),
