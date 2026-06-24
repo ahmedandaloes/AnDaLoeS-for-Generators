@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -27,8 +28,9 @@ class AdminUsersTab extends ConsumerWidget {
           .eq('id', uid);
       ref.invalidate(adminUsersProvider);
       if (context.mounted) {
+        final l = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Role updated to $newRole')),
+          SnackBar(content: Text(l.roleUpdatedTo(_roleLabel(newRole, l)))),
         );
       }
     } catch (e) {
@@ -42,6 +44,7 @@ class AdminUsersTab extends ConsumerWidget {
   Future<void> _showRoleDialog(
       BuildContext context, Map<String, dynamic> user) async {
     final current = user['role']?.toString() ?? 'customer';
+    final l = AppLocalizations.of(context)!;
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -49,7 +52,7 @@ class AdminUsersTab extends ConsumerWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Current role: $current',
+            Text(l.currentRole(_roleLabel(current, l)),
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 16),
             for (final role in ['customer', 'owner', 'admin'])
@@ -57,7 +60,7 @@ class AdminUsersTab extends ConsumerWidget {
                 dense: true,
                 leading: Icon(_roleIcon(role),
                     color: _roleColor(role, Theme.of(ctx).colorScheme)),
-                title: Text(role[0].toUpperCase() + role.substring(1)),
+                title: Text(_roleLabel(role, l)),
                 selected: current == role,
                 onTap: () {
                   Navigator.pop(ctx);
@@ -71,7 +74,7 @@ class AdminUsersTab extends ConsumerWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: Text(l.cancel)),
         ],
       ),
     );
@@ -89,17 +92,24 @@ class AdminUsersTab extends ConsumerWidget {
         _ => cs.primary,
       };
 
+  String _roleLabel(String role, AppLocalizations l) => switch (role) {
+        'admin' => l.roleAdmin,
+        'owner' => l.roleOwner,
+        _ => l.roleCustomer,
+      };
+
   @override
   Widget build(BuildContext context, WidgetRef _ref) {
     final usersAsync = _ref.watch(adminUsersProvider);
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return usersAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => const AppErrorState(),
       data: (users) {
         if (users.isEmpty) {
-          return const Center(child: Text('No users found.'));
+          return Center(child: Text(l.noUsersFound));
         }
         // Group by role
         final byRole = <String, List<Map<String, dynamic>>>{};
@@ -123,7 +133,7 @@ class AdminUsersTab extends ConsumerWidget {
                         avatar: Icon(_roleIcon(role),
                             size: 14, color: _roleColor(role, cs)),
                         label: Text(
-                            '${byRole[role]!.length} ${role[0].toUpperCase()}${role.substring(1)}s',
+                            '${byRole[role]!.length} ${_roleLabel(role, l)}',
                             style: const TextStyle(fontSize: 12)),
                         visualDensity: VisualDensity.compact,
                       ),
@@ -134,7 +144,7 @@ class AdminUsersTab extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                     child: Text(
-                      '${role[0].toUpperCase()}${role.substring(1)}s (${byRole[role]!.length})',
+                      '${_roleLabel(role, l)} (${byRole[role]!.length})',
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -169,7 +179,7 @@ class AdminUsersTab extends ConsumerWidget {
                               color: _roleColor(role, cs).withValues(alpha: 0.3)),
                         ),
                         child: Text(
-                          role[0].toUpperCase() + role.substring(1),
+                          _roleLabel(role, l),
                           style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,

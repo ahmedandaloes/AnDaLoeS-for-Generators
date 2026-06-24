@@ -243,5 +243,13 @@
   "opsStaleSubtitle": "Pending > 24h — owner not responding",
   "opsNotStartedTitle": "Not started on time",
   "opsNotStartedSubtitle": "Accepted but start date passed without going active",
-  "allClearShort": "All clear"
+  "allClearShort": "All clear",
+  "noUsersFound": "No users found.",
+  "currentRole": "Current role: {role}",
+  "@currentRole": { "placeholders": { "role": { "type": "String" } } },
+  "roleUpdatedTo": "Role updated to {role}",
+  "@roleUpdatedTo": { "placeholders": { "role": { "type": "String" } } },
+  "roleCustomer": "Customer",
+  "roleOwner": "Owner",
+  "roleAdmin": "Admin"
 }

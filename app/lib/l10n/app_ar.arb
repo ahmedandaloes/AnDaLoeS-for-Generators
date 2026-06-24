@@ -228,5 +228,11 @@
   "opsStaleSubtitle": "قيد الانتظار أكثر من 24 ساعة — المالك لا يرد",
   "opsNotStartedTitle": "لم تبدأ في الموعد",
   "opsNotStartedSubtitle": "مقبولة لكن مرّ تاريخ البدء دون تفعيل",
-  "allClearShort": "كل شيء على ما يرام"
+  "allClearShort": "كل شيء على ما يرام",
+  "noUsersFound": "لا يوجد مستخدمون.",
+  "currentRole": "الدور الحالي: {role}",
+  "roleUpdatedTo": "تم تحديث الدور إلى {role}",
+  "roleCustomer": "عميل",
+  "roleOwner": "مالك",
+  "roleAdmin": "مدير"
 }
