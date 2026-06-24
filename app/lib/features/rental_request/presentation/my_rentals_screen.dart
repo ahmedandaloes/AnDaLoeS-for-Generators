@@ -9,6 +9,7 @@ import '../../../core/config/supabase.dart';
 import '../../../core/utils/ics.dart';
 import '../../chat/providers/chat_providers.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../core/widgets/app_error_state.dart';
 
 final myRentalsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
@@ -178,7 +179,10 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
         ),
         body: rentals.when(
           loading: () => _RentalsSkeleton(cs: cs),
-          error: (e, _) => Center(child: Text('$e')),
+          error: (e, _) => AppErrorState(
+            message: "Couldn't load your rentals.",
+            onRetry: () => ref.invalidate(myRentalsProvider),
+          ),
           data: (items) {
             if (items.isEmpty) {
               return _EmptyRentals(cs: cs, onBrowse: () => context.go(AppRoutes.home));

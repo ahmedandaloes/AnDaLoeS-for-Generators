@@ -12,6 +12,7 @@ import '../providers/detail_providers.dart';
 import 'widgets/detail_sections.dart';
 import 'widgets/photo_carousel.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../core/widgets/app_error_state.dart';
 
 class GeneratorDetailScreen extends ConsumerWidget {
   const GeneratorDetailScreen(
@@ -27,23 +28,9 @@ class GeneratorDetailScreen extends ConsumerWidget {
     return Scaffold(
       body: detail.when(
         loading: () => _DetailSkeleton(cs: cs),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.error_outline, size: 48, color: cs.error),
-                const SizedBox(height: 16),
-                Text('$e'),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () => ref.invalidate(generatorDetailProvider(id)),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          ),
+        error: (e, _) => AppErrorState(
+          message: "Couldn't load this generator.",
+          onRetry: () => ref.invalidate(generatorDetailProvider(id)),
         ),
         data: (gen) =>
             _Body(gen: gen, cs: cs, scrollController: scrollController),
