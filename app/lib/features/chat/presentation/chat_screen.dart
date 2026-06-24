@@ -227,7 +227,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             padding:
                                 const EdgeInsets.symmetric(vertical: 8),
                             child: Text(
-                              _formatDay(msg['created_at']),
+                              _formatDay(msg['created_at'], l),
                               style: TextStyle(
                                   fontSize: 11,
                                   color: cs.onSurfaceVariant,
@@ -326,17 +326,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  static String _formatDay(dynamic ts) {
+  static String _formatDay(dynamic ts, AppLocalizations l) {
+    // uses l.today/l.yesterday
     if (ts == null) return '';
     try {
       final dt = DateTime.parse(ts.toString()).toLocal();
       final now = DateTime.now();
       if (dt.year == now.year &&
           dt.month == now.month &&
-          dt.day == now.day) return 'Today';
+          dt.day == now.day) return l.today;
       final y = now.subtract(const Duration(days: 1));
       if (dt.year == y.year && dt.month == y.month && dt.day == y.day) {
-        return 'Yesterday';
+        return l.yesterday;
       }
       return '${dt.day}/${dt.month}/${dt.year}';
     } catch (_) {

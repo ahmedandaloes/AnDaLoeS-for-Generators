@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
@@ -178,12 +179,13 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     // Owners must have a real (non-anonymous) account before listing.
     final user = supabase.auth.currentUser;
     if (user == null || user.isAnonymous) {
       final cs = Theme.of(context).colorScheme;
       return Scaffold(
-        appBar: AppBar(title: const Text('Register Company')),
+        appBar: AppBar(title: Text(l.registerCompany)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
@@ -193,20 +195,19 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
                 Icon(Icons.account_circle_outlined,
                     size: 56, color: cs.primary),
                 const SizedBox(height: 16),
-                const Text('Create an account first',
-                    style: TextStyle(
+                Text(l.createAnAccountFirst,
+                    style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
                 Text(
-                  'You need a registered account to list generators. '
-                  'Sign up with your email to continue.',
+                  l.accountRequiredBody,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 20),
                 FilledButton(
                   onPressed: () => context.push(AppRoutes.emailAuth),
-                  child: const Text('Create account'),
+                  child: Text(l.createAccount),
                 ),
               ],
             ),
@@ -216,7 +217,7 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
     }
     return Scaffold(
       appBar: AppBar(
-        title: Text(_step == 1 ? 'Register Company' : 'Upload Documents'),
+        title: Text(_step == 1 ? l.registerCompany : l.uploadDocuments),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
           child: LinearProgressIndicator(
