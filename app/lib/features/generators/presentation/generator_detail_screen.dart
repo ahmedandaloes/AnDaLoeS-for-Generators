@@ -59,6 +59,8 @@ class _Body extends ConsumerWidget {
     final responseTimeAsync = ref.watch(avgResponseTimeProvider(companyId));
     final acceptanceRateAsync =
         ref.watch(ownerAcceptanceRateProvider(companyId));
+    final reliabilityAsync =
+        ref.watch(companyReliabilityProvider(companyId));
     final bookedAsync = ref.watch(bookedDatesProvider(generatorId));
     final similarAsync = ref.watch(similarGeneratorsProvider(gen));
     final isFav =
@@ -291,113 +293,64 @@ class _Body extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  // Avg response time badge
-                  responseTimeAsync.maybeWhen(
-                    data: (mins) {
-                      if (mins == null || mins <= 0) {
-                        return const SizedBox.shrink();
-                      }
+                  const SizedBox(height: 6),
+                  // ── Compact trust row ─────────────────────────────────
+                  Builder(builder: (_) {
+                    final chips = <Widget>[];
+
+                    // Response time
+                    final mins = responseTimeAsync.valueOrNull;
+                    if (mins != null && mins > 0) {
                       final label = mins < 60
                           ? '~$mins min'
                           : mins < 1440
                               ? '~${(mins / 60).round()} hr'
                               : '~${(mins / 1440).round()} day';
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                                color: Colors.green.withValues(alpha: 0.3)),
-                          ),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            Icon(Icons.timer_outlined,
-                                size: 11, color: Colors.green.shade700),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Responds in $label',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.green.shade700),
-                            ),
-                          ]),
-                        ),
-                      );
-                    },
-                    orElse: () => const SizedBox.shrink(),
-                  ),
-                  // Acceptance rate badge
-                  acceptanceRateAsync.maybeWhen(
-                    data: (rate) {
-                      if (rate == null || rate <= 0) {
-                        return const SizedBox.shrink();
-                      }
-                      final color = qualityColor(rate);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.check_circle_outline,
-                                    size: 11, color: color),
-                                const SizedBox(width: 4),
-                                Text(
-                                  l.acceptanceRatePct(rate.round()),
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: color),
-                                ),
-                              ]),
-                        ),
-                      );
-                    },
-                    orElse: () => const SizedBox.shrink(),
-                  ),
-                  // On-time delivery rate (reliability)
-                  ref.watch(companyReliabilityProvider(companyId)).maybeWhen(
-                    data: (rel) {
-                      if (rel.completed < 1 || rel.onTimeRate <= 0) {
-                        return const SizedBox.shrink();
-                      }
+                      chips.add(_trustChip(
+                        Icons.timer_outlined,
+                        'Responds in $label',
+                        Colors.green.shade700,
+                        cs,
+                      ));
+                    }
+
+                    // Acceptance rate
+                    final acceptance = acceptanceRateAsync.valueOrNull;
+                    if (acceptance != null && acceptance > 0) {
+                      final color = qualityColor(acceptance);
+                      chips.add(_trustChip(
+                        Icons.check_circle_outline,
+                        l.acceptanceRatePct(acceptance.round()),
+                        color,
+                        cs,
+                      ));
+                    }
+
+                    // On-time delivery
+                    final rel = reliabilityAsync.valueOrNull;
+                    if (rel != null &&
+                        rel.completed >= 1 &&
+                        rel.onTimeRate > 0) {
                       final pct = (rel.onTimeRate * 100).round();
                       final color = qualityColor(pct);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            Icon(Icons.local_shipping_outlined,
-                                size: 11, color: color),
-                            const SizedBox(width: 4),
-                            Text(l.onTimeStat(pct, rel.completed),
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: color)),
-                          ]),
-                        ),
-                      );
-                    },
-                    orElse: () => const SizedBox.shrink(),
-                  ),
+                      chips.add(_trustChip(
+                        Icons.local_shipping_outlined,
+                        l.onTimeStat(pct, rel.completed),
+                        color,
+                        cs,
+                      ));
+                    }
+
+                    if (chips.isEmpty) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 2, bottom: 6),
+                      child: Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: chips,
+                      ),
+                    );
+                  }),
                 ],
                 Row(
                   children: [
@@ -774,6 +727,25 @@ class GeneratorDetailWrapper extends ConsumerWidget {
     );
   }
 }
+
+// ── Shared trust chip ─────────────────────────────────────────────────────────
+Widget _trustChip(
+    IconData icon, String label, Color color, ColorScheme cs) =>
+    Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 11, color: color),
+        const SizedBox(width: 4),
+        Text(label,
+            style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      ]),
+    );
 
 // ── Detail skeleton shown while data loads ────────────────────────────────────
 class _DetailSkeleton extends StatefulWidget {
