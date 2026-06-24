@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -105,10 +106,11 @@ class _EditGeneratorScreenState
   }
 
   Future<void> _pickPhoto() async {
+    final l = AppLocalizations.of(context)!;
     final total = (_existingPhotos.length - _removedPhotos.length) +
         _newPhotos.length;
     if (total >= _maxPhotos) {
-      _snack('Maximum $_maxPhotos photos allowed');
+      _snack(l.maxPhotosAllowed(_maxPhotos));
       return;
     }
     try {
@@ -121,17 +123,18 @@ class _EditGeneratorScreenState
       if (path == null) return;
       setState(() => _newPhotos.add(File(path)));
     } catch (e) {
-      _snack('Could not open photo picker: $e');
+      _snack(l.photoPickerError);
     }
   }
 
   Future<void> _save() async {
+    final l = AppLocalizations.of(context)!;
     final title = _titleController.text.trim();
     final capacityStr = _capacityController.text.trim();
     final priceStr = _pricePerDayController.text.trim();
 
     if (title.isEmpty || capacityStr.isEmpty || priceStr.isEmpty) {
-      _snack('Title, capacity, and daily price are required');
+      _snack(l.requiredFieldsGenerator);
       return;
     }
 
@@ -189,7 +192,7 @@ class _EditGeneratorScreenState
       }).eq('id', widget.generatorId);
 
       if (mounted) {
-        _snack('Generator updated!');
+        _snack(l.generatorUpdated);
         context.pop();
       }
     } catch (e) {
@@ -213,9 +216,10 @@ class _EditGeneratorScreenState
     final genAsync =
         ref.watch(_editGeneratorProvider(widget.generatorId));
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Generator')),
+      appBar: AppBar(title: Text(l.editGenerator)),
       body: genAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => const AppErrorState(),
@@ -261,7 +265,7 @@ class _EditGeneratorScreenState
                 const SizedBox(height: 20),
 
                 // ── Photos ─────────────────────────────────────────────
-                _Section('Photos'),
+                _Section(l.photosLabel),
                 SizedBox(
                   height: 110,
                   child: ListView(
@@ -289,7 +293,7 @@ class _EditGeneratorScreenState
                 const SizedBox(height: 20),
 
                 // ── Basic info ─────────────────────────────────────────
-                _Section('Basic info'),
+                _Section(l.basicInfo),
                 _EditField('Title *', 'e.g. Cummins 100 KVA Diesel',
                     _titleController),
                 const SizedBox(height: 12),
@@ -315,7 +319,7 @@ class _EditGeneratorScreenState
                       ),
                       prefixIcon: const Icon(Icons.electric_bolt_outlined),
                     ),
-                    hint: const Text('Select size (kVA / kW)'),
+                    hint: Text(l.selectSize),
                     items: [
                       for (final kva in sizes)
                         DropdownMenuItem(
@@ -339,14 +343,14 @@ class _EditGeneratorScreenState
                     ),
                     prefixIcon: const Icon(Icons.local_gas_station_outlined),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'diesel', child: Text('Diesel')),
-                    DropdownMenuItem(value: 'petrol', child: Text('Petrol')),
+                  items: [
+                    DropdownMenuItem(value: 'diesel', child: Text(l.fuelDiesel)),
+                    DropdownMenuItem(value: 'petrol', child: Text(l.fuelPetrol)),
                     DropdownMenuItem(
-                        value: 'gas', child: Text('Gas (LPG)')),
+                        value: 'gas', child: Text(l.fuelGasLpg)),
                     DropdownMenuItem(
-                        value: 'natural_gas', child: Text('Natural Gas')),
-                    DropdownMenuItem(value: 'solar', child: Text('Solar')),
+                        value: 'natural_gas', child: Text(l.fuelNaturalGas)),
+                    DropdownMenuItem(value: 'solar', child: Text(l.fuelSolar)),
                   ],
                   onChanged: (v) =>
                       setState(() => _fuelType = v ?? 'diesel'),
@@ -379,7 +383,7 @@ class _EditGeneratorScreenState
                 const SizedBox(height: 20),
 
                 // ── Location ───────────────────────────────────────────
-                _Section('Location'),
+                _Section(l.location),
                 _EditField('City', 'e.g. Nasr City', _cityController),
                 const SizedBox(height: 12),
                 _EditLabel('Governorate'),
@@ -394,7 +398,7 @@ class _EditGeneratorScreenState
                     ),
                     prefixIcon: const Icon(Icons.location_on_outlined),
                   ),
-                  hint: const Text('Select governorate'),
+                  hint: Text(l.selectGovernorate),
                   items: _editGovernorates
                       .map((g) =>
                           DropdownMenuItem(value: g, child: Text(g)))
@@ -404,7 +408,7 @@ class _EditGeneratorScreenState
                 const SizedBox(height: 20),
 
                 // ── Pricing ────────────────────────────────────────────
-                _Section('Pricing (EGP)'),
+                _Section(l.pricingEgp),
                 _EditNumField(
                     'Per day (8 hrs) *', '0', _pricePerDayController),
                 const SizedBox(height: 12),
@@ -433,7 +437,7 @@ class _EditGeneratorScreenState
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: cs.onPrimary),
                         )
-                      : const Text('Save changes'),
+                      : Text(l.saveChanges),
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton(
@@ -443,7 +447,7 @@ class _EditGeneratorScreenState
                         color: cs.error.withValues(alpha: 0.4)),
                   ),
                   onPressed: _saving ? null : _confirmDelete,
-                  child: const Text('Delete generator'),
+                  child: Text(l.deleteGenerator),
                 ),
               ],
             ),
@@ -454,21 +458,22 @@ class _EditGeneratorScreenState
   }
 
   Future<void> _confirmDelete() async {
+    final l = AppLocalizations.of(context)!;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Delete generator?'),
+        title: Text(l.deleteGeneratorQ),
         content: const Text(
             'This will permanently remove the generator and all its data. This cannot be undone.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+              child: Text(l.cancel)),
           FilledButton(
               style: FilledButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.error),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete')),
+              child: Text(l.deleteAction)),
         ],
       ),
     );
@@ -494,12 +499,13 @@ class _EditPhotoAddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 96,
         height: 96,
-        margin: const EdgeInsets.only(right: 10),
+        margin: const EdgeInsetsDirectional.only(end: 10),
         decoration: BoxDecoration(
           color: cs.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(12),
@@ -511,7 +517,7 @@ class _EditPhotoAddButton extends StatelessWidget {
             Icon(Icons.add_a_photo_outlined,
                 size: 28, color: cs.onSurfaceVariant),
             const SizedBox(height: 4),
-            Text('Add photo',
+            Text(l.addPhoto,
                 style: TextStyle(
                     fontSize: 10, color: cs.onSurfaceVariant)),
           ],
@@ -566,7 +572,7 @@ class _NetworkPhotoThumb extends StatelessWidget {
           child: Container(
             width: 96,
             height: 96,
-            margin: const EdgeInsets.only(right: 10),
+            margin: const EdgeInsetsDirectional.only(end: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               image: DecorationImage(
@@ -652,7 +658,7 @@ class _LocalPhotoThumb extends StatelessWidget {
           child: Container(
             width: 96,
             height: 96,
-            margin: const EdgeInsets.only(right: 10),
+            margin: const EdgeInsetsDirectional.only(end: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               image: DecorationImage(
