@@ -189,5 +189,16 @@
   "chatWithCustomer": "محادثة العميل",
   "minsAgo": "منذ {m} دقيقة",
   "hrsAgo": "منذ {h} ساعة",
-  "hrsAgoRespond": "منذ {h} ساعة · يُرجى الرد قريبًا"
+  "hrsAgoRespond": "منذ {h} ساعة · يُرجى الرد قريبًا",
+  "allTime": "كل الأوقات",
+  "grossRevenue": "إجمالي الإيراد",
+  "platformFee": "رسوم المنصة",
+  "netPayoutYours": "صافي المستحق (لك)",
+  "platformFeesOwed": "رسوم المنصة المستحقة (كل الأوقات)",
+  "toSettle": "للتسوية",
+  "completedRentalsCount": "{count, plural, =1{إيجار مكتمل واحد} other{{count} إيجارات مكتملة}}",
+  "monthlyRevenue": "الإيراد الشهري",
+  "gross": "إجمالي",
+  "net": "صافي",
+  "yourShare": "نصيبك"
 }

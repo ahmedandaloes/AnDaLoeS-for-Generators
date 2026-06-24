@@ -200,5 +200,17 @@
   "hrsAgo": "{h}h ago",
   "@hrsAgo": { "placeholders": { "h": { "type": "int" } } },
   "hrsAgoRespond": "{h}h ago · respond soon",
-  "@hrsAgoRespond": { "placeholders": { "h": { "type": "int" } } }
+  "@hrsAgoRespond": { "placeholders": { "h": { "type": "int" } } },
+  "allTime": "All time",
+  "grossRevenue": "Gross revenue",
+  "platformFee": "Platform fee",
+  "netPayoutYours": "Net payout (yours)",
+  "platformFeesOwed": "Platform fees owed (all time)",
+  "toSettle": "to settle",
+  "completedRentalsCount": "{count, plural, =1{1 completed rental} other{{count} completed rentals}}",
+  "@completedRentalsCount": { "placeholders": { "count": { "type": "int" } } },
+  "monthlyRevenue": "Monthly Revenue",
+  "gross": "Gross",
+  "net": "Net",
+  "yourShare": "Your share"
 }

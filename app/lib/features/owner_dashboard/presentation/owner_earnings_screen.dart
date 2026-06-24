@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -80,11 +81,12 @@ class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final earningsAsync = ref.watch(_earningsProvider(widget.companyId));
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Earnings')),
+      appBar: AppBar(title: Text(l.earnings)),
       body: earningsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => const AppErrorState(),
@@ -137,7 +139,7 @@ class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
                       scrollDirection: Axis.horizontal,
                       children: [
                         _MonthChip(
-                          label: 'All time',
+                          label: l.allTime,
                           selected: _selectedMonth == null,
                           onTap: () =>
                               setState(() => _selectedMonth = null),
@@ -145,7 +147,7 @@ class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
                         ),
                         const SizedBox(width: 6),
                         ...months.reversed.map((m) => Padding(
-                              padding: const EdgeInsets.only(right: 6),
+                              padding: const EdgeInsetsDirectional.only(end: 6),
                               child: _MonthChip(
                                 label: _fmtMonth(m),
                                 selected: _selectedMonth == m,
@@ -164,7 +166,7 @@ class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
                   children: [
                     Expanded(
                       child: _SummaryCard(
-                        label: 'Gross revenue',
+                        label: l.grossRevenue,
                         value: 'EGP ${totalRevenue.toStringAsFixed(0)}',
                         icon: Icons.attach_money,
                         cs: cs,
@@ -174,7 +176,7 @@ class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _SummaryCard(
-                        label: 'Platform fee',
+                        label: l.platformFee,
                         value: 'EGP ${totalCommissions.toStringAsFixed(0)}',
                         icon: Icons.percent,
                         cs: cs,
@@ -185,7 +187,7 @@ class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
                 ),
                 const SizedBox(height: 12),
                 _SummaryCard(
-                  label: 'Net payout (yours)',
+                  label: l.netPayoutYours,
                   value: 'EGP ${netPayout.toStringAsFixed(0)}',
                   icon: Icons.account_balance_wallet_outlined,
                   cs: cs,
@@ -211,7 +213,7 @@ class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Platform fees owed (all time)',
+                            Text(l.platformFeesOwed,
                                 style: TextStyle(
                                     fontSize: 11,
                                     color: cs.onSurfaceVariant)),
@@ -224,7 +226,7 @@ class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
                           ],
                         ),
                       ),
-                      Text('to settle',
+                      Text(l.toSettle,
                           style: TextStyle(
                               fontSize: 11, color: cs.onSurfaceVariant)),
                     ]),
@@ -246,7 +248,7 @@ class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
                       Icon(Icons.receipt_long_outlined,
                           size: 18, color: cs.onSurfaceVariant),
                       const SizedBox(width: 10),
-                      Text('${rentals.length} completed rental${rentals.length == 1 ? '' : 's'}',
+                      Text(l.completedRentalsCount(rentals.length),
                           style: const TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w500)),
                     ],
@@ -280,7 +282,7 @@ class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
                           Icon(Icons.receipt_long,
                               size: 48, color: cs.onSurfaceVariant),
                           const SizedBox(height: 16),
-                          Text('No completed rentals yet',
+                          Text(l.noCompletedRentals,
                               style: TextStyle(color: cs.onSurfaceVariant)),
                         ],
                       ),
@@ -376,6 +378,7 @@ class _MonthlyChartState extends State<_MonthlyChart>
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final data = widget.monthlyNet;
     if (data.isEmpty) return const SizedBox.shrink();
     final maxVal = data.values.fold<double>(0, (m, v) => v > m ? v : m);
@@ -410,7 +413,7 @@ class _MonthlyChartState extends State<_MonthlyChart>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Text('Monthly Revenue',
+            Text(l.monthlyRevenue,
                 style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -684,6 +687,7 @@ class _RentalEarningsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -700,11 +704,11 @@ class _RentalEarningsRow extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                _AmountCol('Gross', 'EGP ${gross.toStringAsFixed(0)}',
+                _AmountCol(l.gross, 'EGP ${gross.toStringAsFixed(0)}',
                     cs.onSurface),
-                _AmountCol('Platform fee',
+                _AmountCol(l.platformFee,
                     '− EGP ${fee.toStringAsFixed(0)}', cs.error),
-                _AmountCol('Your share',
+                _AmountCol(l.yourShare,
                     'EGP ${net.toStringAsFixed(0)}', Colors.green.shade700),
               ],
             ),
