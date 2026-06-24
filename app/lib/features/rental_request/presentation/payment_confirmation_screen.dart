@@ -216,60 +216,75 @@ class _PaymentConfirmationScreenState
             ),
             const SizedBox(height: 16),
 
-            // Price
-            _SectionLabel('Total'),
-            Card(
-              color: cs.primaryContainer.withValues(alpha: 0.4),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(children: [
-                  Text(
-                    'EGP ${widget.totalPrice.toStringAsFixed(0)}',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: cs.primary,
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: cs.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Best rate',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: cs.primary),
-                    ),
-                  ),
-                ]),
-              ),
-            ),
-            // Refundable security deposit (set by the owner)
+            // Itemized payment summary (transparency = our differentiator)
+            _SectionLabel('Payment summary'),
             Builder(builder: (_) {
               final deposit =
                   (widget.generator['deposit_amount'] as num?)?.toDouble() ?? 0;
-              if (deposit <= 0) return const SizedBox.shrink();
-              return Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Row(children: [
-                  Icon(Icons.shield_outlined,
-                      size: 16, color: cs.onSurfaceVariant),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Refundable security deposit: EGP ${deposit.toStringAsFixed(0)} '
-                      '(returned after the generator is returned in good condition).',
-                      style:
-                          TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
-                    ),
+              final rental = widget.totalPrice;
+              final grand = rental + deposit;
+              Widget line(String l, String r,
+                  {bool bold = false, Color? color, String? sub}) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        Expanded(
+                          child: Text(l,
+                              style: TextStyle(
+                                  fontSize: bold ? 15 : 13,
+                                  fontWeight: bold
+                                      ? FontWeight.w800
+                                      : FontWeight.w500,
+                                  color: color ?? cs.onSurface)),
+                        ),
+                        Text(r,
+                            style: TextStyle(
+                                fontSize: bold ? 20 : 14,
+                                fontWeight: bold
+                                    ? FontWeight.w900
+                                    : FontWeight.w600,
+                                color: color ?? cs.onSurface)),
+                      ]),
+                      if (sub != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 1),
+                          child: Text(sub,
+                              style: TextStyle(
+                                  fontSize: 11, color: cs.onSurfaceVariant)),
+                        ),
+                    ],
                   ),
-                ]),
+                );
+              }
+
+              return Card(
+                color: cs.primaryContainer.withValues(alpha: 0.4),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(children: [
+                    line(
+                        'Rental · ${widget.days} day${widget.days == 1 ? '' : 's'}',
+                        'EGP ${rental.toStringAsFixed(0)}',
+                        sub: 'Best rate applied · 1 day = 8 operating hours'),
+                    if (deposit > 0)
+                      line('Refundable deposit',
+                          'EGP ${deposit.toStringAsFixed(0)}',
+                          sub:
+                              'Returned after the generator comes back in good condition'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Divider(
+                          height: 1,
+                          color: cs.primary.withValues(alpha: 0.2)),
+                    ),
+                    line('Total payable on delivery',
+                        'EGP ${grand.toStringAsFixed(0)}',
+                        bold: true, color: cs.primary),
+                  ]),
+                ),
               );
             }),
             const SizedBox(height: 16),
