@@ -900,21 +900,15 @@ class _RentalCard extends ConsumerWidget {
                   ),
                 ],
                 Builder(builder: (_) {
-                  final note = rental['note']?.toString() ?? '';
-                  final prefix = 'Delivery address: ';
-                  final addressLine =
-                      note.split('\n').firstWhere(
-                          (l) => l.startsWith(prefix),
-                          orElse: () => '');
-                  final address = addressLine.isNotEmpty
-                      ? addressLine.substring(prefix.length).trim()
-                      : '';
+                  // Structured delivery address (no more regex-parsing the note).
+                  final address =
+                      rental['delivery_address']?.toString() ?? '';
                   if (address.isEmpty) return const SizedBox.shrink();
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(40),
+                        minimumSize: const Size.fromHeight(48),
                         foregroundColor: cs.secondary,
                       ),
                       onPressed: () async {
@@ -928,6 +922,34 @@ class _RentalCard extends ConsumerWidget {
                       label: const Text('Track Delivery',
                           style: TextStyle(fontSize: 13)),
                     ),
+                  );
+                }),
+                // Refundable deposit status
+                Builder(builder: (_) {
+                  final deposit =
+                      (rental['deposit_amount'] as num?)?.toDouble() ?? 0;
+                  if (deposit <= 0 ||
+                      !['accepted', 'active', 'completed'].contains(status)) {
+                    return const SizedBox.shrink();
+                  }
+                  final amt = deposit.toStringAsFixed(0);
+                  final text = switch (status) {
+                    'completed' => 'Deposit EGP $amt · returned after rental',
+                    'active' => 'Refundable deposit: EGP $amt held',
+                    _ => 'Refundable deposit: EGP $amt (collected on delivery)',
+                  };
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Row(children: [
+                      Icon(Icons.shield_outlined,
+                          size: 14, color: cs.onSurfaceVariant),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(text,
+                            style: TextStyle(
+                                fontSize: 12, color: cs.onSurfaceVariant)),
+                      ),
+                    ]),
                   );
                 }),
                 const SizedBox(height: 4),

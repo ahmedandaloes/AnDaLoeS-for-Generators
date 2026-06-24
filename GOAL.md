@@ -229,7 +229,7 @@ Per-page review of the live code. Implement NOW items in the auto-loop on `devel
 - [x] Delivery handshake (DB 0031 delivered_at): owner "Out for delivery" → "Confirm delivered · start rental" (accepted→active); customer sees an "Out for delivery — on its way" banner. Owner-driven (no customer→active RLS hole). Feeds on-time data via delivered_at.
 - [x] Payment: itemized summary — Rental (N days, best-rate noted) + Refundable deposit + Total payable on delivery, as a clean breakdown card. (Sticky bottom bar = SOON.)
 - [ ] Detail: hoist a compact verified + on-time/acceptance trust row above the fold (unify the 3 inconsistent badge styles).
-- [ ] My Rentals: read structured delivery_address (stop regex-parsing the note); show deposit status; friendly error.
+- [x] My Rentals: reads structured delivery_address (regex note-parsing removed); deposit status line (collected on delivery → held → returned). Track Delivery button →48dp. Guest-bookable detail deferred (auth-resume flow is fragile — needs review).
 - [ ] Owner request card: echo deposit "collect EGP X on delivery" reminder; owner dashboard acceptance/on-time chips.
 - [ ] Home: persist filters/sort across sessions (shared_preferences); friendly states.
 
