@@ -26,6 +26,58 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
   int _score = 0;
   final _commentController = TextEditingController();
   bool _submitting = false;
+  bool? _eligible; // null = checking
+  String _ineligibleReason = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _checkEligibility();
+  }
+
+  // Guard against deep-link/back-stack misuse: only rate a COMPLETED rental,
+  // and only once. (RLS 0030 + the unique index are the hard guard; this is UX.)
+  Future<void> _checkEligibility() async {
+    try {
+      final uid = supabase.auth.currentUser?.id;
+      final rr = await supabase
+          .from('rental_requests')
+          .select('status')
+          .eq('id', widget.rentalRequestId)
+          .maybeSingle();
+      if (rr?['status']?.toString() != 'completed') {
+        if (mounted) {
+          setState(() {
+            _eligible = false;
+            _ineligibleReason =
+                'You can leave a review once the rental is completed.';
+          });
+        }
+        return;
+      }
+      if (uid != null) {
+        final existing = await supabase
+            .from('ratings')
+            .select('id')
+            .eq('rental_request_id', widget.rentalRequestId)
+            .eq('rater_id', uid)
+            .maybeSingle();
+        if (existing != null) {
+          if (mounted) {
+            setState(() {
+              _eligible = false;
+              _ineligibleReason = 'You have already reviewed this rental.';
+            });
+          }
+          return;
+        }
+      }
+      if (mounted) setState(() => _eligible = true);
+    } catch (_) {
+      // Fail open to the form — RLS + unique index still enforce the rules.
+      if (mounted) setState(() => _eligible = true);
+    }
+  }
 
   @override
   void dispose() {
@@ -77,6 +129,37 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+
+    if (_eligible == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_eligible == false) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Leave a Review')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.reviews_outlined,
+                    size: 48, color: cs.onSurfaceVariant),
+                const SizedBox(height: 14),
+                Text(_ineligibleReason,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: cs.onSurfaceVariant)),
+                const SizedBox(height: 16),
+                FilledButton(
+                    onPressed: () => context.pop(),
+                    child: const Text('Back')),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Leave a Review')),
