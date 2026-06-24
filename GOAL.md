@@ -307,3 +307,13 @@ Plan (loop, screen-by-screen): (1) grow app_en.arb + app_ar.arb (real Arabic) wi
 - [~] Localized: Profile + Home + Generator Detail (call/share/copy/save/report/Rent Now, acceptance+on-time stats via placeholders, price estimate) with real Arabic; RTL paddings→Directional. Next: owner request_card + earnings → admin tabs → rest. (Owner dashboard main strings done; a few secondary dialog/verification bodies pending.) Search hint + sort labels + section titles + documents pending. Search hint + sort labels + section titles pending. Search hint + sort labels + section titles pending.
 - [ ] RTL padding/Align audit per screen as localized.
 - [ ] Flip default locale to Arabic when ≥ ~80% strings translated.
+
+## 🧪 Arabic/RTL QA findings (arabic-qa-expert, 2026-06-24) — action list
+Key parity PASS (310 keys, all translated; en/ar count diff is just @-metadata). Translation quality strong + glossary-consistent. To fix:
+- [ ] HIGH: fully-English screens (invisible in Arabic) — rental_offer, invoice, rental_receipt, add_generator, edit_generator.
+- [ ] MEDIUM: partially-localized screens using LITERALS where ARB keys already exist — profile leftover dialogs (signOutQuestion/displayName/createAccount…), email_login_screen, rate_rental, generator_filter, map_screen, report_screen, search_autocomplete, admin leftovers, chat date labels (Today/Yesterday hardcoded at chat_screen ~336/339 despite today/yesterday keys).
+- [ ] MEDIUM: ICU plurals only have =1/other — add Arabic dual(=2)/few/many for rentalDaysLine + completedRentalsCount; verify 1/2/3/11/100.
+- [ ] MEDIUM: wrap LTR runs (EGP amounts, INV-/offer numbers, phone, dates) in Directionality.ltr to avoid RTL scrambling; or use ج.م suffix + Arabic digits.
+- [ ] RTL hazards remain in 9 files (EdgeInsets.only(left/right), Alignment.centerLeft/Right) — switch to EdgeInsetsDirectional / AlignmentDirectional (verify chat bubbles which mirror by isMe intentionally).
+- [ ] LOW: wording — stay "البقاء"→"ابقَ", skip "تخطٍّ"→"تخطّي"; localize 'Error: $e' snackbars; AR @-metadata absent (OK).
+- [ ] CRITICAL-per-spec (do in FINAL cycle): default locale not Arabic yet (locale_provider state null → device locale). Flip to const Locale('ar') once screens above are localized.
