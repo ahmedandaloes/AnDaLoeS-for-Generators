@@ -38,10 +38,10 @@ class InvoiceScreen extends ConsumerWidget {
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: cs.surfaceContainerLow,
       appBar: AppBar(
         title: Text(l.invoice),
-        backgroundColor: Colors.grey.shade100,
+        backgroundColor: cs.surfaceContainerLow,
         elevation: 0,
         actions: [
           dataAsync.maybeWhen(
@@ -161,11 +161,11 @@ class _InvoiceDocument extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cs.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
+                color: cs.shadow.withValues(alpha: 0.08),
                 blurRadius: 20,
                 offset: const Offset(0, 4)),
           ],
@@ -287,7 +287,7 @@ class _InvoiceDocument extends StatelessWidget {
                       name: company?['name'] ?? 'Owner',
                       detail: company?['phone']?.toString(),
                       cs: cs,
-                      color: Colors.green.shade100,
+                      color: Colors.green.withValues(alpha: 0.15),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -317,7 +317,7 @@ class _InvoiceDocument extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
+                      color: cs.surfaceContainerLow,
                       borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(10)),
                     ),
@@ -328,28 +328,28 @@ class _InvoiceDocument extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.grey))),
+                                  color: cs.onSurfaceVariant))),
                       Expanded(
                           child: Text(l.qtyCol,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.grey))),
+                                  color: cs.onSurfaceVariant))),
                       Expanded(
                           child: Text(l.rateCol,
                               textAlign: TextAlign.right,
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.grey))),
+                                  color: cs.onSurfaceVariant))),
                       Expanded(
                           child: Text(l.amountCol,
                               textAlign: TextAlign.right,
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.grey))),
+                                  color: cs.onSurfaceVariant))),
                     ]),
                   ),
                   // Item row
@@ -357,7 +357,7 @@ class _InvoiceDocument extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(color: cs.outlineVariant),
                       borderRadius: const BorderRadius.vertical(
                           bottom: Radius.circular(10)),
                     ),
@@ -423,7 +423,7 @@ class _InvoiceDocument extends StatelessWidget {
               final net = b.subtotal;
               final pctLabel =
                   (taxRate * 100).toStringAsFixed(taxRate * 100 % 1 == 0 ? 0 : 1);
-              final s = TextStyle(fontSize: 12, color: Colors.grey.shade700);
+              final s = TextStyle(fontSize: 12, color: cs.onSurfaceVariant);
               Widget row(String l, String r) => Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Row(children: [
@@ -448,7 +448,7 @@ class _InvoiceDocument extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade50,
+                  color: Colors.green.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                   border:
                       Border.all(color: Colors.green.withValues(alpha: 0.3)),
@@ -499,9 +499,9 @@ class _InvoiceDocument extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
+                      color: cs.surfaceContainerLowest,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(color: cs.outlineVariant),
                     ),
                     child: Column(
                       children: [
