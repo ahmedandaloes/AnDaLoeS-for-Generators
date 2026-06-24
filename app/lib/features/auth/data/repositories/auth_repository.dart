@@ -6,7 +6,7 @@ import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/i_auth_repository.dart';
 
 final authRepositoryProvider =
-    Provider<IAuthRepository>((_) => AuthRepository());
+    Provider<AuthRepository>((_) => AuthRepository());
 
 class AuthRepository implements IAuthRepository {
   @override
@@ -61,5 +61,39 @@ class AuthRepository implements IAuthRepository {
         isAnonymous: user.isAnonymous,
       );
     });
+  }
+
+  Future<void> signInWithOtp(String phone) async {
+    await supabase.auth.signInWithOtp(phone: phone);
+  }
+
+  Future<void> verifyOTP({
+    required String phone,
+    required String token,
+    required OtpType type,
+  }) async {
+    await supabase.auth.verifyOTP(phone: phone, token: token, type: type);
+  }
+
+  Future<void> signInAnonymously() async {
+    await supabase.auth.signInAnonymously();
+  }
+
+  /// Returns true if a session was created (email confirmed / auto-confirm on).
+  /// Returns false if email confirmation is required.
+  Future<bool> signUpAndCheckSession(String email, String password) async {
+    final res = await supabase.auth.signUp(email: email, password: password);
+    return res.session != null;
+  }
+
+  String? get currentUserId => supabase.auth.currentUser?.id;
+
+  Future<String?> fetchCurrentUserRole(String uid) async {
+    final data = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', uid)
+        .maybeSingle();
+    return data?['role'] as String?;
   }
 }

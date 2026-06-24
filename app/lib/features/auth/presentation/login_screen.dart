@@ -1,20 +1,22 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show AuthException, OtpType;
 
-import '../../../core/config/supabase.dart';
-import '../../../l10n/app_localizations.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../l10n/app_localizations.dart';
+import 'providers/auth_providers.dart' show authRepositoryProvider;
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _phoneController = TextEditingController();
   final _codeController = TextEditingController();
   bool _codeSent = false;
@@ -30,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _sendCode() async {
     setState(() => _loading = true);
     try {
-      await supabase.auth.signInWithOtp(phone: _phone);
+      await ref.read(authRepositoryProvider).signInWithOtp(_phone);
       if (mounted) setState(() => _codeSent = true);
     } on AuthException catch (e) {
       _showError(e.message);
@@ -42,11 +44,11 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _verifyCode() async {
     setState(() => _loading = true);
     try {
-      await supabase.auth.verifyOTP(
-        phone: _phone,
-        token: _codeController.text.trim(),
-        type: OtpType.sms,
-      );
+      await ref.read(authRepositoryProvider).verifyOTP(
+            phone: _phone,
+            token: _codeController.text.trim(),
+            type: OtpType.sms,
+          );
       if (mounted) context.go(AppRoutes.home);
     } on AuthException catch (e) {
       _showError(e.message);

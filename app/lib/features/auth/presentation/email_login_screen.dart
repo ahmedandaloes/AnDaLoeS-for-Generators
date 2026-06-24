@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import '../../../l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
-import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../l10n/app_localizations.dart';
+import 'providers/auth_providers.dart' show authRepositoryProvider;
 
-class EmailLoginScreen extends StatefulWidget {
+class EmailLoginScreen extends ConsumerStatefulWidget {
   const EmailLoginScreen({super.key});
 
   @override
-  State<EmailLoginScreen> createState() => _EmailLoginScreenState();
+  ConsumerState<EmailLoginScreen> createState() => _EmailLoginScreenState();
 }
 
-class _EmailLoginScreenState extends State<EmailLoginScreen> {
+class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
@@ -28,11 +29,12 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
       return;
     }
     setState(() => _loading = true);
+    final repo = ref.read(authRepositoryProvider);
     try {
       try {
-        await supabase.auth.signInWithPassword(email: email, password: password);
+        await repo.signInWithEmailPassword(email, password);
       } on AuthException {
-        await supabase.auth.signUp(email: email, password: password);
+        await repo.signUpWithEmailPassword(email, password);
       }
       if (mounted) context.go(AppRoutes.home);
     } on AuthException catch (e) {
@@ -45,7 +47,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
   Future<void> _guest() async {
     setState(() => _loading = true);
     try {
-      await supabase.auth.signInAnonymously();
+      await ref.read(authRepositoryProvider).signInAnonymously();
       if (mounted) context.go(AppRoutes.home);
     } on AuthException catch (e) {
       _show(e.message);

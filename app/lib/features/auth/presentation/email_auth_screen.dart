@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
-import '../../../l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
-import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../l10n/app_localizations.dart';
+import 'providers/auth_providers.dart' show authRepositoryProvider;
 
 /// Production email front door: sign in, or create an account (with email
 /// confirmation when enabled on the Supabase project). Phone OTP lives on the
 /// LoginScreen; this is the path that works without an SMS provider.
-class EmailAuthScreen extends StatefulWidget {
+class EmailAuthScreen extends ConsumerStatefulWidget {
   const EmailAuthScreen({super.key});
 
   @override
-  State<EmailAuthScreen> createState() => _EmailAuthScreenState();
+  ConsumerState<EmailAuthScreen> createState() => _EmailAuthScreenState();
 }
 
-class _EmailAuthScreenState extends State<EmailAuthScreen> {
+class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _signUpMode = false;
@@ -66,20 +67,20 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
       return;
     }
     setState(() => _loading = true);
+    final repo = ref.read(authRepositoryProvider);
     try {
       if (_signUpMode) {
-        final res =
-            await supabase.auth.signUp(email: email, password: password);
+        final sessionCreated =
+            await repo.signUpAndCheckSession(email, password);
         // If the project requires email confirmation, no session is returned.
-        if (res.session == null) {
+        if (!sessionCreated) {
           _snack('Account created! Check your email to confirm, then sign in.');
           setState(() => _signUpMode = false);
         } else if (mounted) {
           context.go(AppRoutes.home);
         }
       } else {
-        await supabase.auth
-            .signInWithPassword(email: email, password: password);
+        await repo.signInWithEmailPassword(email, password);
         if (mounted) context.go(AppRoutes.home);
       }
     } catch (e) {
@@ -92,7 +93,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
   Future<void> _guest() async {
     setState(() => _loading = true);
     try {
-      await supabase.auth.signInAnonymously();
+      await ref.read(authRepositoryProvider).signInAnonymously();
       if (mounted) context.go(AppRoutes.home);
     } catch (e) {
       _snack(_friendlyAuthError(e));
