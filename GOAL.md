@@ -219,7 +219,7 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 Per-page review of the live code. Implement NOW items in the auto-loop on `development`.
 
 ### Cross-cutting [NOW] — highest leverage (clear many items at once)
-- [ ] Shared `AppErrorState` widget (friendly message + Retry; no raw `$e`) — replaces bare `Text('$e')` on detail, rental request, my_rentals, offer/invoice/receipt, all owner-dashboard tabs, owner earnings, notifications, chat (~10 screens).
+- [x] Shared AppErrorState rolled out app-wide — all ~19 screens (detail, my_rentals, notifications, owner dashboard + tabs, earnings, edit-generator, chat, offer/receipt/invoice, all admin tabs, map, company profile) now show a friendly error + retry instead of raw $e.
 - [ ] Tokenize status/trust colors — recurring hardcoded `Colors.green/orange/red/amber/grey.shadeXXX` (detail badges, rental statuses, owner stats/gradients, favorites pill, document scaffolds) drift off the blue/green system + break dark mode. Centralize status→color + positive/verified→cs.secondary/tertiary.
 - [ ] ≥48dp tap-target pass — home sort/favorites/login pills, detail small FABs, owner request-card buttons, dashboard Earnings button (32px), _MonthChip, my_rentals report/receipt/calendar controls.
 - [ ] Chat: move `_scrollToBottom()` out of build → addPostFrameCallback keyed on message count (correctness; respects no-work-in-build rule).

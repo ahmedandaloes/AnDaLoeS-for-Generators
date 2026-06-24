@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/pricing.dart';
@@ -137,7 +138,7 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
       appBar: AppBar(title: const Text('Rent Generator')),
       body: genAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => const AppErrorState(),
         data: (gen) {
           final days = _range == null
               ? 0

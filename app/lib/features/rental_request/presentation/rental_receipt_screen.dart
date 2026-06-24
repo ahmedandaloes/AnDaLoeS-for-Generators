@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,7 +91,7 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
       ),
       body: receiptAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => const AppErrorState(),
         data: (r) {
           final gen = r['generators'] as Map<String, dynamic>?;
           final customer = r['profiles'] as Map<String, dynamic>?;

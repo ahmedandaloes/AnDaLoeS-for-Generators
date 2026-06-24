@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/supabase.dart';
@@ -57,7 +58,7 @@ class AdminScreen extends ConsumerWidget {
       ),
       body: isAdminAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => const AppErrorState(),
         data: (isAdmin) {
           if (!isAdmin) {
             return Center(

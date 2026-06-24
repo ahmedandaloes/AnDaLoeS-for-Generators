@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -169,7 +170,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             child: messagesAsync.when(
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('$e')),
+              error: (e, _) => const AppErrorState(),
               data: (messages) {
                 if (messages.isEmpty) {
                   return Center(

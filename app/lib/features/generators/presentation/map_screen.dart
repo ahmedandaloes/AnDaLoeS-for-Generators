@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -92,7 +93,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ),
       body: generatorsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => const AppErrorState(),
         data: (generators) {
           // Group by governorate to count
           final byGov = <String, List<Map<String, dynamic>>>{};

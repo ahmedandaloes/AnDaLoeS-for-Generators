@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
@@ -97,7 +98,7 @@ class _OwnerDashboardScreenState
       ),
       body: companyAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => const AppErrorState(),
         data: (company) {
           if (company == null) {
             return _NoCompanyState(cs: cs);
@@ -331,7 +332,7 @@ class _RequestsTab extends StatelessWidget {
 
     return requestsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('$e')),
+      error: (e, _) => const AppErrorState(),
       data: (items) {
         if (items.isEmpty) {
           return RefreshIndicator(
@@ -631,7 +632,7 @@ class _GeneratorsTabState extends State<_GeneratorsTab> {
 
     return generatorsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('$e')),
+      error: (e, _) => const AppErrorState(),
       data: (items) {
         final sorted = _sorted(items);
         return RefreshIndicator(
@@ -863,7 +864,7 @@ class _HistoryTabState extends State<_HistoryTab> {
 
     return historyAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('$e')),
+      error: (e, _) => const AppErrorState(),
       data: (items) {
         if (items.isEmpty) {
           return Center(

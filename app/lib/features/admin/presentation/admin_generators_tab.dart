@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/supabase.dart';
@@ -45,7 +46,7 @@ class _AdminGeneratorsTabState extends State<AdminGeneratorsTab> {
 
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('$e')),
+      error: (e, _) => const AppErrorState(),
       data: (generators) {
         if (generators.isEmpty) {
           return Center(
