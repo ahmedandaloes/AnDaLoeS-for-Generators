@@ -45,5 +45,16 @@
   "createYourAccount": "أنشئ حسابك",
   "createAccountKeep": "احتفظ بمفضّلتك وإيجاراتك ومحادثاتك.",
   "createAccount": "إنشاء حساب",
-  "profilePhotoUpdated": "تم تحديث صورة الحساب"
+  "profilePhotoUpdated": "تم تحديث صورة الحساب",
+  "mapView": "الخريطة",
+  "notifications": "الإشعارات",
+  "dashboard": "لوحة التحكم",
+  "sort": "ترتيب",
+  "sortBy": "الترتيب حسب",
+  "verified": "موثّق",
+  "emptyGeneratorsTitle": "لا توجد مولدات بعد",
+  "emptyGeneratorsSubtitle": "ستظهر هنا المولدات التي يضيفها المُلّاك.",
+  "noMatchTitle": "لا توجد مولدات مطابقة",
+  "noMatchSubtitle": "جرّب قدرة أو مدينة أو نطاق سعر مختلف.",
+  "clearAllFilters": "مسح كل الفلاتر"
 }

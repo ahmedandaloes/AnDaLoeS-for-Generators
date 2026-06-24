@@ -45,5 +45,16 @@
   "createYourAccount": "Create your account",
   "createAccountKeep": "Keep your favorites, rentals and chats.",
   "createAccount": "Create account",
-  "profilePhotoUpdated": "Profile photo updated"
+  "profilePhotoUpdated": "Profile photo updated",
+  "mapView": "Map view",
+  "notifications": "Notifications",
+  "dashboard": "Dashboard",
+  "sort": "Sort",
+  "sortBy": "Sort by",
+  "verified": "Verified",
+  "emptyGeneratorsTitle": "No generators yet",
+  "emptyGeneratorsSubtitle": "Generators listed by owners will appear here.",
+  "noMatchTitle": "No generators match",
+  "noMatchSubtitle": "Try a different capacity, city, or price range.",
+  "clearAllFilters": "Clear all filters"
 }

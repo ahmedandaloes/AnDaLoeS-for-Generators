@@ -141,13 +141,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.map_outlined),
-                tooltip: 'Map view',
+                tooltip: l.mapView,
                 onPressed: () => context.push(AppRoutes.map),
               ),
               if (loggedIn) ...[
                 IconButton(
                   icon: const Icon(Icons.receipt_long_outlined),
-                  tooltip: 'My Rentals',
+                  tooltip: l.myRentals,
                   onPressed: () => context.push(AppRoutes.myRentals),
                 ),
                 Consumer(
@@ -159,7 +159,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       label: Text('$count'),
                       child: IconButton(
                         icon: const Icon(Icons.notifications_outlined),
-                        tooltip: 'Notifications',
+                        tooltip: l.notifications,
                         onPressed: () => context.push(AppRoutes.notifications),
                       ),
                     );
@@ -176,7 +176,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ] else
                 Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsetsDirectional.only(end: 8),
                   child: FilledButton.tonal(
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(80, 36),
@@ -321,7 +321,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 minimumSize: Size.zero,
                               ),
                               onPressed: () => context.push(AppRoutes.ownerDashboard),
-                              child: Text('Dashboard',
+                              child: Text(l.dashboard,
                                   style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
@@ -335,7 +335,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 minimumSize: Size.zero,
                               ),
                               onPressed: () => context.push(AppRoutes.admin),
-                              child: Text('Admin Panel',
+                              child: Text(l.adminPanel,
                                   style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
@@ -423,7 +423,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     'Assiut', 'Sharqia', 'Aswan', 'Luxor',
                   ])
                     Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsetsDirectional.only(end: 8),
                       child: FilterChip(
                         avatar: const Icon(Icons.location_on_outlined, size: 14),
                         label: Text(gov, style: const TextStyle(fontSize: 12.5)),
@@ -481,7 +481,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         .read(showFavoritesOnlyProvider.notifier)
                         .state = !showingFavs,
                     child: Container(
-                      margin: const EdgeInsets.only(right: 6),
+                      margin: const EdgeInsetsDirectional.only(end: 6),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
@@ -529,7 +529,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(width: 4),
                       Text(
                         filter.sort == GeneratorSortBy.newest
-                            ? 'Sort'
+                            ? l.sort
                             : sortLabels[filter.sort]!.split(':').first.trim(),
                         style: TextStyle(
                           fontSize: 11,
@@ -609,7 +609,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _filterPill(String label, VoidCallback onDelete) => Padding(
-        padding: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsetsDirectional.only(end: 6),
         child: InputChip(
           label: Text(label, style: const TextStyle(fontSize: 12)),
           onDeleted: onDelete,
@@ -619,6 +619,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _showSortSheet(BuildContext context, GeneratorFilter filter) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -639,7 +640,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Text('Sort by',
+            Text(l.sortBy,
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -684,6 +685,7 @@ class _GridGeneratorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     final photos = (generator['photos'] as List?)?.cast<String>() ?? const [];
     final photo = photos.isNotEmpty ? photos.first : null;
     final title = generator['title']?.toString() ?? 'Generator';
@@ -751,7 +753,7 @@ class _GridGeneratorCard extends StatelessWidget {
                     Row(children: [
                       Icon(Icons.verified, size: 13, color: cs.secondary),
                       const SizedBox(width: 3),
-                      Text('Verified',
+                      Text(l.verified,
                           style: TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.w600,
@@ -968,6 +970,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -982,13 +985,13 @@ class _EmptyState extends StatelessWidget {
               child: Icon(Icons.bolt, size: 40, color: cs.primary),
             ),
             const SizedBox(height: 20),
-            Text('No generators yet',
+            Text(l.emptyGeneratorsTitle,
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
                     ?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            Text('Generators listed by owners will appear here.',
+            Text(l.emptyGeneratorsSubtitle,
                 style: Theme.of(context)
                     .textTheme
                     .bodyMedium
@@ -1009,6 +1012,7 @@ class _ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -1017,14 +1021,14 @@ class _ErrorState extends StatelessWidget {
           children: [
             Icon(Icons.wifi_off_rounded, size: 48, color: cs.error),
             const SizedBox(height: 16),
-            Text('Something went wrong',
+            Text(l.errorGeneric,
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
                     ?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 24),
             FilledButton.tonal(
-                onPressed: onRetry, child: const Text('Try again')),
+                onPressed: onRetry, child: Text(l.tryAgain)),
           ],
         ),
       ),
@@ -1040,6 +1044,7 @@ class _NoResultsState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -1076,7 +1081,7 @@ class _NoResultsState extends StatelessWidget {
               ),
             ]),
             const SizedBox(height: 20),
-            const Text('No generators match',
+            Text(l.noMatchTitle,
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             if (filterSummary != null) ...[
@@ -1098,14 +1103,14 @@ class _NoResultsState extends StatelessWidget {
               ),
               const SizedBox(height: 12),
             ],
-            Text('Try different KVA, city, or price range.',
+            Text(l.noMatchSubtitle,
                 style: TextStyle(
                     color: cs.onSurfaceVariant, fontSize: 13),
                 textAlign: TextAlign.center),
             const SizedBox(height: 20),
             FilledButton.tonal(
                 onPressed: onClear,
-                child: const Text('Clear all filters')),
+                child: Text(l.clearAllFilters)),
           ],
         ),
       ),
