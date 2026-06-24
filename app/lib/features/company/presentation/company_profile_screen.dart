@@ -283,22 +283,29 @@ class _CompanyBody extends StatelessWidget {
                     ref
                         .watch(companyReliabilityProvider(companyId))
                         .maybeWhen(
-                          data: (stats) => Row(
-                            mainAxisSize: MainAxisSize.min,
+                          data: (stats) => Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
                             children: [
                               if (stats.acceptanceRate > 0)
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(right: 8),
-                                  child: _StatChip(
-                                    icon: Icons.check_circle_outline,
-                                    label:
-                                        '${(stats.acceptanceRate * 100).round()}% acceptance',
-                                    cs: cs,
-                                    color: stats.acceptanceRate >= 0.8
-                                        ? Colors.green.shade700
-                                        : Colors.orange.shade700,
-                                  ),
+                                _StatChip(
+                                  icon: Icons.check_circle_outline,
+                                  label:
+                                      '${(stats.acceptanceRate * 100).round()}% acceptance',
+                                  cs: cs,
+                                  color: stats.acceptanceRate >= 0.8
+                                      ? Colors.green.shade700
+                                      : Colors.orange.shade700,
+                                ),
+                              if (stats.completed >= 1 && stats.onTimeRate > 0)
+                                _StatChip(
+                                  icon: Icons.local_shipping_outlined,
+                                  label:
+                                      '${(stats.onTimeRate * 100).round()}% on-time',
+                                  cs: cs,
+                                  color: stats.onTimeRate >= 0.8
+                                      ? Colors.green.shade700
+                                      : Colors.orange.shade700,
                                 ),
                               if (stats.avgResponseHours > 0)
                                 _StatChip(
