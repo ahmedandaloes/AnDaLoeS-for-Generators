@@ -231,7 +231,7 @@ Per-page review of the live code. Implement NOW items in the auto-loop on `devel
 - [ ] Detail: hoist a compact verified + on-time/acceptance trust row above the fold (unify the 3 inconsistent badge styles).
 - [x] My Rentals: reads structured delivery_address (regex note-parsing removed); deposit status line (collected on delivery → held → returned). Track Delivery button →48dp. Guest-bookable detail deferred (auth-resume flow is fragile — needs review).
 - [ ] Owner request card: echo deposit "collect EGP X on delivery" reminder; owner dashboard acceptance/on-time chips.
-- [ ] Home: persist filters/sort across sessions (shared_preferences); friendly states.
+- [x] Home filters/sort persisted via shared_preferences (restored at launch, saved on change; search text stays transient). +2 round-trip tests.
 
 ### [SOON]
 - [ ] Detail: move share/copy/report into AppBar so Rent Now dominates. Add cancellation/terms acknowledgement at payment.
