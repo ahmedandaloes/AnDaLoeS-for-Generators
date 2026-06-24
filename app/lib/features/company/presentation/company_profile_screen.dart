@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -46,7 +47,7 @@ class CompanyProfileScreen extends ConsumerWidget {
     return Scaffold(
       body: companyAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => const AppErrorState(),
         data: (company) {
           if (company == null) {
             return const Center(child: Text('Company not found'));
@@ -361,7 +362,7 @@ class _CompanyBody extends StatelessWidget {
             ),
           ),
           error: (e, _) => SliverToBoxAdapter(
-            child: Center(child: Text('$e')),
+            child: const AppErrorState(),
           ),
           data: (gens) {
             if (gens.isEmpty) {

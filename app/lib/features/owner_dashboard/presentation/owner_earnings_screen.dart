@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/supabase.dart';
@@ -86,7 +87,7 @@ class _OwnerEarningsScreenState extends ConsumerState<OwnerEarningsScreen> {
       appBar: AppBar(title: const Text('Earnings')),
       body: earningsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => const AppErrorState(),
         data: (data) {
           final allRentals =
               (data['rentals'] as List).cast<Map<String, dynamic>>();

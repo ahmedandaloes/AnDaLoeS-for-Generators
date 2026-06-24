@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/generator_use_cases.dart';
 
@@ -72,9 +75,56 @@ class GeneratorFilter {
   GeneratorFilter withFuelType(String? f) => _copy(fuelType: f);
   GeneratorFilter withUseCases(Set<String> u) => _copy(useCases: u);
   GeneratorFilter withSort(GeneratorSortBy s) => _copy(sort: s);
+
+  // Persisted fields only (query/search text is transient, not saved).
+  Map<String, dynamic> toJson() => {
+        if (governorate != null) 'gov': governorate,
+        if (maxKva != null) 'kva': maxKva,
+        if (maxPrice != null) 'price': maxPrice,
+        if (fuelType != null) 'fuel': fuelType,
+        if (useCases.isNotEmpty) 'uc': useCases.toList(),
+        'sort': sort.index,
+      };
+
+  static GeneratorFilter fromJson(Map<String, dynamic> j) {
+    final si = (j['sort'] as int?) ?? 0;
+    return GeneratorFilter(
+      governorate: j['gov'] as String?,
+      maxKva: (j['kva'] as num?)?.toDouble(),
+      maxPrice: (j['price'] as num?)?.toDouble(),
+      fuelType: j['fuel'] as String?,
+      useCases: ((j['uc'] as List?)?.cast<String>() ?? const <String>[]).toSet(),
+      sort: (si >= 0 && si < GeneratorSortBy.values.length)
+          ? GeneratorSortBy.values[si]
+          : GeneratorSortBy.newest,
+    );
+  }
 }
 
 const Object _sentinel = Object();
+
+const _filterPrefsKey = 'home_filter_v1';
+
+/// Restores the user's last governorate/kVA/price/fuel/use-case/sort selection.
+Future<GeneratorFilter> loadSavedFilter() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_filterPrefsKey);
+    if (raw == null) return const GeneratorFilter();
+    return GeneratorFilter.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+  } catch (_) {
+    return const GeneratorFilter();
+  }
+}
+
+Future<void> saveFilter(GeneratorFilter f) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_filterPrefsKey, jsonEncode(f.toJson()));
+  } catch (_) {
+    // Non-blocking — persistence is best-effort.
+  }
+}
 
 final filterProvider =
     StateProvider<GeneratorFilter>((ref) => const GeneratorFilter());

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/supabase.dart';
@@ -95,7 +96,7 @@ class AdminUsersTab extends ConsumerWidget {
 
     return usersAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('$e')),
+      error: (e, _) => const AppErrorState(),
       data: (users) {
         if (users.isEmpty) {
           return const Center(child: Text('No users found.'));

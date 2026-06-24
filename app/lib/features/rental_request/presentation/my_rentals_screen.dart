@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/status_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,7 @@ import '../../../core/config/supabase.dart';
 import '../../../core/utils/ics.dart';
 import '../../chat/providers/chat_providers.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../core/widgets/app_error_state.dart';
 
 final myRentalsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
@@ -178,7 +180,10 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
         ),
         body: rentals.when(
           loading: () => _RentalsSkeleton(cs: cs),
-          error: (e, _) => Center(child: Text('$e')),
+          error: (e, _) => AppErrorState(
+            message: "Couldn't load your rentals.",
+            onRetry: () => ref.invalidate(myRentalsProvider),
+          ),
           data: (items) {
             if (items.isEmpty) {
               return _EmptyRentals(cs: cs, onBrowse: () => context.go(AppRoutes.home));
@@ -520,7 +525,7 @@ class _RentalCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef wRef) {
     final gen = rental['generators'] as Map<String, dynamic>?;
     final status = rental['status']?.toString() ?? 'pending';
-    final statusColor = _statusColor(status, cs);
+    final statusColor = rentalStatusColor(status, cs);
     final photos = (gen?['photos'] as List?)?.cast<String>() ?? [];
     final firstPhoto = photos.isNotEmpty ? photos.first : null;
     final rentalId = rental['id']?.toString() ?? '';
@@ -558,6 +563,23 @@ class _RentalCard extends ConsumerWidget {
                       size: 14, color: Colors.white),
                   const SizedBox(width: 6),
                   const Text('Overdue — please contact owner',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white)),
+                ]),
+              ),
+            if (status == 'accepted' && rental['delivered_at'] != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 6),
+                color: cs.primary,
+                child: const Row(children: [
+                  Icon(Icons.local_shipping_outlined,
+                      size: 14, color: Colors.white),
+                  SizedBox(width: 6),
+                  Text('Out for delivery — on its way to you',
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -878,21 +900,15 @@ class _RentalCard extends ConsumerWidget {
                   ),
                 ],
                 Builder(builder: (_) {
-                  final note = rental['note']?.toString() ?? '';
-                  final prefix = 'Delivery address: ';
-                  final addressLine =
-                      note.split('\n').firstWhere(
-                          (l) => l.startsWith(prefix),
-                          orElse: () => '');
-                  final address = addressLine.isNotEmpty
-                      ? addressLine.substring(prefix.length).trim()
-                      : '';
+                  // Structured delivery address (no more regex-parsing the note).
+                  final address =
+                      rental['delivery_address']?.toString() ?? '';
                   if (address.isEmpty) return const SizedBox.shrink();
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(40),
+                        minimumSize: const Size.fromHeight(48),
                         foregroundColor: cs.secondary,
                       ),
                       onPressed: () async {
@@ -906,6 +922,34 @@ class _RentalCard extends ConsumerWidget {
                       label: const Text('Track Delivery',
                           style: TextStyle(fontSize: 13)),
                     ),
+                  );
+                }),
+                // Refundable deposit status
+                Builder(builder: (_) {
+                  final deposit =
+                      (rental['deposit_amount'] as num?)?.toDouble() ?? 0;
+                  if (deposit <= 0 ||
+                      !['accepted', 'active', 'completed'].contains(status)) {
+                    return const SizedBox.shrink();
+                  }
+                  final amt = deposit.toStringAsFixed(0);
+                  final text = switch (status) {
+                    'completed' => 'Deposit EGP $amt · returned after rental',
+                    'active' => 'Refundable deposit: EGP $amt held',
+                    _ => 'Refundable deposit: EGP $amt (collected on delivery)',
+                  };
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Row(children: [
+                      Icon(Icons.shield_outlined,
+                          size: 14, color: cs.onSurfaceVariant),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(text,
+                            style: TextStyle(
+                                fontSize: 12, color: cs.onSurfaceVariant)),
+                      ),
+                    ]),
                   );
                 }),
                 const SizedBox(height: 4),
@@ -1119,18 +1163,6 @@ class _RentalCard extends ConsumerWidget {
           SnackBar(content: Text('Error: $e')));
       }
     }
-  }
-
-  Color _statusColor(String status, ColorScheme cs) {
-    return switch (status) {
-      'pending' => Colors.orange,
-      'accepted' => Colors.green,
-      'active' => cs.primary,
-      'completed' => Colors.green.shade700,
-      'rejected' => cs.error,
-      'cancelled' => cs.onSurfaceVariant,
-      _ => cs.onSurfaceVariant,
-    };
   }
 
   String _statusLabel(String status) {

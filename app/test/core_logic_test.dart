@@ -6,6 +6,7 @@ import 'package:andaloes/core/utils/db_error.dart';
 import 'package:andaloes/core/utils/ics.dart';
 import 'package:andaloes/core/constants/generator_sizes.dart';
 import 'package:andaloes/core/constants/generator_use_cases.dart';
+import 'package:andaloes/features/generators/presentation/widgets/generator_filter.dart';
 
 void main() {
   group('projectCommission', () {
@@ -32,6 +33,34 @@ void main() {
       final r = projectCommission(40, (type: 'fixed', value: 50));
       expect(r.commission, 40);
       expect(r.net, 0);
+    });
+  });
+
+  group('GeneratorFilter persistence', () {
+    test('round-trips through JSON (query excluded)', () {
+      const f = GeneratorFilter(
+        query: 'transient',
+        governorate: 'Cairo',
+        maxKva: 250,
+        maxPrice: 1200,
+        fuelType: 'diesel',
+        useCases: {'events', 'construction'},
+        sort: GeneratorSortBy.priceLow,
+      );
+      final back = GeneratorFilter.fromJson(f.toJson());
+      expect(back.governorate, 'Cairo');
+      expect(back.maxKva, 250);
+      expect(back.maxPrice, 1200);
+      expect(back.fuelType, 'diesel');
+      expect(back.useCases, {'events', 'construction'});
+      expect(back.sort, GeneratorSortBy.priceLow);
+      expect(back.query, ''); // search text is not persisted
+    });
+
+    test('empty filter round-trips to defaults', () {
+      final back = GeneratorFilter.fromJson(const GeneratorFilter().toJson());
+      expect(back.hasActiveFilters, false);
+      expect(back.sort, GeneratorSortBy.newest);
     });
   });
 

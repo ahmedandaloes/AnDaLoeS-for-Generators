@@ -215,6 +215,34 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 
 ---
 
+## 🎨 Page Improvement Plan (product-owner + UX experts, 2026-06-24)
+Per-page review of the live code. Implement NOW items in the auto-loop on `development`.
+
+### Cross-cutting [NOW] — highest leverage (clear many items at once)
+- [x] Shared AppErrorState rolled out app-wide — all ~19 screens (detail, my_rentals, notifications, owner dashboard + tabs, earnings, edit-generator, chat, offer/receipt/invoice, all admin tabs, map, company profile) now show a friendly error + retry instead of raw $e.
+- [~] Status colors tokenized — shared core/theme/status_colors.dart (rentalStatusColor + qualityColor) replaces duplicated mappings in My Rentals + owner request card. More screens to adopt qualityColor/cs tokens next.
+- [ ] ≥48dp tap-target pass — home sort/favorites/login pills, detail small FABs, owner request-card buttons, dashboard Earnings button (32px), _MonthChip, my_rentals report/receipt/calendar controls.
+- [x] Chat: auto-scroll only on new messages (guarded by message-count change) — no longer fires every rebuild or fights user scroll-up.
+
+### Business wins [NOW] (product owner)
+- [ ] Detail: guest can pick dates/address first; require auth only at "Send request" (recovers the biggest browse→request drop-off).
+- [x] Delivery handshake (DB 0031 delivered_at): owner "Out for delivery" → "Confirm delivered · start rental" (accepted→active); customer sees an "Out for delivery — on its way" banner. Owner-driven (no customer→active RLS hole). Feeds on-time data via delivered_at.
+- [x] Payment: itemized summary — Rental (N days, best-rate noted) + Refundable deposit + Total payable on delivery, as a clean breakdown card. (Sticky bottom bar = SOON.)
+- [ ] Detail: hoist a compact verified + on-time/acceptance trust row above the fold (unify the 3 inconsistent badge styles).
+- [x] My Rentals: reads structured delivery_address (regex note-parsing removed); deposit status line (collected on delivery → held → returned). Track Delivery button →48dp. Guest-bookable detail deferred (auth-resume flow is fragile — needs review).
+- [ ] Owner request card: echo deposit "collect EGP X on delivery" reminder; owner dashboard acceptance/on-time chips.
+- [x] Home filters/sort persisted via shared_preferences (restored at launch, saved on change; search text stays transient). +2 round-trip tests.
+
+### [SOON]
+- [ ] Detail: move share/copy/report into AppBar so Rent Now dominates. Add cancellation/terms acknowledgement at payment.
+- [ ] My Rentals: reduce 7 stacked buttons to one primary + overflow; show cancellation reason on cancelled cards.
+- [ ] Company profile: show review text + documents-verified indicator. Add Generator: clone listing + local draft.
+- [ ] Login: friendly auth errors + resend-code. Notifications: list skeleton + stronger unread signal.
+- [ ] Document screens (invoice/receipt/offer): theme the scaffold/greens (dark-mode), friendly errors, format ISO dates.
+- [ ] Home: min-kVA filter + fuel/verified on card; saved-search alerts (favorites + use_cases + notifications).
+
+---
+
 ## Loop State (updated each iteration)
 **Last iteration:** 2026-06-23
 **Working branch:** `development` (main is integration/release)
@@ -259,3 +287,23 @@ autonomous-loops skill). GOAL.md is the cross-iteration context bridge
 ### CI gate (risky changes)
 For schema/auth/money changes, prefer a PR into `main` and wait for the
 `flutter.yml` checks before merge, instead of pushing straight through.
+
+---
+
+## 📘 Requirements v2.0 alignment (owner spec, 2026-06-24)
+The owner's authoritative spec is captured in [docs/REQUIREMENTS_v2.md](docs/REQUIREMENTS_v2.md);
+build-vs-spec gap analysis in [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md).
+Much of Phase 0–1 is built (marketplace, booking lifecycle, owner delivery + handshake,
+% commission ledger/COD, no-double-booking, VAT invoices, admin console, search).
+Key remaining: owner KYC publish-gating, Arabic-first/RTL, digital handover (photos+fuel/meter),
+new-customer trust fee, B2B renter ID, listing fields (operated/dry-hire, fuel policy, accessories),
+disputes workflow. Decisions needed: Section 18 (commission enforcement, trust-fee collection,
+listing approval, pricing guardrails, liability). Sequence proposed in GAP_ANALYSIS.md.
+
+## 🌍 Arabic-first + RTL rollout (owner decision 2026-06-24)
+Decision: Arabic default + full RTL. State: RTL infra present (gen-l10n Global delegates, `ar` supported, toggle); only ~14 strings externalized, ~345 hardcoded English Text() across ~28 screens.
+Plan (loop, screen-by-screen): (1) grow app_en.arb + app_ar.arb (real Arabic) with each screen's strings; (2) replace hardcoded Text() with AppLocalizations; (3) RTL audit — EdgeInsets.only(left/right) → start/end, Align/Row directionality; (4) flip locale default to Arabic once the bulk is translated (avoid half-Arabic UI). Shared/common strings first (highest leverage), then high-traffic screens (home, detail, rental request, my rentals, owner dashboard), then the rest.
+- [x] Foundation: common strings (actions/errors) in en+ar; AppErrorState localized (app-wide).
+- [ ] Localize: bottom nav + profile + home → detail → rental request/payment → my rentals → owner dashboard → admin → rest.
+- [ ] RTL padding/Align audit per screen as localized.
+- [ ] Flip default locale to Arabic when ≥ ~80% strings translated.

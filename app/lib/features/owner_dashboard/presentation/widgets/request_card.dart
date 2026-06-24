@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/status_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,6 +10,7 @@ import '../../../../core/utils/db_error.dart';
 import '../../../../core/widgets/press_scale.dart';
 import '../../../chat/providers/chat_providers.dart';
 import '../../../ratings/presentation/rate_rental_screen.dart';
+import '../../../rental_request/data/rental_repository.dart';
 import '../../providers/owner_providers.dart'
     show ownerRequestsProvider, commissionConfigProvider;
 
@@ -252,19 +254,40 @@ class OwnerRequestCard extends StatelessWidget {
             ],
             if (status == 'accepted') ...[
               const SizedBox(height: 8),
-              FilledButton.tonal(
-                style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40)),
-                onPressed: () =>
-                    _updateStatus(context, request['id'].toString(), 'active'),
-                child: const Text('Mark as started'),
-              ),
+              if (request['delivered_at'] == null)
+                FilledButton.tonalIcon(
+                  style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48)),
+                  onPressed: () => _markOutForDelivery(context),
+                  icon: const Icon(Icons.local_shipping_outlined, size: 18),
+                  label: const Text('Out for delivery'),
+                )
+              else ...[
+                Row(children: [
+                  Icon(Icons.local_shipping_outlined,
+                      size: 14, color: cs.primary),
+                  const SizedBox(width: 6),
+                  Text('Out for delivery',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: cs.primary)),
+                ]),
+                const SizedBox(height: 8),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48)),
+                  onPressed: () => _updateStatus(
+                      context, request['id'].toString(), 'active'),
+                  child: const Text('Confirm delivered · start rental'),
+                ),
+              ],
             ],
             if (status == 'active') ...[
               const SizedBox(height: 8),
               FilledButton(
                 style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40)),
+                    minimumSize: const Size.fromHeight(48)),
                 onPressed: () => _updateStatus(
                     context, request['id'].toString(), 'completed'),
                 child: const Text('Mark as completed'),
@@ -364,6 +387,20 @@ class OwnerRequestCard extends StatelessWidget {
     }
   }
 
+  Future<void> _markOutForDelivery(BuildContext context) async {
+    try {
+      await ref
+          .read(rentalRepositoryProvider)
+          .markOutForDelivery(request['id'].toString());
+      ref.invalidate(ownerRequestsProvider(companyId));
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(friendlyDbError(e))));
+      }
+    }
+  }
+
   Future<void> _updateStatus(
       BuildContext context, String requestId, String newStatus,
       {String? ownerNote}) async {
@@ -444,14 +481,15 @@ class _RequestStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (color, label) = switch (status) {
-      'pending' => (Colors.orange, 'Pending'),
-      'accepted' => (Colors.green, 'Accepted'),
-      'active' => (cs.primary, 'Active'),
-      'completed' => (Colors.green.shade700, 'Completed'),
-      'rejected' => (cs.error, 'Rejected'),
-      'cancelled' => (cs.onSurfaceVariant, 'Cancelled'),
-      _ => (cs.onSurfaceVariant, status),
+    final color = rentalStatusColor(status, cs);
+    final label = switch (status) {
+      'pending' => 'Pending',
+      'accepted' => 'Accepted',
+      'active' => 'Active',
+      'completed' => 'Completed',
+      'rejected' => 'Rejected',
+      'cancelled' => 'Cancelled',
+      _ => status,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

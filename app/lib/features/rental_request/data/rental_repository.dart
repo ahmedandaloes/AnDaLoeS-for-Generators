@@ -39,6 +39,13 @@ class RentalRepository {
     return (data as List).cast<Map<String, dynamic>>();
   }
 
+  /// Owner marks an accepted rental as out for delivery (timestamp only;
+  /// status stays accepted until the owner confirms delivery → active).
+  Future<void> markOutForDelivery(String id) async {
+    await supabase.from('rental_requests').update(
+        {'delivered_at': DateTime.now().toUtc().toIso8601String()}).eq('id', id);
+  }
+
   /// Count of accepted/active rentals overlapping [start]..[end] (yyyy-MM-dd).
   Future<int> overlapCount(
       String generatorId, String start, String end) async {

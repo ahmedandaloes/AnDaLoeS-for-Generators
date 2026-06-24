@@ -59,6 +59,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    // Persist filters/sort whenever they change (best-effort).
+    ref.listen<GeneratorFilter>(
+        filterProvider, (_, next) => saveFilter(next));
     final allGenerators = ref.watch(generatorsProvider);
     final filter = ref.watch(filterProvider);
     final recentSearches = ref.watch(recentSearchesProvider);

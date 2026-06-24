@@ -8,6 +8,7 @@ import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode_provider.dart';
 import 'features/auth/presentation/onboarding_screen.dart';
+import 'features/generators/presentation/widgets/generator_filter.dart';
 import 'l10n/app_localizations.dart';
 
 Future<void> main() async {
@@ -19,8 +20,12 @@ Future<void> main() async {
     container.read(themeModeProvider.notifier).load(),
     container.read(localeProvider.notifier).load(),
     hasSeenOnboarding(),
+    loadSavedFilter(),
   ]);
   final seenOnboarding = results[2] as bool;
+  // Restore the user's last home filters/sort.
+  container.read(filterProvider.notifier).state =
+      results[3] as GeneratorFilter;
 
   runApp(UncontrolledProviderScope(
     container: container,

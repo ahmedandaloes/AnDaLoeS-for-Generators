@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -89,7 +90,7 @@ class AdminStatsTab extends StatelessWidget {
 
     return statsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('$e')),
+      error: (e, _) => const AppErrorState(),
       data: (stats) => Scaffold(
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _exportCsv(context, stats),

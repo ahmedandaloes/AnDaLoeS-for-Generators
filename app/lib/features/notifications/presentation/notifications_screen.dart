@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../core/widgets/app_error_state.dart';
 import '../data/notifications_repository.dart';
 import '../providers/notifications_providers.dart'
     show notificationsProvider, unreadCountProvider;
@@ -95,7 +96,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       ),
       body: notifAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => AppErrorState(
+          message: "Couldn't load notifications.",
+          onRetry: () => ref.invalidate(notificationsProvider),
+        ),
         data: (items) {
           if (items.isEmpty) {
             return RefreshIndicator(
