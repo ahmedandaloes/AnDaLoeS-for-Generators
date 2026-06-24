@@ -976,6 +976,7 @@ class ProfileScreen extends ConsumerWidget {
 
   Future<void> _uploadAvatar(
       BuildContext context, WidgetRef ref, ColorScheme cs) async {
+    final l = AppLocalizations.of(context)!;
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: false,
@@ -1013,8 +1014,8 @@ class ProfileScreen extends ConsumerWidget {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile photo updated'),
+          SnackBar(
+            content: Text(l.profilePhotoUpdated),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1022,7 +1023,7 @@ class ProfileScreen extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e')),
+          SnackBar(content: Text(l.uploadFailed)),
         );
       }
     }
@@ -1047,8 +1048,9 @@ class ProfileScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
+        final l = AppLocalizations.of(ctx)!;
         return AlertDialog(
-          title: const Text('Sign out?'),
+          title: Text(l.signOutQuestion),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1090,18 +1092,18 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
               ],
-              const Text('You will need to sign in again to access your account.'),
+              Text(l.signOutBody),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Stay'),
+              child: Text(l.stay),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: FilledButton.styleFrom(backgroundColor: cs.error),
-              child: const Text('Sign out'),
+              child: Text(l.signOut),
             ),
           ],
         );
@@ -1116,17 +1118,18 @@ class ProfileScreen extends ConsumerWidget {
 
   Future<void> _editName(
       BuildContext context, WidgetRef ref, String current) async {
+    final l = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: current);
     final newName = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Display name'),
+        title: Text(l.displayName),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Your name',
-            hintText: 'e.g. Ahmed Mostafa',
+          decoration: InputDecoration(
+            labelText: l.yourName,
+            hintText: l.yourNameHint,
           ),
           textCapitalization: TextCapitalization.words,
           onSubmitted: (v) => Navigator.pop(context, v.trim()),
@@ -1134,12 +1137,12 @@ class ProfileScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () =>
                 Navigator.pop(context, controller.text.trim()),
-            child: const Text('Save'),
+            child: Text(l.save),
           ),
         ],
       ),
@@ -1156,31 +1159,32 @@ class ProfileScreen extends ConsumerWidget {
 
   Future<void> _editPhone(
       BuildContext context, WidgetRef ref, String current) async {
+    final l = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: current);
     final newPhone = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Phone number'),
+        title: Text(l.phoneLabel),
         content: TextField(
           controller: controller,
           autofocus: true,
           keyboardType: TextInputType.phone,
-          decoration: const InputDecoration(
-            labelText: 'Phone',
-            hintText: '01XXXXXXXXX',
-            prefixIcon: Icon(Icons.phone_outlined),
+          decoration: InputDecoration(
+            labelText: l.phoneLabel,
+            hintText: l.phoneHintNumber,
+            prefixIcon: const Icon(Icons.phone_outlined),
           ),
           onSubmitted: (v) => Navigator.pop(context, v.trim()),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () =>
                 Navigator.pop(context, controller.text.trim()),
-            child: const Text('Save'),
+            child: Text(l.save),
           ),
         ],
       ),
@@ -1211,6 +1215,7 @@ Future<void> _showGuestUpgrade(BuildContext context, WidgetRef ref) async {
     showDragHandle: true,
     builder: (sheetCtx) => StatefulBuilder(builder: (sheetCtx, setSheet) {
       final cs = Theme.of(sheetCtx).colorScheme;
+      final l = AppLocalizations.of(sheetCtx)!;
       Future<void> submit() async {
         final email = emailC.text.trim();
         final pass = passC.text;
@@ -1235,7 +1240,7 @@ Future<void> _showGuestUpgrade(BuildContext context, WidgetRef ref) async {
           setSheet(() => loading = false);
           if (sheetCtx.mounted) {
             ScaffoldMessenger.of(sheetCtx).showSnackBar(SnackBar(
-                content: Text('Could not create account. Please try again.')));
+                content: Text(l.couldNotCreateAccount)));
           }
         }
       }
@@ -1247,10 +1252,10 @@ Future<void> _showGuestUpgrade(BuildContext context, WidgetRef ref) async {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Create your account',
+            Text(l.createYourAccount,
                 style: Theme.of(sheetCtx).textTheme.titleLarge),
             const SizedBox(height: 4),
-            Text('Keep your favorites, rentals and chats.',
+            Text(l.createAccountKeep,
                 style: TextStyle(color: cs.onSurfaceVariant)),
             const SizedBox(height: 16),
             TextField(
@@ -1279,7 +1284,7 @@ Future<void> _showGuestUpgrade(BuildContext context, WidgetRef ref) async {
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Create account'),
+                  : Text(l.createAccount),
             ),
           ],
         ),
@@ -1372,6 +1377,7 @@ class _EditablePhoneRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final hasPhone = phone != null && phone!.isNotEmpty;
     return ListTile(
       leading: Container(
@@ -1383,7 +1389,7 @@ class _EditablePhoneRow extends StatelessWidget {
         child: Icon(Icons.phone_outlined,
             size: 18, color: cs.onSurfaceVariant),
       ),
-      title: Text('Phone',
+      title: Text(l.phoneLabel,
           style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
       subtitle: Text(
         hasPhone ? phone! : 'Tap to add phone number',
@@ -1484,6 +1490,7 @@ class _ReferralCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final code = _code;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1505,7 +1512,7 @@ class _ReferralCard extends StatelessWidget {
           Row(children: [
             Icon(Icons.card_giftcard_outlined, size: 18, color: cs.primary),
             const SizedBox(width: 8),
-            Text('Your referral code',
+            Text(l.yourReferralCode,
                 style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -1538,7 +1545,7 @@ class _ReferralCard extends StatelessWidget {
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: code));
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: const Text('Referral code copied'),
+                  content: Text(l.referralCodeCopied),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
