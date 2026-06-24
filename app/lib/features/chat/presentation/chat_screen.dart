@@ -1,23 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show RealtimeChannel;
 
-import '../../../core/config/supabase.dart';
+import '../../../core/widgets/app_error_state.dart';
+import '../../../l10n/app_localizations.dart';
+import '../data/repositories/message_repository.dart';
 
 final _messagesProvider =
     StreamProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
         (ref, rentalRequestId) {
-  return supabase
-      .from('messages')
-      .stream(primaryKey: ['id'])
-      .eq('rental_request_id', rentalRequestId)
-      .order('created_at')
-      .map((rows) => rows.cast<Map<String, dynamic>>());
+  return ref
+      .read(messageRepositoryProvider)
+      .messagesStream(rentalRequestId);
 });
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -42,21 +39,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   int _lastMessageCount = 0;
   Timer? _typingClearTimer;
   RealtimeChannel? _typingChannel;
-  final _uid = supabase.auth.currentUser?.id ?? '';
+  late final String _uid;
 
   @override
   void initState() {
     super.initState();
+    _uid = ref.read(messageRepositoryProvider).currentUserId ?? '';
     _controller.addListener(_onTextChanged);
     _subscribeTyping();
   }
 
   void _subscribeTyping() {
-    _typingChannel = supabase
-        .channel('typing-${widget.rentalRequestId}')
-        .onBroadcast(
-          event: 'typing',
-          callback: (payload) {
+    final repo = ref.read(messageRepositoryProvider);
+    _typingChannel = repo
+        .typingChannel(
+          widget.rentalRequestId,
+          onTyping: (payload) {
             final sender = payload['uid']?.toString();
             if (sender == null || sender == _uid) return;
             if (mounted) {
@@ -110,11 +108,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     setState(() => _sending = true);
     _controller.clear();
     try {
-      await supabase.from('messages').insert({
-        'rental_request_id': widget.rentalRequestId,
-        'sender_id': _uid,
-        'body': body,
-      });
+      await ref.read(messageRepositoryProvider).insertMessage(
+            rentalRequestId: widget.rentalRequestId,
+            senderId: _uid,
+            body: body,
+          );
       HapticFeedback.lightImpact();
       _scrollToBottom();
     } catch (e) {

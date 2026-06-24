@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show RealtimeChannel;
 
 import '../../../../core/config/supabase.dart';
 import '../../domain/entities/message.dart';
@@ -62,5 +63,38 @@ class MessageRepository implements IMessageRepository {
 
     final res = await query;
     return (res as List).length;
+  }
+
+  Stream<List<Map<String, dynamic>>> messagesStream(String rentalRequestId) {
+    return supabase
+        .from('messages')
+        .stream(primaryKey: ['id'])
+        .eq('rental_request_id', rentalRequestId)
+        .order('created_at')
+        .map((rows) => rows.cast<Map<String, dynamic>>());
+  }
+
+  Future<void> insertMessage({
+    required String rentalRequestId,
+    required String senderId,
+    required String body,
+  }) async {
+    await supabase.from('messages').insert({
+      'rental_request_id': rentalRequestId,
+      'sender_id': senderId,
+      'body': body,
+    });
+  }
+
+  RealtimeChannel typingChannel(
+    String rentalRequestId, {
+    required void Function(Map<String, dynamic>) onTyping,
+  }) {
+    return supabase
+        .channel('typing-$rentalRequestId')
+        .onBroadcast(
+          event: 'typing',
+          callback: onTyping,
+        );
   }
 }
