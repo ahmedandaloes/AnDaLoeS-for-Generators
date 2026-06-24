@@ -10,6 +10,7 @@ import '../../../../core/utils/db_error.dart';
 import '../../../../core/widgets/press_scale.dart';
 import '../../../chat/providers/chat_providers.dart';
 import '../../../ratings/presentation/rate_rental_screen.dart';
+import '../../../rental_request/data/rental_repository.dart';
 import '../../providers/owner_providers.dart'
     show ownerRequestsProvider, commissionConfigProvider;
 
@@ -253,19 +254,40 @@ class OwnerRequestCard extends StatelessWidget {
             ],
             if (status == 'accepted') ...[
               const SizedBox(height: 8),
-              FilledButton.tonal(
-                style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40)),
-                onPressed: () =>
-                    _updateStatus(context, request['id'].toString(), 'active'),
-                child: const Text('Mark as started'),
-              ),
+              if (request['delivered_at'] == null)
+                FilledButton.tonalIcon(
+                  style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48)),
+                  onPressed: () => _markOutForDelivery(context),
+                  icon: const Icon(Icons.local_shipping_outlined, size: 18),
+                  label: const Text('Out for delivery'),
+                )
+              else ...[
+                Row(children: [
+                  Icon(Icons.local_shipping_outlined,
+                      size: 14, color: cs.primary),
+                  const SizedBox(width: 6),
+                  Text('Out for delivery',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: cs.primary)),
+                ]),
+                const SizedBox(height: 8),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48)),
+                  onPressed: () => _updateStatus(
+                      context, request['id'].toString(), 'active'),
+                  child: const Text('Confirm delivered · start rental'),
+                ),
+              ],
             ],
             if (status == 'active') ...[
               const SizedBox(height: 8),
               FilledButton(
                 style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40)),
+                    minimumSize: const Size.fromHeight(48)),
                 onPressed: () => _updateStatus(
                     context, request['id'].toString(), 'completed'),
                 child: const Text('Mark as completed'),
@@ -362,6 +384,20 @@ class OwnerRequestCard extends StatelessWidget {
       final note = noteController.text.trim();
       await _updateStatus(context, requestId, 'rejected',
           ownerNote: note.isNotEmpty ? note : null);
+    }
+  }
+
+  Future<void> _markOutForDelivery(BuildContext context) async {
+    try {
+      await ref
+          .read(rentalRepositoryProvider)
+          .markOutForDelivery(request['id'].toString());
+      ref.invalidate(ownerRequestsProvider(companyId));
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(friendlyDbError(e))));
+      }
     }
   }
 

@@ -226,7 +226,7 @@ Per-page review of the live code. Implement NOW items in the auto-loop on `devel
 
 ### Business wins [NOW] (product owner)
 - [ ] Detail: guest can pick dates/address first; require auth only at "Send request" (recovers the biggest browse→request drop-off).
-- [ ] Owner request card: delivery-confirmation step ("Out for delivery" → customer "Received") instead of accepted→active in one tap — the core on-time fulfillment gap; feeds reliability badges real data.
+- [x] Delivery handshake (DB 0031 delivered_at): owner "Out for delivery" → "Confirm delivered · start rental" (accepted→active); customer sees an "Out for delivery — on its way" banner. Owner-driven (no customer→active RLS hole). Feeds on-time data via delivered_at.
 - [x] Payment: itemized summary — Rental (N days, best-rate noted) + Refundable deposit + Total payable on delivery, as a clean breakdown card. (Sticky bottom bar = SOON.)
 - [ ] Detail: hoist a compact verified + on-time/acceptance trust row above the fold (unify the 3 inconsistent badge styles).
 - [ ] My Rentals: read structured delivery_address (stop regex-parsing the note); show deposit status; friendly error.

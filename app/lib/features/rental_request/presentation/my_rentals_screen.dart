@@ -569,6 +569,23 @@ class _RentalCard extends ConsumerWidget {
                           color: Colors.white)),
                 ]),
               ),
+            if (status == 'accepted' && rental['delivered_at'] != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 6),
+                color: cs.primary,
+                child: const Row(children: [
+                  Icon(Icons.local_shipping_outlined,
+                      size: 14, color: Colors.white),
+                  SizedBox(width: 6),
+                  Text('Out for delivery — on its way to you',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white)),
+                ]),
+              ),
             Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
