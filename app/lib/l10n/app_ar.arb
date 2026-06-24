@@ -219,5 +219,14 @@
   "noOpenReports": "لا توجد بلاغات مفتوحة",
   "allClear": "كل شيء على ما يرام!",
   "dismiss": "تجاهل",
-  "resolve": "حل"
+  "resolve": "حل",
+  "setUnavailable": "إيقاف الإتاحة",
+  "reactivate": "إعادة التفعيل",
+  "opsOverdueTitle": "إيجارات متأخرة",
+  "opsOverdueSubtitle": "نشطة بعد تاريخ انتهائها — لم تُرجَع",
+  "opsStaleTitle": "طلبات متعثّرة",
+  "opsStaleSubtitle": "قيد الانتظار أكثر من 24 ساعة — المالك لا يرد",
+  "opsNotStartedTitle": "لم تبدأ في الموعد",
+  "opsNotStartedSubtitle": "مقبولة لكن مرّ تاريخ البدء دون تفعيل",
+  "allClearShort": "كل شيء على ما يرام"
 }

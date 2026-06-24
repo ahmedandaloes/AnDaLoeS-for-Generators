@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../rental_request/data/rental_repository.dart';
@@ -18,6 +19,7 @@ class AdminOpsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef wRef) {
+    final l = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     return RefreshIndicator(
       onRefresh: () async {
@@ -29,24 +31,24 @@ class AdminOpsTab extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
         children: [
           _Section(
-            title: 'Overdue rentals',
-            subtitle: 'Active past their end date — not returned',
+            title: l.opsOverdueTitle,
+            subtitle: l.opsOverdueSubtitle,
             icon: Icons.warning_amber_rounded,
             color: Colors.red.shade700,
             async: wRef.watch(_overdueActiveProvider),
             cs: cs,
           ),
           _Section(
-            title: 'Stale requests',
-            subtitle: 'Pending > 24h — owner not responding',
+            title: l.opsStaleTitle,
+            subtitle: l.opsStaleSubtitle,
             icon: Icons.hourglass_bottom_rounded,
             color: Colors.orange.shade800,
             async: wRef.watch(_stalePendingProvider),
             cs: cs,
           ),
           _Section(
-            title: 'Not started on time',
-            subtitle: 'Accepted but start date passed without going active',
+            title: l.opsNotStartedTitle,
+            subtitle: l.opsNotStartedSubtitle,
             icon: Icons.event_busy_outlined,
             color: Colors.deepPurple.shade400,
             async: wRef.watch(_overdueAcceptedProvider),
@@ -77,6 +79,7 @@ class _Section extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = async.valueOrNull ?? const [];
+    final l = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Column(
@@ -119,7 +122,7 @@ class _Section extends StatelessWidget {
                   Icon(Icons.check_circle_outline,
                       size: 16, color: Colors.green.shade600),
                   const SizedBox(width: 6),
-                  Text('All clear',
+                  Text(l.allClearShort,
                       style: TextStyle(
                           fontSize: 13, color: cs.onSurfaceVariant)),
                 ]);

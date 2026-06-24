@@ -234,5 +234,14 @@
   "noOpenReports": "No open reports",
   "allClear": "All clear!",
   "dismiss": "Dismiss",
-  "resolve": "Resolve"
+  "resolve": "Resolve",
+  "setUnavailable": "Set unavailable",
+  "reactivate": "Re-activate",
+  "opsOverdueTitle": "Overdue rentals",
+  "opsOverdueSubtitle": "Active past their end date — not returned",
+  "opsStaleTitle": "Stale requests",
+  "opsStaleSubtitle": "Pending > 24h — owner not responding",
+  "opsNotStartedTitle": "Not started on time",
+  "opsNotStartedSubtitle": "Accepted but start date passed without going active",
+  "allClearShort": "All clear"
 }

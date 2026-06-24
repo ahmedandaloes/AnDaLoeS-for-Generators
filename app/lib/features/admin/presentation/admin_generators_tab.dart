@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -41,6 +42,7 @@ class _AdminGeneratorsTabState extends State<AdminGeneratorsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final async = widget.ref.watch(adminGeneratorsProvider);
 
@@ -56,7 +58,7 @@ class _AdminGeneratorsTabState extends State<AdminGeneratorsTab> {
                 Icon(Icons.bolt_outlined,
                     size: 48, color: cs.onSurfaceVariant),
                 const SizedBox(height: 8),
-                Text('No generators yet',
+                Text(l.emptyGeneratorsTitle,
                     style: TextStyle(color: cs.onSurfaceVariant)),
               ],
             ),
@@ -96,6 +98,7 @@ class _GenCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final genId = g['id']?.toString() ?? '';
     final status = g['status']?.toString() ?? '';
@@ -138,7 +141,7 @@ class _GenCard extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsetsDirectional.only(end: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -200,7 +203,7 @@ class _GenCard extends StatelessWidget {
                         ? null
                         : () => onStatus(genId, 'available'),
                     icon: const Icon(Icons.check_rounded, size: 16),
-                    label: const Text('Approve'),
+                    label: Text(l.approve),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.green.shade700,
                       side: BorderSide(color: Colors.green.shade400),
@@ -214,7 +217,7 @@ class _GenCard extends StatelessWidget {
                         ? null
                         : () => onStatus(genId, 'rejected'),
                     icon: const Icon(Icons.close_rounded, size: 16),
-                    label: const Text('Reject'),
+                    label: Text(l.reject),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: cs.error,
                       side:
@@ -236,7 +239,7 @@ class _GenCard extends StatelessWidget {
                           ? null
                           : () => onStatus(genId, 'unavailable'),
                       icon: const Icon(Icons.pause_circle_outline, size: 14),
-                      label: const Text('Set unavailable'),
+                      label: Text(l.setUnavailable),
                       style: TextButton.styleFrom(
                           foregroundColor: cs.onSurfaceVariant,
                           textStyle: const TextStyle(fontSize: 12)),
@@ -247,7 +250,7 @@ class _GenCard extends StatelessWidget {
                           ? null
                           : () => onStatus(genId, 'available'),
                       icon: const Icon(Icons.play_circle_outline, size: 14),
-                      label: const Text('Re-activate'),
+                      label: Text(l.reactivate),
                       style: TextButton.styleFrom(
                           foregroundColor: Colors.green.shade700,
                           textStyle: const TextStyle(fontSize: 12)),
