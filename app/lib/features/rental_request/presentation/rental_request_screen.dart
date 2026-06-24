@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../../core/utils/pricing.dart';
 import '../../../core/widgets/press_scale.dart';
 import '../../generators/data/generator_repository.dart';
@@ -9,14 +8,8 @@ import '../data/rental_repository.dart';
 import 'payment_confirmation_screen.dart';
 
 final _generatorForRequestProvider =
-    FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, id) async {
-  final data = await supabase
-      .from('generators')
-      .select('id, title, capacity_kva, price_per_day, price_per_week, price_per_month, city, governorate, company_id')
-      .eq('id', id)
-      .single();
-  return data;
-});
+    FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
+        (ref, id) => ref.read(generatorRepositoryProvider).fetchById(id));
 
 final _requestBookedRangesProvider =
     FutureProvider.autoDispose.family<List<DateTimeRange>, String>(
