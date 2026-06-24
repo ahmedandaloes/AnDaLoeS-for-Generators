@@ -107,7 +107,7 @@ analyze/test/review/DB gate). Specialists:
 - Architecture: `code-architect`, `security-architect`, `data-architect`
 - Build: `flutter-ui-expert`, `riverpod-state-expert`, `supabase-db-expert`, `rental-workflow-expert`
 - Platform: `flutter-ios-expert`, `flutter-android-expert`, `release-ci-expert`
-- Quality/Security: `flutter-security-expert`, `security-rls-auditor`, `flutter-test-expert`
+- Quality/Security: `flutter-security-expert`, `security-rls-auditor`, `flutter-test-expert`, `qa-expert` (E2E/functional/regression), `arabic-qa-expert` (Arabic + RTL localization QA)
 - Product/Business (own GOAL.md): `product-strategy-expert`, `marketplace-growth-expert`, `monetization-expert`
 
 ### Global agents (`~/.claude/agents/`)

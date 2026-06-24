@@ -63,6 +63,8 @@ define new agents when a durable capability gap appears.
 | `flutter-security-expert` | Client-side: secrets, secure storage, deep links, hardening. |
 | `security-rls-auditor` | Backend authorization: 3-role model, RLS policies, input validation. |
 | `flutter-test-expert` | Unit/widget/integration tests, mocking, 80% coverage goal, TDD. |
+| `qa-expert` | End-to-end / functional / regression / on-device QA across customer, owner, admin journeys. Bug reports with severity. |
+| `arabic-qa-expert` | Arabic + RTL localization QA: translation quality, completeness (no leftover English), RTL mirroring, ICU plurals, EGP/number formatting. |
 
 ## Product & Business (shape goals in GOAL.md)
 | Agent | Expertise |
