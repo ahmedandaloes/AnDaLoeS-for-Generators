@@ -16,6 +16,17 @@ final rentalTimelineProvider = FutureProvider.family<
   return (data as List).cast<Map<String, dynamic>>();
 });
 
+/// Fetches delivery + return handover records for a rental (at most 2 rows).
+final rentalHandoversProvider = FutureProvider.family<
+    List<Map<String, dynamic>>, String>((ref, rentalId) async {
+  final data = await supabase
+      .from('rental_handovers')
+      .select('type, fuel_level, meter_reading, note, created_at')
+      .eq('rental_id', rentalId)
+      .order('created_at');
+  return (data as List).cast<Map<String, dynamic>>();
+});
+
 /// Central data access for rental_requests (REST/repository layer — keeps
 /// queries out of widgets and non-duplicated).
 class RentalRepository {

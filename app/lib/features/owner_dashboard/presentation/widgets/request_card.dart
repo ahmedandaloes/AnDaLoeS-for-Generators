@@ -12,7 +12,7 @@ import '../../../../core/widgets/press_scale.dart';
 import '../../../chat/providers/chat_providers.dart';
 import '../../../ratings/presentation/rate_rental_screen.dart';
 import '../../../rental_request/data/rental_repository.dart'
-    show rentalRepositoryProvider, rentalTimelineProvider;
+    show rentalRepositoryProvider, rentalTimelineProvider, rentalHandoversProvider;
 import '../../providers/owner_providers.dart'
     show ownerRequestsProvider, commissionConfigProvider;
 
@@ -328,8 +328,7 @@ class OwnerRequestCard extends StatelessWidget {
                 FilledButton(
                   style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(48)),
-                  onPressed: () => _updateStatus(
-                      context, request['id'].toString(), 'active'),
+                  onPressed: () => _confirmDelivered(context),
                   child: Text(l.confirmDeliveredStart),
                 ),
               ],
@@ -339,8 +338,7 @@ class OwnerRequestCard extends StatelessWidget {
               FilledButton(
                 style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(48)),
-                onPressed: () => _updateStatus(
-                    context, request['id'].toString(), 'completed'),
+                onPressed: () => _confirmCompleted(context),
                 child: Text(l.markAsCompleted),
               ),
             ],
@@ -451,6 +449,146 @@ class OwnerRequestCard extends StatelessWidget {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(friendlyDbError(e))));
       }
+    }
+  }
+
+  Future<void> _confirmDelivered(BuildContext context) async {
+    final l = AppLocalizations.of(context)!;
+    final rentalId = request['id'].toString();
+    await _showHandoverDialog(context, 'delivery', l.deliveryHandover,
+        l.deliveryHandoverBody);
+    if (!context.mounted) return;
+    await _updateStatus(context, rentalId, 'active');
+  }
+
+  Future<void> _confirmCompleted(BuildContext context) async {
+    final l = AppLocalizations.of(context)!;
+    final rentalId = request['id'].toString();
+    await _showHandoverDialog(context, 'return', l.returnHandover,
+        l.returnHandoverBody);
+    if (!context.mounted) return;
+    await _updateStatus(context, rentalId, 'completed');
+  }
+
+  Future<void> _showHandoverDialog(
+      BuildContext context, String type, String title, String body) async {
+    final l = AppLocalizations.of(context)!;
+    final rentalId = request['id'].toString();
+    String? selectedFuel;
+    final meterCtrl = TextEditingController();
+    final noteCtrl = TextEditingController();
+
+    final fuels = [
+      ('full', l.fuelFull),
+      ('three_quarters', l.fuelThreeQuarters),
+      ('half', l.fuelHalf),
+      ('quarter', l.fuelQuarter),
+      ('empty', l.fuelEmpty),
+    ];
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: Text(title),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(body,
+                    style: TextStyle(
+                        fontSize: 13,
+                        color:
+                            Theme.of(ctx).colorScheme.onSurfaceVariant)),
+                const SizedBox(height: 16),
+                Text(l.fuelLevelLabel,
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  children: fuels.map((f) {
+                    final isSelected = selectedFuel == f.$1;
+                    return ChoiceChip(
+                      label: Text(f.$2),
+                      selected: isSelected,
+                      onSelected: (_) =>
+                          setState(() => selectedFuel = f.$1),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: meterCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true),
+                  decoration: InputDecoration(
+                    labelText: l.meterReadingLabel,
+                    hintText: l.meterReadingHint,
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: noteCtrl,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    hintText: l.handoverNoteHint,
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l.skipHandover),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await _recordHandover(
+                  context,
+                  rentalId: rentalId,
+                  type: type,
+                  fuelLevel: selectedFuel,
+                  meterReading: double.tryParse(meterCtrl.text.trim()),
+                  note: noteCtrl.text.trim().isEmpty
+                      ? null
+                      : noteCtrl.text.trim(),
+                );
+              },
+              child: Text(l.confirm),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _recordHandover(BuildContext context,
+      {required String rentalId,
+      required String type,
+      String? fuelLevel,
+      double? meterReading,
+      String? note}) async {
+    try {
+      final payload = <String, dynamic>{
+        'rental_id': rentalId,
+        'type': type,
+        'recorded_by': supabase.auth.currentUser?.id,
+      };
+      if (fuelLevel != null) payload['fuel_level'] = fuelLevel;
+      if (meterReading != null) payload['meter_reading'] = meterReading;
+      if (note != null) payload['note'] = note;
+      await supabase.from('rental_handovers').insert(payload);
+      ref.invalidate(rentalHandoversProvider(rentalId));
+    } catch (_) {
+      // Non-critical: handover recording failure should not block status update.
     }
   }
 

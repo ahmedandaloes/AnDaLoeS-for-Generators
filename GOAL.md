@@ -110,8 +110,8 @@ buildable in-app now. Definition of done (DoD) per sprint listed.
 - [x] Verified-owner badge on generator cards + detail (from `companies.verification_status`; wire the approval state through the generator query/repository)
 - [x] Detail: hoist ONE compact "verified + on-time % + acceptance" trust row above the fold; unify the 3 inconsistent badge styles
 - [x] Owner request card: "collect EGP X deposit on delivery" reminder
-- [ ] Adopt shared `qualityColor`/status tokens on remaining screens (kill duplicated mappings)
-- DoD: trust state visible end-to-end; new strings localized en+ar; no duplicate color maps.
+- [x] Adopt shared `qualityColor`/status tokens on remaining screens — `generatorStatusColor()` added; inline switch dupes removed from owner_dashboard_screen + admin_generators_tab
+- DoD: trust state visible end-to-end; new strings localized en+ar; no duplicate color maps. ✅
 
 ### Sprint 2 — Booking integrity & lifecycle correctness ✅
 - [x] DB status state-machine guard — block invalid transitions (rejected→active, completed→pending, …) via `mcp apply_migration`
@@ -128,7 +128,7 @@ buildable in-app now. Definition of done (DoD) per sprint listed.
 - [x] ≥48dp tap-target pass — filter pills container 38→48, all my_rentals buttons 36/38/40→48
 - [x] My Rentals: completed state buttons (Invoice/Receipt/Report) collapsed into 3-column row
 - [ ] Accessibility audit: semantic labels + contrast ratios
-- [ ] Document screens (invoice/receipt/offer): dark-mode theming, ISO date formatting
+- [x] Document screens (invoice/receipt/offer): dark-mode theming — hardcoded white/grey/black replaced with colorScheme tokens in rental_offer_screen, invoice_screen, rental_receipt_screen (committed)
 - DoD: a11y scan clean; no <48dp targets; documents readable in dark mode.
 
 ### Sprint 5 — Growth: shareable & discoverable (partial)
@@ -143,7 +143,7 @@ buildable in-app now. Definition of done (DoD) per sprint listed.
 - DoD: a generator is viewable + indexable without the app. (Blocked portion: web SDK fix.)
 
 ### Sprint 7 — Fulfillment timeline & disputes
-- [ ] Fulfillment status timeline on the ticket (accepted→preparing→en route→delivered→active→returned)
+- [x] Fulfillment status timeline on the ticket (DB 0036 rental_timeline_events + auto-trigger; _StatusTimeline in My Rentals + _OwnerTimeline in OwnerRequestCard)
 - [ ] Digital handover: delivery & return photos + fuel/meter readings (v2 spec)
 - [ ] Two-sided dispute/claim flow (extend reports: damage/no-show/wrong-spec + evidence + admin adjudication)
 - DoD: every active rental has an auditable timeline; disputes have an admin adjudication path.
@@ -321,9 +321,9 @@ Per-page review of the live code. Implement NOW items in the auto-loop on `devel
 **Last iteration:** 2026-06-24 — Arabic-first rollout COMPLETE (default `ar`+RTL, both QA agents addressed). Now executing the **Next 10 Sprints** roadmap (see section above).
 **Working branch:** `development` (main is integration/release)
 **Mode:** continuous loop (owner directive — no timer waits; finish item → start next).
-**Last commit:** `fix: company onboarding governorate + dedupe location`
+**Last commit:** `fix: Sprint 4 dark-mode — invoice screen colorScheme tokens`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** Sprint 1 — Trust signals. First item: verified-owner badge on generator cards + detail (wire `companies.verification_status` through the generator query/repository). Then the detail trust row, owner deposit reminder, status-token adoption. (Loop currently waiting on Bash/shell tool availability for the analyze/test/commit gate; resumes automatically.)
+**Next action:** Sprint 7 — Digital handover: delivery + return photos captured by owner, fuel/meter readings, stored in rental_timeline_events or new handover table.
 **Strategy:** repositioned to B2B/SMB trust marketplace per market research 2026-06-23 (docs/BUSINESS_STRATEGY.md).
 
 ---
@@ -399,7 +399,7 @@ FIXED this cycle:
 - [x] CRITICAL/MED: customer could cancel accepted/active via API — DB 0032 tightened rental_requests_update_customer USING to status='pending'.
 - [x] HIGH: HomeScreen price/capacity sort crashed on null fields — null-safe numeric sort.
 TODO (next cycles):
-- [ ] HIGH: "Mark as received" sets status=completed (wrong + RLS-rejected); make it informational or route via owner/Edge Fn + align RLS/copy (my_rentals ~865).
+- [x] HIGH: "Mark as received" removed — completion is owner-driven via delivery handshake; customer RLS now blocks status=completed writes.
 - [x] HIGH: router role-gating — cached role provider (refreshed on auth change); GoRouter redirect sends non-admins away from /admin and non-owners/non-admins away from /owner/* (defense-in-depth on RLS). /owner-dashboard stays open (onboarding entry).
 - [x] HIGH: guest/anonymous gating — detail Rent Now/report/favorite require a real (non-anonymous) account (push login); company onboarding shows "create an account first" for anonymous users.
 - [x] VAT consistency: shared vatBreakdown helper used by invoice; payment confirmation now shows a VAT line (subtotal + label+%) when tax_config.applies_when=='always' (total payable unchanged — price_total is VAT-inclusive). NOTE: VAT treatment (inclusive vs added-on) + applies_when policy need owner/accountant confirmation.
