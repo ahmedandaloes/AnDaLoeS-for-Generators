@@ -88,7 +88,8 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
       _snack(l.selectDatesFirst);
       return;
     }
-    final days = _range!.end.difference(_range!.start).inDays;
+    // +1: end-date is inclusive (June 24→26 = 3 rental days, not 2)
+    final days = _range!.end.difference(_range!.start).inDays + 1;
     if (days < 1) {
       _snack(l.minOneDay);
       return;
@@ -145,7 +146,7 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
         data: (gen) {
           final days = _range == null
               ? 0
-              : _range!.end.difference(_range!.start).inDays;
+              : _range!.end.difference(_range!.start).inDays + 1;
           final perDay = _toDouble(gen['price_per_day']) ?? 0.0;
           final perWeek = _toDouble(gen['price_per_week']);
           final perMonth = _toDouble(gen['price_per_month']);
