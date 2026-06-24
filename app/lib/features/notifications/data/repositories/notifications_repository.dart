@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show PostgresChangeEvent, PostgresChangeFilter, PostgresChangeFilterType, RealtimeChannel;
 
 import '../../../../core/config/supabase.dart';
 import '../../domain/repositories/i_notifications_repository.dart';
@@ -53,5 +55,25 @@ class NotificationsRepository implements INotificationsRepository {
   @override
   Future<void> delete(String id) async {
     await supabase.from('notifications').delete().eq('id', id);
+  }
+
+  /// Subscribe to realtime inserts for a user's notifications.
+  /// Returns the channel so the caller can unsubscribe on dispose.
+  RealtimeChannel subscribeToUserNotifications(
+      String uid, void Function() onInsert) {
+    return supabase
+        .channel('notifications-$uid')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'notifications',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user_id',
+            value: uid,
+          ),
+          callback: (_) => onInsert(),
+        )
+        .subscribe();
   }
 }

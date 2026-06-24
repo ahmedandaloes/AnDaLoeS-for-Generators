@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../auth/data/repositories/auth_repository.dart';
 import '../../../core/widgets/app_error_state.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/notifications_repository.dart';
@@ -32,25 +32,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   void _subscribeRealtime() {
-    final uid = supabase.auth.currentUser?.id;
+    final uid = ref.read(authRepositoryProvider).currentUserId;
     if (uid == null) return;
-    _channel = supabase
-        .channel('notifications-$uid')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: 'notifications',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'user_id',
-            value: uid,
-          ),
-          callback: (_) {
-            ref.invalidate(notificationsProvider);
-            ref.invalidate(unreadCountProvider);
-          },
-        )
-        .subscribe();
+    _channel = ref.read(notificationsRepositoryProvider).subscribeToUserNotifications(
+      uid,
+      () {
+        ref.invalidate(notificationsProvider);
+        ref.invalidate(unreadCountProvider);
+      },
+    );
   }
 
   void _refresh() {
