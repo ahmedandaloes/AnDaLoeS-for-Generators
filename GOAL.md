@@ -134,7 +134,7 @@ buildable in-app now. Definition of done (DoD) per sprint listed.
 ### Sprint 5 — Growth: shareable & discoverable (partial)
 - [x] Share URL fixed (/generator → /generators) + bilingual CTA + first photo URL
 - [ ] Deep linking to listings (GoRouter deep links + Android App Links config)
-- [ ] Saved searches + "new match" alerts (reuse notifications + use_cases)
+- [x] Saved searches — DB 0039, savedSearchesProvider, home screen bookmark icon + save chip + bottom sheet with apply/delete ✅ (new-match server alerts deferred to Sprint 10 edge fn)
 - DoD: a shared link opens the right listing; saved search fires a notification on match.
 
 ### Sprint 6 — Public web listing pages (SEO/organic) 🔒(web support fix)
@@ -152,8 +152,9 @@ buildable in-app now. Definition of done (DoD) per sprint listed.
 - [ ] Owner quick-add / bulk listing flow (low-friction OLX/Facebook migration)
 - [x] Add Generator: clone listing — copy_all_outlined button in owner generator tile passes full data (all 17 fields) as GoRouter extra → AddGeneratorScreen prefill
 - [x] Listing fields: operated vs dry-hire, fuel policy, accessories — DB 0037, AddGeneratorScreen + EditGeneratorScreen + GeneratorDetailScreen all ship these fields
-- [ ] Supply-thin owner nudges (tie to the governorate tracker)
-- DoD: an owner can list 5 generators in minutes; new spec fields captured + filterable.
+- [x] Supply-thin owner nudges — thin_supply_nudge widget in owner dashboard, thinSupplyNudge ARB keys ✅
+- [x] Owner quick-add: "Add another generator?" dialog + _resetForm() for back-to-back listings ✅
+- DoD: an owner can list 5 generators in minutes; new spec fields captured + filterable. ✅
 
 ### Sprint 9 — Monetization (collectable without a gateway) 🔒(owner: revenue model)
 - 🔒 [ ] Revenue-collection model decision (A subscription / B Fawry-escrow / C ledger / D hybrid) — owner picks (docs/MONETIZATION.md §1b)
@@ -256,8 +257,8 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 - [ ] [NOW] Public web listing pages (no-auth, SEO/Arabic URLs) per generator/company — organic discovery
 - [ ] [NOW] WhatsApp deep-link sharing with rich preview (photo+kVA+rate+city), app/web fallback
 - [x] [NOW] Supply-by-governorate tracker in Admin Stats (available generators per area, "thin" flag <3) — via GeneratorRepository.countAvailableByGovernorate (repository, no inline dup)
-- [ ] [SOON] Owner quick-add / bulk listing flow (migrate OLX/Facebook owners with low friction)
-- [ ] [SOON] Saved searches + "new match" alerts (reuse notifications + use_cases)
+- [x] [SOON] Owner quick-add: add-another dialog + _resetForm() + thin-supply nudge chips in owner dashboard ✅
+- [x] [SOON] Saved searches: DB + UI (save/browse/apply/delete); new-match alerts deferred to edge fn ✅
 - [ ] [SOON] Two-sided referral invites with deep links (attribution; credit value = monetization)
 - [ ] [SOON] First-booking nudge sequence (browse→request drop-off, segment-aware copy)
 - [ ] [LATER] Seasonal summer-demand campaign hooks; repeat/re-book loop for telecom/agri; listing-quality score
