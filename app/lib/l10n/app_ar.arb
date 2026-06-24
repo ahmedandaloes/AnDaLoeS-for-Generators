@@ -131,6 +131,8 @@
   "invoice": "فاتورة",
   "overdueContactOwner": "متأخر — يُرجى التواصل مع المالك",
   "outForDeliveryBanner": "قيد التوصيل — في طريقه إليك",
+  "confirmReceipt": "تأكيد الاستلام",
+  "receiptConfirmed": "تم استلام المولّد — الإيجار نشط الآن",
   "addToCalendar": "أضف إلى التقويم",
   "rentalIdCopied": "تم نسخ رقم الإيجار",
   "cancelRequest": "إلغاء الطلب",
@@ -532,6 +534,7 @@
 
   "addAnotherGeneratorQ": "تمت إضافة المولد! هل تريد إضافة مولد آخر؟",
   "addAnotherGenerator": "أضف مولدًا آخر",
+  "addSimilarGenerator": "أضف مشابهًا",
   "done": "تم",
 
   "thinSupplyNudge": "المولدات مطلوبة في: {govs} — اضغط لإضافة مولدك",

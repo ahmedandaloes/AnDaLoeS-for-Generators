@@ -136,6 +136,8 @@
   "invoice": "Invoice",
   "overdueContactOwner": "Overdue — please contact owner",
   "outForDeliveryBanner": "Out for delivery — on its way to you",
+  "confirmReceipt": "Confirm receipt",
+  "receiptConfirmed": "Generator received — rental is now active",
   "addToCalendar": "Add to calendar",
   "rentalIdCopied": "Rental ID copied",
   "cancelRequest": "Cancel request",
@@ -563,8 +565,9 @@
   "showPassword": "Show password",
   "hidePassword": "Hide password",
 
-  "addAnotherGeneratorQ": "Generator listed! Would you like to add another one?",
-  "addAnotherGenerator": "Add another",
+  "addAnotherGeneratorQ": "Generator listed! Add another one?",
+  "addAnotherGenerator": "Add blank",
+  "addSimilarGenerator": "Add similar",
   "done": "Done",
 
   "thinSupplyNudge": "Generators needed in: {govs} — tap to list yours",

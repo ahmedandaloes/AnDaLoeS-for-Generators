@@ -577,7 +577,7 @@ class _RentalCard extends ConsumerWidget {
                           color: Colors.white)),
                 ]),
               ),
-            if (status == 'accepted' && rental['delivered_at'] != null)
+            if (status == 'accepted' && rental['delivered_at'] != null) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
@@ -594,6 +594,18 @@ class _RentalCard extends ConsumerWidget {
                           color: Colors.white)),
                 ]),
               ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    icon: const Icon(Icons.check_circle_outline, size: 18),
+                    label: Text(l.confirmReceipt),
+                    onPressed: () => _confirmReceipt(context, rental['id'] as String),
+                  ),
+                ),
+              ),
+            ],
             Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -1213,6 +1225,44 @@ class _RentalCard extends ConsumerWidget {
       'cancelled' => l.statusCancelled,
       _ => status.toUpperCase(),
     };
+  }
+
+  Future<void> _confirmReceipt(BuildContext context, String rentalId) async {
+    final l = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.markReceivedQ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l.notYet)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l.yesReceived)),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await supabase
+          .from('rental_requests')
+          .update({'status': 'active'})
+          .eq('id', rentalId)
+          .eq('status', 'accepted');
+      ref.invalidate(myRentalsProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.markedReceived)),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.errorGeneric)),
+        );
+      }
+    }
   }
 
   String _fmt(dynamic dateStr) {
