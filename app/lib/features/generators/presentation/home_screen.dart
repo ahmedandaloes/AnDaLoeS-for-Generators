@@ -71,7 +71,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final loggedIn = supabase.auth.currentSession != null;
     final cs = Theme.of(context).colorScheme;
 
-    ref.watch(remoteFavoritesProvider).whenData(_seedFavoritesIfNeeded);
+    ref.listen<AsyncValue<Set<String>>>(remoteFavoritesProvider, (_, next) {
+      next.whenData(_seedFavoritesIfNeeded);
+    });
 
     // Client-side filter + sort
     final generators = allGenerators.whenData((items) => items.where((g) {

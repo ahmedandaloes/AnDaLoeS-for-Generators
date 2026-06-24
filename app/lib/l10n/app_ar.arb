@@ -540,5 +540,11 @@
   "thinSupplyNudge": "المولدات مطلوبة في: {govs} — اضغط لإضافة مولدك",
   "thinSupplyTitle": "مناطق الطلب العالي",
   "thinSupplyBody": "هذه المحافظات لديها أقل من 3 مولدات متاحة. إضافة مولدك هناك ستساعدك في الحصول على حجوزات بشكل أسرع.",
-  "generatorsNeeded": "أقل من 3 متوفر"
+  "generatorsNeeded": "أقل من 3 متوفر",
+  "customerSupport": "العملاء",
+  "ownerSupport": "الملاك",
+  "platformSection": "المنصة",
+  "tabRentals": "الإيجارات",
+  "adminSearchHint": "ابحث بالاسم أو رقم الهاتف",
+  "noRentalsFound": "لا توجد إيجارات"
 }

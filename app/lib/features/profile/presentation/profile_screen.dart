@@ -688,11 +688,14 @@ class ProfileScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Text(l.appearance,
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500)),
-                            const Spacer(),
+                            Expanded(
+                              child: Text(l.appearance,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500)),
+                            ),
+                            const SizedBox(width: 8),
                             SegmentedButton<ThemeMode>(
                               style: SegmentedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(

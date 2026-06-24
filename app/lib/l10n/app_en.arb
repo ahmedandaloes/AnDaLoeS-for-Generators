@@ -574,5 +574,11 @@
   "@thinSupplyNudge": { "placeholders": { "govs": { "type": "String" } } },
   "thinSupplyTitle": "High-demand areas",
   "thinSupplyBody": "These governorates have fewer than 3 available generators. Listing yours there can get you bookings faster.",
-  "generatorsNeeded": "Under 3 available"
+  "generatorsNeeded": "Under 3 available",
+  "customerSupport": "Customers",
+  "ownerSupport": "Owners",
+  "platformSection": "Platform",
+  "tabRentals": "Rentals",
+  "adminSearchHint": "Search by name or phone",
+  "noRentalsFound": "No rentals found"
 }
