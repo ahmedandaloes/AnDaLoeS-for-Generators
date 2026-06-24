@@ -521,13 +521,13 @@ class _InvoiceDocument extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
               child: Column(
                 children: [
-                  Divider(color: Colors.grey.shade200),
+                  Divider(color: cs.outlineVariant),
                   const SizedBox(height: 12),
                   if (CompanyInfo.hasTaxIds)
                     Text(
                       '${CompanyInfo.legalName} · Tax Reg. ${CompanyInfo.taxRegistrationNumber} · CR ${CompanyInfo.commercialRegister}',
                       style: TextStyle(
-                          fontSize: 9.5, color: Colors.grey.shade600),
+                          fontSize: 9.5, color: cs.onSurfaceVariant),
                       textAlign: TextAlign.center,
                     ),
                   const SizedBox(height: 6),
@@ -536,7 +536,7 @@ class _InvoiceDocument extends StatelessWidget {
                     'This is an official tax invoice for services rendered.',
                     style: TextStyle(
                         fontSize: 10,
-                        color: Colors.grey.shade500,
+                        color: cs.onSurfaceVariant,
                         height: 1.6),
                     textAlign: TextAlign.center,
                   ),
