@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/theme/status_colors.dart';
 import '../../../core/utils/db_error.dart';
 import '../providers/owner_providers.dart';
 import '../../generators/providers/detail_providers.dart';
@@ -1175,11 +1176,7 @@ class _HistoryTabState extends State<_HistoryTab> {
               final gen = r['generators'] as Map<String, dynamic>?;
               final customer = r['profiles'] as Map<String, dynamic>?;
               final status = r['status']?.toString() ?? '';
-              final statusColor = switch (status) {
-                'completed' => Colors.green.shade700,
-                'cancelled' => cs.onSurfaceVariant,
-                _ => cs.error,
-              };
+              final statusColor = rentalStatusColor(status, cs);
               final statusLabel = switch (status) {
                 'completed' => l.statusCompleted,
                 'cancelled' => l.statusCancelled,

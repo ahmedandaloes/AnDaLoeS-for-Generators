@@ -4,6 +4,7 @@ import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/theme/status_colors.dart';
 
 final adminGeneratorsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
@@ -278,25 +279,14 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color color;
-    String label;
-    switch (status) {
-      case 'available':
-        color = Colors.green;
-        label = 'Live';
-      case 'pending':
-        color = Colors.orange;
-        label = 'Pending';
-      case 'unavailable':
-        color = Colors.grey;
-        label = 'Off';
-      case 'rejected':
-        color = cs.error;
-        label = 'Rejected';
-      default:
-        color = Colors.grey;
-        label = status;
-    }
+    final color = generatorStatusColor(status, cs);
+    final label = switch (status) {
+      'available' => 'Live',
+      'pending' => 'Pending',
+      'unavailable' => 'Off',
+      'rejected' => 'Rejected',
+      _ => status,
+    };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(

@@ -5,6 +5,17 @@ import '../../../core/config/supabase.dart';
 final rentalRepositoryProvider =
     Provider<RentalRepository>((_) => RentalRepository());
 
+/// Fetches timeline events for a single rental, ordered chronologically.
+final rentalTimelineProvider = FutureProvider.family<
+    List<Map<String, dynamic>>, String>((ref, rentalId) async {
+  final data = await supabase
+      .from('rental_timeline_events')
+      .select('event, note, created_at')
+      .eq('rental_id', rentalId)
+      .order('created_at');
+  return (data as List).cast<Map<String, dynamic>>();
+});
+
 /// Central data access for rental_requests (REST/repository layer — keeps
 /// queries out of widgets and non-duplicated).
 class RentalRepository {

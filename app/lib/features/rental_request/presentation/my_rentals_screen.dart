@@ -12,6 +12,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../chat/providers/chat_providers.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/widgets/app_error_state.dart';
+import '../data/rental_repository.dart' show rentalTimelineProvider;
 
 final myRentalsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
@@ -778,7 +779,8 @@ class _RentalCard extends ConsumerWidget {
               // Status timeline — hide for rejected/cancelled
               if (status != 'rejected' && status != 'cancelled') ...[
                 const SizedBox(height: 14),
-                _StatusTimeline(status: status, cs: cs),
+                _StatusTimeline(
+                    rentalId: rentalId, status: status, cs: cs),
               ],
               // Action buttons by status
               if (status == 'pending') ...[
@@ -1168,8 +1170,10 @@ class _RentalCard extends ConsumerWidget {
 }
 
 // ── Status progress timeline ──────────────────────────────────────────────────
-class _StatusTimeline extends StatelessWidget {
-  const _StatusTimeline({required this.status, required this.cs});
+class _StatusTimeline extends ConsumerWidget {
+  const _StatusTimeline(
+      {required this.rentalId, required this.status, required this.cs});
+  final String rentalId;
   final String status;
   final ColorScheme cs;
 
@@ -1184,20 +1188,42 @@ class _StatusTimeline extends StatelessWidget {
 
   int get _currentIndex => _steps.indexOf(status);
 
+  String _tsFor(String step, List<Map<String, dynamic>> events) {
+    final match = events.lastWhere(
+      (e) => e['event'] == step,
+      orElse: () => {},
+    );
+    final raw = match['created_at']?.toString();
+    if (raw == null) return '';
+    try {
+      final dt = DateTime.parse(raw).toLocal();
+      final h = dt.hour.toString().padLeft(2, '0');
+      final m = dt.minute.toString().padLeft(2, '0');
+      return '${dt.day}/${dt.month} $h:$m';
+    } catch (_) {
+      return '';
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final events = ref
+        .watch(rentalTimelineProvider(rentalId))
+        .valueOrNull ?? const [];
+
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: List.generate(_steps.length * 2 - 1, (i) {
         if (i.isOdd) {
-          // Connector line
           final stepIndex = (i - 1) ~/ 2;
           final done = _currentIndex > stepIndex;
           return Expanded(
-            child: Container(
-              height: 2,
-              color: done
-                  ? cs.primary
-                  : cs.outlineVariant,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 13),
+              child: Container(
+                height: 2,
+                color: done ? cs.primary : cs.outlineVariant,
+              ),
             ),
           );
         }
@@ -1205,6 +1231,7 @@ class _StatusTimeline extends StatelessWidget {
         final done = _currentIndex > stepIndex;
         final active = _currentIndex == stepIndex;
         final color = done || active ? cs.primary : cs.outlineVariant;
+        final ts = _tsFor(_steps[stepIndex], events);
 
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -1214,7 +1241,9 @@ class _StatusTimeline extends StatelessWidget {
               width: active ? 28 : 22,
               height: active ? 28 : 22,
               decoration: BoxDecoration(
-                color: done || active ? cs.primary : cs.surfaceContainerHighest,
+                color: done || active
+                    ? cs.primary
+                    : cs.surfaceContainerHighest,
                 shape: BoxShape.circle,
                 border: active
                     ? Border.all(
@@ -1232,11 +1261,18 @@ class _StatusTimeline extends StatelessWidget {
               _labels[stepIndex],
               style: TextStyle(
                 fontSize: 9,
-                fontWeight:
-                    active ? FontWeight.w700 : FontWeight.w400,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w400,
                 color: active ? cs.primary : color,
               ),
             ),
+            if (ts.isNotEmpty) ...[
+              const SizedBox(height: 1),
+              Text(
+                ts,
+                style: TextStyle(
+                    fontSize: 8, color: cs.onSurfaceVariant),
+              ),
+            ],
           ],
         );
       }),

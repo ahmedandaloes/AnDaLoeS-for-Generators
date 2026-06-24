@@ -11,7 +11,8 @@ import '../../../../core/utils/db_error.dart';
 import '../../../../core/widgets/press_scale.dart';
 import '../../../chat/providers/chat_providers.dart';
 import '../../../ratings/presentation/rate_rental_screen.dart';
-import '../../../rental_request/data/rental_repository.dart';
+import '../../../rental_request/data/rental_repository.dart'
+    show rentalRepositoryProvider, rentalTimelineProvider;
 import '../../providers/owner_providers.dart'
     show ownerRequestsProvider, commissionConfigProvider;
 
@@ -141,6 +142,17 @@ class OwnerRequestCard extends StatelessWidget {
                 style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
               ),
             ]),
+            // Fulfillment timeline — shows for accepted/active/completed
+            if (status == 'accepted' ||
+                status == 'active' ||
+                status == 'completed') ...[
+              const SizedBox(height: 12),
+              _OwnerTimeline(
+                rentalId: request['id'].toString(),
+                status: status,
+                cs: cs,
+              ),
+            ],
             // Delivery details (where/when the customer wants the generator)
             if ((request['delivery_address']?.toString().isNotEmpty ?? false) ||
                 (request['delivery_time']?.toString().isNotEmpty ?? false)) ...[
@@ -484,6 +496,107 @@ class OwnerRequestCard extends StatelessWidget {
     } catch (_) {
       return d.toString();
     }
+  }
+}
+
+// ── Owner fulfillment timeline (compact stepper) ──────────────────────────────
+class _OwnerTimeline extends ConsumerWidget {
+  const _OwnerTimeline(
+      {required this.rentalId, required this.status, required this.cs});
+  final String rentalId;
+  final String status;
+  final ColorScheme cs;
+
+  static const _steps = ['accepted', 'active', 'completed'];
+  static const _icons = [
+    Icons.check_circle_outline,
+    Icons.bolt,
+    Icons.verified_outlined,
+  ];
+  static const _labels = ['Accepted', 'Active', 'Done'];
+
+  int get _currentIndex => _steps.indexOf(status);
+
+  String _tsFor(String step, List<Map<String, dynamic>> events) {
+    final match = events.lastWhere(
+      (e) => e['event'] == step,
+      orElse: () => {},
+    );
+    final raw = match['created_at']?.toString();
+    if (raw == null) return '';
+    try {
+      final dt = DateTime.parse(raw).toLocal();
+      return '${dt.day}/${dt.month} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final events =
+        ref.watch(rentalTimelineProvider(rentalId)).valueOrNull ?? const [];
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: List.generate(_steps.length * 2 - 1, (i) {
+        if (i.isOdd) {
+          final stepIndex = (i - 1) ~/ 2;
+          final done = _currentIndex > stepIndex;
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 13),
+              child: Container(
+                  height: 2,
+                  color: done ? cs.primary : cs.outlineVariant),
+            ),
+          );
+        }
+        final stepIndex = i ~/ 2;
+        final done = _currentIndex > stepIndex;
+        final active = _currentIndex == stepIndex;
+        final color = done || active ? cs.primary : cs.outlineVariant;
+        final ts = _tsFor(_steps[stepIndex], events);
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: active ? 28 : 22,
+              height: active ? 28 : 22,
+              decoration: BoxDecoration(
+                color: done || active
+                    ? cs.primary
+                    : cs.surfaceContainerHighest,
+                shape: BoxShape.circle,
+                border: active
+                    ? Border.all(
+                        color: cs.primary.withValues(alpha: 0.35), width: 3)
+                    : null,
+              ),
+              child: Icon(_icons[stepIndex],
+                  size: active ? 14 : 11,
+                  color:
+                      done || active ? cs.onPrimary : cs.outlineVariant),
+            ),
+            const SizedBox(height: 3),
+            Text(_labels[stepIndex],
+                style: TextStyle(
+                    fontSize: 9,
+                    fontWeight:
+                        active ? FontWeight.w700 : FontWeight.w400,
+                    color: active ? cs.primary : color)),
+            if (ts.isNotEmpty) ...[
+              const SizedBox(height: 1),
+              Text(ts,
+                  style: TextStyle(
+                      fontSize: 8, color: cs.onSurfaceVariant)),
+            ],
+          ],
+        );
+      }),
+    );
   }
 }
 

@@ -19,3 +19,12 @@ Color qualityColor(num pct) => pct >= 80
     : pct >= 50
         ? Colors.orange.shade800
         : Colors.red.shade700;
+
+/// Generator listing status → colour (available / pending / unavailable / rejected).
+Color generatorStatusColor(String status, ColorScheme cs) => switch (status) {
+      'available' => Colors.green.shade600,
+      'pending' => Colors.orange.shade700,
+      'unavailable' => cs.onSurfaceVariant,
+      'rejected' => cs.error,
+      _ => cs.onSurfaceVariant,
+    };
