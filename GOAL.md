@@ -332,3 +332,9 @@ TODO (next cycles):
 - [x] MED: completion trigger now clamps commission to [0, price_total] (DB 0033) — owner net never negative.
 - [ ] MED: priced days (exclusive) vs blocked days (inclusive daterange) off-by-one; standardize.
 - [x] MED: rate + receipt screens now gate on completed status when reached by route (friendly state otherwise).
+
+## 🌐 DEFAULT LANGUAGE: ARABIC (shipped)
+The app now launches in **Arabic with full RTL** by default (Arabic-first).
+- Every screen is localized with real, natural Arabic; DB values stay English.
+- Arabic plurals use proper categories (zero/one/two/few/many/other).
+- **To switch to English:** Profile → Language → English. The choice persists across launches and overrides the Arabic default.
