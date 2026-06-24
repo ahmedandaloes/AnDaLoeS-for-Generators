@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
+import '../data/notifications_repository.dart';
 import '../providers/notifications_providers.dart'
     show notificationsProvider, unreadCountProvider;
 
@@ -50,31 +51,24 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         .subscribe();
   }
 
-  Future<void> _markAllRead() async {
-    final uid = supabase.auth.currentUser?.id;
-    if (uid == null) return;
-    await supabase
-        .from('notifications')
-        .update({'is_read': true})
-        .eq('user_id', uid)
-        .eq('is_read', false);
+  void _refresh() {
     ref.invalidate(notificationsProvider);
     ref.invalidate(unreadCountProvider);
+  }
+
+  Future<void> _markAllRead() async {
+    await ref.read(notificationsRepositoryProvider).markAllRead();
+    _refresh();
   }
 
   Future<void> _markOneRead(String id) async {
-    await supabase
-        .from('notifications')
-        .update({'is_read': true})
-        .eq('id', id);
-    ref.invalidate(notificationsProvider);
-    ref.invalidate(unreadCountProvider);
+    await ref.read(notificationsRepositoryProvider).markRead(id);
+    _refresh();
   }
 
   Future<void> _dismiss(String id) async {
-    await supabase.from('notifications').delete().eq('id', id);
-    ref.invalidate(notificationsProvider);
-    ref.invalidate(unreadCountProvider);
+    await ref.read(notificationsRepositoryProvider).delete(id);
+    _refresh();
   }
 
   @override
