@@ -98,6 +98,81 @@ MEDIUM (polish):
 
 ---
 
+## 🗓️ NEXT 10 SPRINTS (roadmap, 2026-06-24)
+Operative forward plan after the Arabic-first rollout. Each sprint = a coherent
+theme the loop works one verified item at a time (analyze 0 / tests green /
+conventional commit / push / tick here). Priority order: launch-readiness &
+trust → conversion → growth → monetization/compliance. **🔒 = blocked on an
+owner/external decision** (loop skips until unblocked); everything else is
+buildable in-app now. Definition of done (DoD) per sprint listed.
+
+### Sprint 1 — Trust signals (verification + reliability surfacing)
+- [ ] Verified-owner badge on generator cards + detail (from `companies.verification_status`; wire the approval state through the generator query/repository)
+- [ ] Detail: hoist ONE compact "verified + on-time % + acceptance" trust row above the fold; unify the 3 inconsistent badge styles
+- [ ] Owner request card: "collect EGP X deposit on delivery" reminder + acceptance/on-time chips
+- [ ] Adopt shared `qualityColor`/status tokens on remaining screens (kill duplicated mappings)
+- DoD: trust state visible end-to-end; new strings localized en+ar; no duplicate color maps.
+
+### Sprint 2 — Booking integrity & lifecycle correctness
+- [ ] DB status state-machine guard — block invalid transitions (rejected→active, completed→pending, …) via `mcp apply_migration` + trigger; unit-test the matrix
+- [ ] Standardize priced-days (exclusive) vs blocked-days (inclusive daterange) off-by-one
+- [ ] Fix "Mark as received" (QA HIGH): currently sets status=completed (wrong + RLS-rejected) — make informational or route via owner/Edge Fn + align RLS/copy (my_rentals ~865)
+- DoD: invalid transitions impossible at DB level; day math consistent; no RLS-rejected client writes.
+
+### Sprint 3 — Conversion: frictionless request
+- [ ] Detail: guest picks dates/address first, auth required only at "Send request" (design the auth-resume flow properly — previously deferred as fragile)
+- [ ] Payment: cancellation/terms acknowledgement; sticky bottom Rent-Now bar
+- [ ] Detail: move share/copy/report into the AppBar so Rent Now dominates
+- DoD: browse→request drop-off reduced; auth-resume preserves picked dates/address.
+
+### Sprint 4 — Accessibility & UX polish
+- [ ] ≥48dp tap-target pass across all flagged controls (home pills, detail FABs, owner buttons, _MonthChip, my_rentals controls)
+- [ ] Accessibility audit: semantic labels + contrast ratios
+- [ ] Document screens (invoice/receipt/offer): dark-mode theming, ISO date formatting, friendly errors
+- [ ] My Rentals: 7 stacked buttons → one primary + overflow; show cancellation reason on cancelled cards
+- DoD: a11y scan clean; no <48dp targets; documents readable in dark mode.
+
+### Sprint 5 — Growth: shareable & discoverable
+- [ ] WhatsApp deep-link share with rich preview (photo + kVA + rate + city), app/web fallback
+- [ ] Deep linking to listings (GoRouter deep links + route restore)
+- [ ] Saved searches + "new match" alerts (reuse notifications + use_cases)
+- DoD: a shared link opens the right listing; saved search fires a notification on match.
+
+### Sprint 6 — Public web listing pages (SEO/organic) 🔒(web support fix)
+- [ ] Fix web build (passkeys SDK error) enough to serve read-only pages
+- [ ] No-auth public generator/company pages, Arabic-first URLs, SEO/OpenGraph meta
+- DoD: a generator is viewable + indexable without the app. (Blocked portion: web SDK fix.)
+
+### Sprint 7 — Fulfillment timeline & disputes
+- [ ] Fulfillment status timeline on the ticket (accepted→preparing→en route→delivered→active→returned)
+- [ ] Digital handover: delivery & return photos + fuel/meter readings (v2 spec)
+- [ ] Two-sided dispute/claim flow (extend reports: damage/no-show/wrong-spec + evidence + admin adjudication)
+- DoD: every active rental has an auditable timeline; disputes have an admin adjudication path.
+
+### Sprint 8 — Owner tooling & supply growth
+- [ ] Owner quick-add / bulk listing flow (low-friction OLX/Facebook migration)
+- [ ] Add Generator: clone listing + local draft
+- [ ] Listing fields: operated vs dry-hire, fuel policy, accessories (v2 spec)
+- [ ] Supply-thin owner nudges (tie to the governorate tracker)
+- DoD: an owner can list 5 generators in minutes; new spec fields captured + filterable.
+
+### Sprint 9 — Monetization (collectable without a gateway) 🔒(owner: revenue model)
+- 🔒 [ ] Revenue-collection model decision (A subscription / B Fawry-escrow / C ledger / D hybrid) — owner picks (docs/MONETIZATION.md §1b)
+- [ ] Owner subscription + featured-listing fees (needs a digital charge endpoint)
+- [ ] Unpaid-balance listing-suspension rule (anti-churn for the cash ledger)
+- [ ] Owner payout statements (income reporting; WHT if required)
+- DoD: a collectable revenue mechanism live once the model is chosen; ledger drives suspensions.
+
+### Sprint 10 — Notifications, payments & compliance 🔒(external)
+- 🔒 [ ] FCM push + flutter_local_notifications (needs android/ios native config + FCM project)
+- 🔒 [ ] Phone OTP (needs SMS provider — Twilio/Vonage)
+- 🔒 [ ] Digital escrow (Paymob/Kashier) / Fawry pay-against-code (needs merchant acct + CBE review)
+- 🔒 [ ] Tax: confirm VAT treatment + customer % with accountant; ETA e-invoicing onboarding
+- [ ] Auto-expire stale pending requests (edge fn/cron) — buildable once an edge fn is allowed
+- DoD: real-time push + collected payments + compliant invoicing (gated on the owner/external items).
+
+---
+
 ## FOCUS: Validated Business Thesis (market research 2026-06-23)
 Full strategy in `docs/BUSINESS_STRATEGY.md` + money model in `docs/MONETIZATION.md`.
 
@@ -244,12 +319,12 @@ Per-page review of the live code. Implement NOW items in the auto-loop on `devel
 ---
 
 ## Loop State (updated each iteration)
-**Last iteration:** 2026-06-23
+**Last iteration:** 2026-06-24 — Arabic-first rollout COMPLETE (default `ar`+RTL, both QA agents addressed). Now executing the **Next 10 Sprints** roadmap (see section above).
 **Working branch:** `development` (main is integration/release)
 **Mode:** continuous loop (owner directive — no timer waits; finish item → start next).
 **Last commit:** `fix: company onboarding governorate + dedupe location`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** money-model shift — switch commission_config to ~10% percentage + show fee/payout breakdown at request time (rental-workflow + supabase-db). See docs/BUSINESS_STRATEGY.md + docs/MONETIZATION.md.
+**Next action:** Sprint 1 — Trust signals. First item: verified-owner badge on generator cards + detail (wire `companies.verification_status` through the generator query/repository). Then the detail trust row, owner deposit reminder, status-token adoption. (Loop currently waiting on Bash/shell tool availability for the analyze/test/commit gate; resumes automatically.)
 **Strategy:** repositioned to B2B/SMB trust marketplace per market research 2026-06-23 (docs/BUSINESS_STRATEGY.md).
 
 ---
