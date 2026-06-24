@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../l10n/app_localizations.dart';
 
 const _reasons = [
   ('misrepresentation', 'Misrepresentation', 'Generator specs don\'t match reality'),
@@ -44,8 +45,9 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _submit() async {
+    final l = AppLocalizations.of(context)!;
     if (_reason == null) {
-      _snack('Please select a reason');
+      _snack(l.selectReason);
       return;
     }
     setState(() => _submitting = true);
@@ -61,7 +63,7 @@ class _ReportScreenState extends State<ReportScreen> {
           'description': _descController.text.trim(),
       });
       if (mounted) {
-        _snack('Report submitted — we\'ll review it shortly.');
+        _snack(l.reportSubmitted);
         context.pop();
       }
     } catch (e) {
@@ -83,10 +85,11 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final entityLabel = widget.entityName ?? _entityLabel(widget.entityType);
+    final l = AppLocalizations.of(context)!;
+    final entityLabel = widget.entityName ?? _entityLabel(widget.entityType, l);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Report an Issue')),
+      appBar: AppBar(title: Text(l.reportAnIssueTitle)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -107,12 +110,12 @@ class _ReportScreenState extends State<ReportScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Reporting: $entityLabel',
+                        Text(l.reportingEntity(entityLabel),
                             style: const TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 2),
                         Text(
-                          'Your report is confidential and reviewed by our team.',
+                          l.reportConfidential,
                           style: TextStyle(
                               fontSize: 12, color: cs.onSurfaceVariant),
                         ),
@@ -125,7 +128,7 @@ class _ReportScreenState extends State<ReportScreen> {
             const SizedBox(height: 24),
 
             // Reason selector
-            Text('What\'s the issue?',
+            Text(l.whatsTheIssue,
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -133,7 +136,7 @@ class _ReportScreenState extends State<ReportScreen> {
                     color: cs.onSurfaceVariant)),
             const SizedBox(height: 10),
             ..._reasons.map((r) {
-              final (key, label, sub) = r;
+              final key = r.$1;
               final selected = _reason == key;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -167,14 +170,14 @@ class _ReportScreenState extends State<ReportScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(label,
+                              Text(_reasonTitle(key, l),
                                   style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: selected
                                           ? cs.onErrorContainer
                                           : cs.onSurface)),
-                              Text(sub,
+                              Text(_reasonDesc(key, l),
                                   style: TextStyle(
                                       fontSize: 12,
                                       color: cs.onSurfaceVariant)),
@@ -190,7 +193,7 @@ class _ReportScreenState extends State<ReportScreen> {
             const SizedBox(height: 16),
 
             // Description
-            Text('Additional details (optional)',
+            Text(l.additionalDetails,
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -201,8 +204,8 @@ class _ReportScreenState extends State<ReportScreen> {
               controller: _descController,
               maxLines: 4,
               maxLength: 500,
-              decoration: const InputDecoration(
-                hintText: 'Describe what happened…',
+              decoration: InputDecoration(
+                hintText: l.describeHint,
                 alignLabelWithHint: true,
               ),
             ),
@@ -221,12 +224,12 @@ class _ReportScreenState extends State<ReportScreen> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: cs.onError),
                     )
-                  : const Text('Submit report'),
+                  : Text(l.submitReport),
             ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => context.pop(),
-              child: const Text('Cancel'),
+              child: Text(l.cancel),
             ),
           ],
         ),
@@ -234,10 +237,28 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  String _entityLabel(String type) => switch (type) {
-        'generator' => 'Generator',
-        'company' => 'Company',
-        'user' => 'User',
-        _ => 'Item',
+  String _entityLabel(String type, AppLocalizations l) => switch (type) {
+        'generator' => l.generatorLabel,
+        'company' => l.entityCompany,
+        'user' => l.entityUser,
+        _ => l.entityItem,
+      };
+
+  String _reasonTitle(String code, AppLocalizations l) => switch (code) {
+        'misrepresentation' => l.reasonMisrep,
+        'no_show' => l.reasonNoShow,
+        'damage' => l.reasonDamage,
+        'fraud' => l.reasonFraud,
+        'harassment' => l.reasonHarassment,
+        _ => l.reasonOther,
+      };
+
+  String _reasonDesc(String code, AppLocalizations l) => switch (code) {
+        'misrepresentation' => l.reasonMisrepDesc,
+        'no_show' => l.reasonNoShowDesc,
+        'damage' => l.reasonDamageDesc,
+        'fraud' => l.reasonFraudDesc,
+        'harassment' => l.reasonHarassmentDesc,
+        _ => l.reasonOtherDesc,
       };
 }
