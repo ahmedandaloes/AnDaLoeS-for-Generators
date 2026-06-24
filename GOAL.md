@@ -151,7 +151,7 @@ buildable in-app now. Definition of done (DoD) per sprint listed.
 ### Sprint 8 — Owner tooling & supply growth
 - [ ] Owner quick-add / bulk listing flow (low-friction OLX/Facebook migration)
 - [x] Add Generator: clone listing — copy_all_outlined button in owner generator tile passes full data (all 17 fields) as GoRouter extra → AddGeneratorScreen prefill
-- [ ] Listing fields: operated vs dry-hire, fuel policy, accessories (v2 spec)
+- [x] Listing fields: operated vs dry-hire, fuel policy, accessories — DB 0037, AddGeneratorScreen + EditGeneratorScreen + GeneratorDetailScreen all ship these fields
 - [ ] Supply-thin owner nudges (tie to the governorate tracker)
 - DoD: an owner can list 5 generators in minutes; new spec fields captured + filterable.
 

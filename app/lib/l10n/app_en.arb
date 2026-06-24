@@ -550,5 +550,8 @@
   "handoverSaved": "Handover recorded",
   "skipHandover": "Skip",
   "deliveryHandoverBody": "Record generator state at delivery (recommended).",
-  "returnHandoverBody": "Record generator state at return before marking complete."
+  "returnHandoverBody": "Record generator state at return before marking complete.",
+
+  "showPassword": "Show password",
+  "hidePassword": "Hide password"
 }

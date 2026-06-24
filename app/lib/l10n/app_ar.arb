@@ -517,5 +517,8 @@
   "handoverSaved": "تم تسجيل التسليم",
   "skipHandover": "تخطّي",
   "deliveryHandoverBody": "سجّل حالة المولد عند التسليم (موصى به).",
-  "returnHandoverBody": "سجّل حالة المولد عند الاستلام قبل إنهاء الإيجار."
+  "returnHandoverBody": "سجّل حالة المولد عند الاستلام قبل إنهاء الإيجار.",
+
+  "showPassword": "إظهار كلمة المرور",
+  "hidePassword": "إخفاء كلمة المرور"
 }
