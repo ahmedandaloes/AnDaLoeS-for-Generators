@@ -296,5 +296,18 @@
   "filterRentals": "الإيجارات",
   "filterRatings": "التقييمات",
   "filterStatus": "الحالة",
-  "filterPayments": "المدفوعات"
+  "filterPayments": "المدفوعات",
+  "taxInvoice": "فاتورة ضريبية",
+  "issueDate": "تاريخ الإصدار: {date}",
+  "paid": "مدفوعة",
+  "descriptionCol": "الوصف",
+  "qtyCol": "الكمية",
+  "rateCol": "السعر",
+  "amountCol": "المبلغ",
+  "totalAmountDue": "إجمالي المبلغ المستحق",
+  "subtotalExcl": "المجموع الفرعي (بدون {tax})",
+  "rentalPeriod": "فترة الإيجار",
+  "durationLabel": "المدة",
+  "daysCount": "{days} أيام",
+  "completedCheck": "مكتمل ✓"
 }

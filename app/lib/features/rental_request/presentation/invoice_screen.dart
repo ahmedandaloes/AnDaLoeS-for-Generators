@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -33,11 +34,12 @@ class InvoiceScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dataAsync = ref.watch(_invoiceDataProvider(rentalId));
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('Invoice'),
+        title: Text(l.invoice),
         backgroundColor: Colors.grey.shade100,
         elevation: 0,
         actions: [
@@ -146,6 +148,7 @@ class _InvoiceDocument extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final gen = data['generators'] as Map<String, dynamic>?;
     final company = data['companies'] as Map<String, dynamic>?;
     final customer = data['profiles'] as Map<String, dynamic>?;
@@ -217,7 +220,7 @@ class _InvoiceDocument extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('TAX INVOICE',
+                        Text(l.taxInvoice,
                             style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 13,
@@ -243,7 +246,7 @@ class _InvoiceDocument extends StatelessWidget {
                   ]),
                   const SizedBox(height: 16),
                   Row(children: [
-                    Text('Issue date: ${_fmt(data['created_at'])}',
+                    Text(l.issueDate(_fmt(data['created_at'])),
                         style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 11)),
@@ -259,7 +262,7 @@ class _InvoiceDocument extends StatelessWidget {
                         const Icon(Icons.check_circle_rounded,
                             size: 12, color: Colors.green),
                         const SizedBox(width: 4),
-                        Text('PAID',
+                        Text(l.paid,
                             style: TextStyle(
                                 color: Colors.green.shade700,
                                 fontSize: 11,
@@ -318,29 +321,29 @@ class _InvoiceDocument extends StatelessWidget {
                           top: Radius.circular(10)),
                     ),
                     child: Row(children: [
-                      const Expanded(
+                      Expanded(
                           flex: 3,
-                          child: Text('Description',
+                          child: Text(l.descriptionCol,
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.grey))),
-                      const Expanded(
-                          child: Text('Qty',
+                      Expanded(
+                          child: Text(l.qtyCol,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.grey))),
-                      const Expanded(
-                          child: Text('Rate',
+                      Expanded(
+                          child: Text(l.rateCol,
                               textAlign: TextAlign.right,
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.grey))),
-                      const Expanded(
-                          child: Text('Amount',
+                      Expanded(
+                          child: Text(l.amountCol,
                               textAlign: TextAlign.right,
                               style: TextStyle(
                                   fontSize: 11,
@@ -430,7 +433,7 @@ class _InvoiceDocument extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
                 child: Column(children: [
-                  row('Subtotal (excl. $taxLabel)',
+                  row(l.subtotalExcl(taxLabel),
                       'EGP ${net.toStringAsFixed(2)}'),
                   row('$taxLabel ($pctLabel%)', 'EGP ${tax.toStringAsFixed(2)}'),
                 ]),
@@ -452,7 +455,7 @@ class _InvoiceDocument extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Total Amount Due',
+                      Text(l.totalAmountDue,
                           style: TextStyle(
                               fontSize: 11,
                               color: Colors.green.shade700,
@@ -469,12 +472,12 @@ class _InvoiceDocument extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text('Payment method',
+                      Text(l.paymentMethod,
                           style: TextStyle(
                               fontSize: 10,
                               color: Colors.green.shade700)),
                       const SizedBox(height: 2),
-                      const Text('Cash on delivery',
+                      Text(l.cashOnDelivery,
                           style: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.w600)),
                     ],
@@ -500,10 +503,10 @@ class _InvoiceDocument extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        DocRow('Rental Period',
+                        DocRow(l.rentalPeriod,
                             '${_fmt(data['start_date'])} → ${_fmt(data['end_date'])}'),
-                        DocRow('Duration', '$days days'),
-                        DocRow('Status', 'Completed ✓'),
+                        DocRow(l.durationLabel, l.daysCount('$days')),
+                        DocRow(l.filterStatus, l.completedCheck),
                       ],
                     ),
                   ),

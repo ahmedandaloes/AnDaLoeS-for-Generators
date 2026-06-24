@@ -316,5 +316,21 @@
   "filterRentals": "Rentals",
   "filterRatings": "Ratings",
   "filterStatus": "Status",
-  "filterPayments": "Payments"
+  "filterPayments": "Payments",
+  "taxInvoice": "TAX INVOICE",
+  "issueDate": "Issue date: {date}",
+  "@issueDate": { "placeholders": { "date": { "type": "String" } } },
+  "paid": "PAID",
+  "descriptionCol": "Description",
+  "qtyCol": "Qty",
+  "rateCol": "Rate",
+  "amountCol": "Amount",
+  "totalAmountDue": "Total Amount Due",
+  "subtotalExcl": "Subtotal (excl. {tax})",
+  "@subtotalExcl": { "placeholders": { "tax": { "type": "String" } } },
+  "rentalPeriod": "Rental Period",
+  "durationLabel": "Duration",
+  "daysCount": "{days} days",
+  "@daysCount": { "placeholders": { "days": { "type": "String" } } },
+  "completedCheck": "Completed ✓"
 }
