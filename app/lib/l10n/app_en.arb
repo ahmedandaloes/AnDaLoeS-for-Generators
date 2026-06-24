@@ -13,5 +13,14 @@
   "noGeneratorsYet": "No generators to show yet.",
   "language": "Language",
   "english": "English",
-  "arabic": "العربية"
+  "arabic": "العربية",
+  "tryAgain": "Try again",
+  "errorGeneric": "Something went wrong.",
+  "errorConnection": "Please check your connection and try again.",
+  "cancel": "Cancel",
+  "save": "Save",
+  "confirm": "Confirm",
+  "retry": "Retry",
+  "close": "Close",
+  "viewDetails": "View details"
 }

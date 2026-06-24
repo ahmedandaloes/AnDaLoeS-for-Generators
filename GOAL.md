@@ -299,3 +299,11 @@ Key remaining: owner KYC publish-gating, Arabic-first/RTL, digital handover (pho
 new-customer trust fee, B2B renter ID, listing fields (operated/dry-hire, fuel policy, accessories),
 disputes workflow. Decisions needed: Section 18 (commission enforcement, trust-fee collection,
 listing approval, pricing guardrails, liability). Sequence proposed in GAP_ANALYSIS.md.
+
+## 🌍 Arabic-first + RTL rollout (owner decision 2026-06-24)
+Decision: Arabic default + full RTL. State: RTL infra present (gen-l10n Global delegates, `ar` supported, toggle); only ~14 strings externalized, ~345 hardcoded English Text() across ~28 screens.
+Plan (loop, screen-by-screen): (1) grow app_en.arb + app_ar.arb (real Arabic) with each screen's strings; (2) replace hardcoded Text() with AppLocalizations; (3) RTL audit — EdgeInsets.only(left/right) → start/end, Align/Row directionality; (4) flip locale default to Arabic once the bulk is translated (avoid half-Arabic UI). Shared/common strings first (highest leverage), then high-traffic screens (home, detail, rental request, my rentals, owner dashboard), then the rest.
+- [x] Foundation: common strings (actions/errors) in en+ar; AppErrorState localized (app-wide).
+- [ ] Localize: bottom nav + profile + home → detail → rental request/payment → my rentals → owner dashboard → admin → rest.
+- [ ] RTL padding/Align audit per screen as localized.
+- [ ] Flip default locale to Arabic when ≥ ~80% strings translated.

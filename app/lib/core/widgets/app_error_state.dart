@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 /// Friendly, branded error state with an optional Retry — replaces bare
 /// `Center(child: Text('$e'))` across screens so failures never leak raw
-/// exceptions and always look premium.
+/// exceptions and always look premium. Localized (en + ar/RTL).
 class AppErrorState extends StatelessWidget {
   const AppErrorState({super.key, this.message, this.onRetry});
 
@@ -12,6 +14,7 @@ class AppErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -21,7 +24,7 @@ class AppErrorState extends StatelessWidget {
             Icon(Icons.cloud_off_rounded, size: 44, color: cs.onSurfaceVariant),
             const SizedBox(height: 14),
             Text(
-              message ?? 'Something went wrong.',
+              message ?? l.errorGeneric,
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontSize: 15,
@@ -30,7 +33,7 @@ class AppErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Please check your connection and try again.',
+              l.errorConnection,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12.5, color: cs.onSurfaceVariant),
             ),
@@ -39,7 +42,7 @@ class AppErrorState extends StatelessWidget {
               FilledButton.tonalIcon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Try again'),
+                label: Text(l.tryAgain),
               ),
             ],
           ],

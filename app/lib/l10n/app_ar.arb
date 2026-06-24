@@ -13,5 +13,14 @@
   "noGeneratorsYet": "لا توجد مولدات لعرضها حتى الآن.",
   "language": "اللغة",
   "english": "English",
-  "arabic": "العربية"
+  "arabic": "العربية",
+  "tryAgain": "حاول مرة أخرى",
+  "errorGeneric": "حدث خطأ ما.",
+  "errorConnection": "تحقّق من اتصالك بالإنترنت وحاول مرة أخرى.",
+  "cancel": "إلغاء",
+  "save": "حفظ",
+  "confirm": "تأكيد",
+  "retry": "إعادة المحاولة",
+  "close": "إغلاق",
+  "viewDetails": "عرض التفاصيل"
 }
