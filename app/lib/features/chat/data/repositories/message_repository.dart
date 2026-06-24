@@ -8,6 +8,8 @@ final messageRepositoryProvider =
     Provider<MessageRepository>((_) => MessageRepository());
 
 class MessageRepository implements IMessageRepository {
+  String? get currentUserId => supabase.auth.currentUser?.id;
+
   @override
   Future<List<MessageEntity>> fetchMessages(String rentalRequestId) async {
     final data = await supabase

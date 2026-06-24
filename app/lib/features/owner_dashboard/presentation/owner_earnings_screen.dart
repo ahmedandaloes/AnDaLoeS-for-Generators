@@ -3,68 +3,12 @@ import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/config/supabase.dart';
+import '../providers/owner_providers.dart' show ownerRepositoryProvider;
 
 final _earningsProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
         (ref, companyId) async {
-  // Completed rentals for this company
-  final rentals = await supabase
-      .from('rental_requests')
-      .select('id, price_total, start_date, end_date, generators(title)')
-      .eq('company_id', companyId)
-      .eq('status', 'completed')
-      .order('created_at', ascending: false);
-
-  final rentalList = (rentals as List).cast<Map<String, dynamic>>();
-
-  // Commissions taken
-  final commissions = await supabase
-      .from('commissions')
-      .select('rental_request_id, commission_amount, type, value, status')
-      .inFilter('rental_request_id', rentalList.map((r) => r['id']).toList());
-
-  final commissionList = (commissions as List).cast<Map<String, dynamic>>();
-  final commissionMap = {
-    for (final c in commissionList) c['rental_request_id'].toString(): c
-  };
-
-  final totalRevenue = rentalList.fold<double>(
-      0, (s, r) => s + (double.tryParse(r['price_total']?.toString() ?? '0') ?? 0));
-  final totalCommissions = commissionList.fold<double>(
-      0, (s, c) => s + (double.tryParse(c['commission_amount']?.toString() ?? '0') ?? 0));
-  // What the owner still owes the platform vs already settled.
-  final commissionOwed = commissionList
-      .where((c) => c['status'] != 'settled')
-      .fold<double>(0,
-          (s, c) => s + (double.tryParse(c['commission_amount']?.toString() ?? '0') ?? 0));
-  final commissionSettled = totalCommissions - commissionOwed;
-
-  // Group net revenue by month (YYYY-MM)
-  final monthlyMap = <String, double>{};
-  for (final r in rentalList) {
-    final raw = r['start_date']?.toString() ?? '';
-    if (raw.length >= 7) {
-      final month = raw.substring(0, 7);
-      final gross = double.tryParse(r['price_total']?.toString() ?? '0') ?? 0;
-      final fee = commissionMap[r['id'].toString()] != null
-          ? double.tryParse(commissionMap[r['id'].toString()]?['commission_amount']?.toString() ?? '0') ?? 0
-          : 0.0;
-      monthlyMap[month] = (monthlyMap[month] ?? 0) + (gross - fee);
-    }
-  }
-  final sortedMonths = monthlyMap.keys.toList()..sort();
-
-  return {
-    'rentals': rentalList,
-    'commission_map': commissionMap,
-    'total_revenue': totalRevenue,
-    'total_commissions': totalCommissions,
-    'commission_owed': commissionOwed,
-    'commission_settled': commissionSettled,
-    'net_payout': totalRevenue - totalCommissions,
-    'monthly_net': {for (final m in sortedMonths) m: monthlyMap[m]!},
-  };
+  return ref.read(ownerRepositoryProvider).fetchEarnings(companyId);
 });
 
 class OwnerEarningsScreen extends ConsumerStatefulWidget {

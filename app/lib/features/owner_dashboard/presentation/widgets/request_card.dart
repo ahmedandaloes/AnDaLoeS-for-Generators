@@ -4,7 +4,6 @@ import '../../../../core/theme/status_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/config/supabase.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/commission.dart';
 import '../../../../core/utils/db_error.dart';
@@ -14,7 +13,7 @@ import '../../../ratings/presentation/rate_rental_screen.dart';
 import '../../../rental_request/data/rental_repository.dart'
     show rentalRepositoryProvider, rentalTimelineProvider, rentalHandoversProvider;
 import '../../providers/owner_providers.dart'
-    show ownerRequestsProvider, commissionConfigProvider;
+    show ownerRequestsProvider, commissionConfigProvider, ownerRepositoryProvider;
 
 class OwnerRequestCard extends StatelessWidget {
   const OwnerRequestCard({
@@ -577,15 +576,15 @@ class OwnerRequestCard extends StatelessWidget {
       double? meterReading,
       String? note}) async {
     try {
-      final payload = <String, dynamic>{
-        'rental_id': rentalId,
-        'type': type,
-        'recorded_by': supabase.auth.currentUser?.id,
-      };
-      if (fuelLevel != null) payload['fuel_level'] = fuelLevel;
-      if (meterReading != null) payload['meter_reading'] = meterReading;
-      if (note != null) payload['note'] = note;
-      await supabase.from('rental_handovers').insert(payload);
+      final repo = ref.read(ownerRepositoryProvider);
+      await repo.recordHandover(
+        rentalId: rentalId,
+        type: type,
+        recordedBy: repo.currentUserId ?? '',
+        fuelLevel: fuelLevel,
+        meterReading: meterReading,
+        note: note,
+      );
       ref.invalidate(rentalHandoversProvider(rentalId));
     } catch (_) {
       // Non-critical: handover recording failure should not block status update.
@@ -596,12 +595,9 @@ class OwnerRequestCard extends StatelessWidget {
       BuildContext context, String requestId, String newStatus,
       {String? ownerNote}) async {
     try {
-      final update = <String, dynamic>{'status': newStatus};
-      if (ownerNote != null) update['owner_note'] = ownerNote;
-      await supabase
-          .from('rental_requests')
-          .update(update)
-          .eq('id', requestId);
+      await ref
+          .read(ownerRepositoryProvider)
+          .updateRequestStatus(requestId, newStatus, ownerNote: ownerNote);
       ref.invalidate(ownerRequestsProvider(companyId));
       if (newStatus == 'completed' && context.mounted) {
         final customerId = request['customer_id']?.toString() ?? '';

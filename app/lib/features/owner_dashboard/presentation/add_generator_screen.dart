@@ -5,12 +5,13 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
-import '../../../core/config/supabase.dart';
 import '../../../core/constants/generator_sizes.dart';
 import '../../../core/constants/generator_use_cases.dart';
 import '../../../core/widgets/app_snack_bar.dart';
+import '../providers/owner_providers.dart' show ownerRepositoryProvider;
 
 const _governorates = [
   'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',
@@ -20,7 +21,7 @@ const _governorates = [
   'Luxor', 'Qena', 'North Sinai', 'Sohag',
 ];
 
-class AddGeneratorScreen extends StatefulWidget {
+class AddGeneratorScreen extends ConsumerStatefulWidget {
   const AddGeneratorScreen({
     super.key,
     required this.companyId,
@@ -30,10 +31,11 @@ class AddGeneratorScreen extends StatefulWidget {
   final Map<String, dynamic>? prefill;
 
   @override
-  State<AddGeneratorScreen> createState() => _AddGeneratorScreenState();
+  ConsumerState<AddGeneratorScreen> createState() =>
+      _AddGeneratorScreenState();
 }
 
-class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
+class _AddGeneratorScreenState extends ConsumerState<AddGeneratorScreen> {
   final _titleController = TextEditingController();
   final _capacityController = TextEditingController();
   final _descController = TextEditingController();
@@ -129,8 +131,9 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
 
     setState(() => _submitting = true);
     try {
+      final repo = ref.read(ownerRepositoryProvider);
       // 1 — insert generator
-      final data = await supabase.from('generators').insert({
+      final data = await repo.insertGenerator({
         'company_id': widget.companyId,
         'title': title,
         'capacity_kva': double.parse(capacityStr),
@@ -152,7 +155,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
         'accessories': _accessories.toList(),
         'use_cases': _useCases.toList(),
         'status': 'available',
-      }).select('id').single();
+      });
 
       final generatorId = data['id'].toString();
 
@@ -165,18 +168,14 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
           final ext = file.path.split('.').last.toLowerCase();
           final remotePath =
               '${widget.companyId}/$generatorId/${ts}_$i.$ext';
-          await supabase.storage.from('generator-photos').upload(
-                remotePath,
-                file,
-                fileOptions: const FileOptions(upsert: true),
-              );
-          final url = supabase.storage
-              .from('generator-photos')
-              .getPublicUrl(remotePath);
+          final url = await repo.uploadGeneratorPhoto(
+            remotePath,
+            file,
+            const FileOptions(upsert: true),
+          );
           urls.add(url);
         }
-        await supabase.from('generators').update({'photos': urls}).eq(
-            'id', generatorId);
+        await repo.updateGeneratorPhotos(generatorId, urls);
       }
 
       if (mounted) {

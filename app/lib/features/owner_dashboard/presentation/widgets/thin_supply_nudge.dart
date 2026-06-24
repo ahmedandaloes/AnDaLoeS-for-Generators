@@ -2,19 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/config/supabase.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../providers/owner_providers.dart' show ownerRepositoryProvider;
 
 /// Governorates with fewer than 3 available generators.
 final thinSupplyProvider =
     FutureProvider.autoDispose<List<String>>((ref) async {
-  final data = await supabase
-      .from('generators')
-      .select('governorate')
-      .eq('status', 'available');
+  final data = await ref
+      .read(ownerRepositoryProvider)
+      .fetchAvailableGeneratorsGovernorates();
   final counts = <String, int>{};
-  for (final g in (data as List)) {
+  for (final g in data) {
     final gov = g['governorate']?.toString();
     if (gov == null || gov.isEmpty) continue;
     counts[gov] = (counts[gov] ?? 0) + 1;

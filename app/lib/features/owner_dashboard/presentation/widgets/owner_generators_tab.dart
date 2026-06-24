@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/config/supabase.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/widgets/app_error_state.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../providers/owner_providers.dart';
+import '../../providers/owner_providers.dart'
+    show ownerGeneratorsProvider, activeRentalCountsProvider, ownerRepositoryProvider;
 
 enum _GenSort { status, kva, price }
 
@@ -242,9 +242,9 @@ class _OwnerGeneratorTile extends StatelessWidget {
 
   Future<void> _toggleStatus(BuildContext context, bool available) async {
     try {
-      await supabase.from('generators').update(
-          {'status': available ? 'available' : 'unavailable'}).eq(
-          'id', gen['id'].toString());
+      await ref
+          .read(ownerRepositoryProvider)
+          .toggleGeneratorStatus(gen['id'].toString(), available);
       ref.invalidate(ownerGeneratorsProvider(companyId));
     } catch (e) {
       if (context.mounted) {

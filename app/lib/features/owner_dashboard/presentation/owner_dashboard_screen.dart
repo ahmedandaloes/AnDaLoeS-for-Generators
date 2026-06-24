@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/widgets/app_error_state.dart';
 import '../../../l10n/app_localizations.dart';
@@ -30,29 +29,18 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
     if (_watchedCompanyId == companyId) return;
     _channel?.unsubscribe();
     _watchedCompanyId = companyId;
-    _channel = supabase
-        .channel('owner-requests-$companyId')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: 'rental_requests',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'company_id',
-            value: companyId,
-          ),
-          callback: (_) {
-            ref.invalidate(ownerRequestsProvider(companyId));
-            if (mounted) {
-              final l = AppLocalizations.of(context)!;
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(l.newRequestReceived),
-                behavior: SnackBarBehavior.floating,
-              ));
-            }
-          },
-        )
-        .subscribe();
+    _channel = ref
+        .read(ownerRepositoryProvider)
+        .ownerRequestsChannel(companyId, () {
+      ref.invalidate(ownerRequestsProvider(companyId));
+      if (mounted) {
+        final l = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(l.newRequestReceived),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    }).subscribe();
   }
 
   @override

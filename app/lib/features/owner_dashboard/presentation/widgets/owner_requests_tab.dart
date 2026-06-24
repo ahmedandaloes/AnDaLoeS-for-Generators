@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/config/supabase.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/db_error.dart';
 import '../../../../core/widgets/app_error_state.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../providers/owner_providers.dart';
+import '../../providers/owner_providers.dart'
+    show ownerRequestsProvider, ownerRepositoryProvider;
 import 'request_card.dart';
 
 class OwnerRequestsTab extends StatelessWidget {
@@ -122,9 +122,9 @@ class OwnerRequestsTab extends StatelessWidget {
                     confirmDismiss: (dir) async {
                       if (dir == DismissDirection.startToEnd) {
                         try {
-                          await supabase
-                              .from('rental_requests')
-                              .update({'status': 'accepted'}).eq('id', reqId);
+                          await ref
+                              .read(ownerRepositoryProvider)
+                              .updateRequestStatus(reqId, 'accepted');
                           ref.invalidate(ownerRequestsProvider(companyId));
                         } catch (e) {
                           if (ctx.mounted) {
@@ -158,9 +158,9 @@ class OwnerRequestsTab extends StatelessWidget {
                           ),
                         );
                         if (confirmed == true) {
-                          await supabase
-                              .from('rental_requests')
-                              .update({'status': 'rejected'}).eq('id', reqId);
+                          await ref
+                              .read(ownerRepositoryProvider)
+                              .updateRequestStatus(reqId, 'rejected');
                           ref.invalidate(ownerRequestsProvider(companyId));
                         }
                         return false;
@@ -257,11 +257,10 @@ class OwnerRequestsTab extends StatelessWidget {
     if (confirmed != true) return;
     var accepted = 0;
     var skipped = 0;
+    final repo = ref.read(ownerRepositoryProvider);
     for (final r in pending) {
       try {
-        await supabase
-            .from('rental_requests')
-            .update({'status': 'accepted'}).eq('id', r['id'].toString());
+        await repo.updateRequestStatus(r['id'].toString(), 'accepted');
         accepted++;
       } catch (_) {
         skipped++;

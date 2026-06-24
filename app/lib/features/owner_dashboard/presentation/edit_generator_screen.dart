@@ -9,11 +9,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
-import '../../../core/config/supabase.dart';
 import '../../../core/constants/generator_sizes.dart';
 import '../../../core/constants/generator_use_cases.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_snack_bar.dart';
+import '../providers/owner_providers.dart' show ownerRepositoryProvider;
 
 const _editGovernorates = [
   'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',
@@ -26,12 +26,7 @@ const _editGovernorates = [
 final _editGeneratorProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
         (ref, id) async {
-  final data = await supabase
-      .from('generators')
-      .select('*')
-      .eq('id', id)
-      .single();
-  return data;
+  return ref.read(ownerRepositoryProvider).fetchGeneratorById(id);
 });
 
 class EditGeneratorScreen extends ConsumerStatefulWidget {
@@ -151,6 +146,7 @@ class _EditGeneratorScreenState
 
     setState(() => _saving = true);
     try {
+      final repo = ref.read(ownerRepositoryProvider);
       // 1 — upload new photos
       final ts = DateTime.now().millisecondsSinceEpoch;
       final newUrls = <String>[];
@@ -159,14 +155,11 @@ class _EditGeneratorScreenState
         final ext = file.path.split('.').last.toLowerCase();
         final remotePath =
             '$_companyId/${widget.generatorId}/${ts}_$i.$ext';
-        await supabase.storage.from('generator-photos').upload(
-              remotePath,
-              file,
-              fileOptions: const FileOptions(upsert: true),
-            );
-        final url = supabase.storage
-            .from('generator-photos')
-            .getPublicUrl(remotePath);
+        final url = await repo.uploadGeneratorPhoto(
+          remotePath,
+          file,
+          const FileOptions(upsert: true),
+        );
         newUrls.add(url);
       }
 
@@ -177,7 +170,7 @@ class _EditGeneratorScreenState
       ];
 
       // 3 — update generator
-      await supabase.from('generators').update({
+      await repo.updateGenerator(widget.generatorId, {
         'title': title,
         'capacity_kva': double.parse(capacityStr),
         'price_per_day': double.parse(priceStr),
@@ -203,7 +196,7 @@ class _EditGeneratorScreenState
         'use_cases': _useCases.toList(),
         'status': _available ? 'available' : 'unavailable',
         'photos': finalPhotos,
-      }).eq('id', widget.generatorId);
+      });
 
       if (mounted) {
         _snack(l.generatorUpdated);
@@ -543,10 +536,7 @@ class _EditGeneratorScreenState
     );
     if (ok != true || !mounted) return;
     try {
-      await supabase
-          .from('generators')
-          .delete()
-          .eq('id', widget.generatorId);
+      await ref.read(ownerRepositoryProvider).deleteGenerator(widget.generatorId);
       if (mounted) context.pop();
     } catch (e) {
       _snack('Error: $e');
