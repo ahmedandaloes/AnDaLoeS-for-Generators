@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/data/repositories/auth_repository.dart';
+import '../data/repositories/reports_repository.dart';
 
 const _reasons = [
   ('misrepresentation', 'Misrepresentation', 'Generator specs don\'t match reality'),
@@ -13,7 +15,7 @@ const _reasons = [
   ('other', 'Other', 'Something else'),
 ];
 
-class ReportScreen extends StatefulWidget {
+class ReportScreen extends ConsumerStatefulWidget {
   const ReportScreen({
     super.key,
     required this.entityType,
@@ -30,10 +32,10 @@ class ReportScreen extends StatefulWidget {
   final String? initialReason;
 
   @override
-  State<ReportScreen> createState() => _ReportScreenState();
+  ConsumerState<ReportScreen> createState() => _ReportScreenState();
 }
 
-class _ReportScreenState extends State<ReportScreen> {
+class _ReportScreenState extends ConsumerState<ReportScreen> {
   late String? _reason = widget.initialReason;
   final _descController = TextEditingController();
   bool _submitting = false;
@@ -52,16 +54,21 @@ class _ReportScreenState extends State<ReportScreen> {
     }
     setState(() => _submitting = true);
     try {
-      await supabase.from('reports').insert({
-        'reporter_id': supabase.auth.currentUser!.id,
-        'reported_entity_type': widget.entityType,
-        'reported_entity_id': widget.entityId,
-        if (widget.rentalRequestId != null)
-          'rental_request_id': widget.rentalRequestId,
-        'reason': _reason,
-        if (_descController.text.trim().isNotEmpty)
-          'description': _descController.text.trim(),
-      });
+      final uid = ref.read(authRepositoryProvider).currentUserId;
+      if (uid == null) {
+        _snack(l.createAnAccountFirst);
+        return;
+      }
+      await ref.read(reportsRepositoryProvider).submitReport(
+            reporterId: uid,
+            entityType: widget.entityType,
+            entityId: widget.entityId,
+            rentalRequestId: widget.rentalRequestId,
+            reason: _reason!,
+            description: _descController.text.trim().isNotEmpty
+                ? _descController.text.trim()
+                : null,
+          );
       if (mounted) {
         _snack(l.reportSubmitted);
         context.pop();
