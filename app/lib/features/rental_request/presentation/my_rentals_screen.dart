@@ -12,7 +12,8 @@ import '../../../l10n/app_localizations.dart';
 import '../../chat/providers/chat_providers.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/widgets/app_error_state.dart';
-import '../data/rental_repository.dart' show rentalTimelineProvider;
+import '../data/rental_repository.dart'
+    show rentalTimelineProvider, rentalHandoversProvider;
 
 final myRentalsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
@@ -913,6 +914,62 @@ class _RentalCard extends ConsumerWidget {
                     ]),
                   );
                 }),
+                if (['active', 'completed'].contains(status))
+                  Consumer(builder: (ctx, r, _) {
+                    final handovers = r
+                        .watch(rentalHandoversProvider(rental['id'].toString()))
+                        .valueOrNull;
+                    if (handovers == null || handovers.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: handovers.map((h) {
+                        final isDelivery = h['type'] == 'delivery';
+                        final fuel = h['fuel_level'] as String?;
+                        final meter = h['meter_reading'];
+                        if (fuel == null && meter == null) {
+                          return const SizedBox.shrink();
+                        }
+                        final fuelLabel = switch (fuel) {
+                          'full' => AppLocalizations.of(ctx)!.fuelFull,
+                          'three_quarters' =>
+                            AppLocalizations.of(ctx)!.fuelThreeQuarters,
+                          'half' => AppLocalizations.of(ctx)!.fuelHalf,
+                          'quarter' => AppLocalizations.of(ctx)!.fuelQuarter,
+                          'empty' => AppLocalizations.of(ctx)!.fuelEmpty,
+                          _ => null,
+                        };
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Row(children: [
+                            Icon(
+                              isDelivery
+                                  ? Icons.local_shipping_outlined
+                                  : Icons.assignment_return_outlined,
+                              size: 13,
+                              color: cs.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 6),
+                            if (fuelLabel != null)
+                              Text('⛽ $fuelLabel',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: cs.onSurfaceVariant)),
+                            if (fuelLabel != null && meter != null)
+                              Text(' · ',
+                                  style: TextStyle(
+                                      color: cs.onSurfaceVariant)),
+                            if (meter != null)
+                              Text('${meter}h',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: cs.onSurfaceVariant)),
+                          ]),
+                        );
+                      }).toList(),
+                    );
+                  }),
                 const SizedBox(height: 4),
                 _ChatButton(
                   rentalId: rental['id'].toString(),
