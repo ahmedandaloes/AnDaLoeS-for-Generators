@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/widgets/app_error_state.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/notifications_repository.dart';
 import '../providers/notifications_providers.dart'
     show notificationsProvider, unreadCountProvider;
@@ -82,14 +83,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   Widget build(BuildContext context) {
     final notifAsync = ref.watch(notificationsProvider);
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(l.notifications),
         actions: [
           IconButton(
             icon: const Icon(Icons.done_all),
-            tooltip: 'Mark all read',
+            tooltip: l.markAllRead,
             onPressed: _markAllRead,
           ),
         ],
@@ -177,12 +179,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            const Text('All caught up',
+                            Text(l.allCaughtUp,
                                 style: TextStyle(
                                     fontSize: 18, fontWeight: FontWeight.w700)),
                             const SizedBox(height: 8),
                             Text(
-                              'Rental updates and owner alerts will appear here.',
+                              l.notifEmptySubtitle,
                               style: TextStyle(color: cs.onSurfaceVariant),
                               textAlign: TextAlign.center,
                             ),
@@ -204,10 +206,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   .toList();
 
           // Filter chips row
-          final typeChips = _buildTypeChips(items, cs);
+          final typeChips = _buildTypeChips(l, items, cs);
 
           // Group by day
-          final groups = _groupByDay(filtered);
+          final groups = _groupByDay(l, filtered);
           // Flatten into a mixed list of headers + items
           final rows = <_Row>[];
           for (final entry in groups.entries) {
@@ -239,7 +241,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   direction: DismissDirection.endToStart,
                   background: Container(
                     alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 20),
+                    padding: const EdgeInsetsDirectional.only(end: 20),
                     color: cs.errorContainer,
                     child: Icon(Icons.delete_outline, color: cs.onErrorContainer),
                   ),
@@ -334,7 +336,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   // Group notifications into Today / Yesterday / date buckets
-  Widget _buildTypeChips(
+  Widget _buildTypeChips(AppLocalizations l,
       List<Map<String, dynamic>> all, ColorScheme cs) {
     final types = <String>{};
     for (final n in all) {
@@ -343,10 +345,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     }
     if (types.length < 2) return const SizedBox.shrink();
     final labels = {
-      'rental_request': 'Rentals',
-      'rating': 'Ratings',
-      'status_update': 'Status',
-      'payment': 'Payments',
+      'rental_request': l.filterRentals,
+      'rating': l.filterRatings,
+      'status_update': l.filterStatus,
+      'payment': l.filterPayments,
     };
     return SizedBox(
       height: 48,
@@ -355,9 +357,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
         children: [
           Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsetsDirectional.only(end: 8),
             child: FilterChip(
-              label: const Text('All', style: TextStyle(fontSize: 12)),
+              label: Text(l.tabAll, style: const TextStyle(fontSize: 12)),
               selected: _typeFilter == null,
               onSelected: (_) => setState(() => _typeFilter = null),
               visualDensity: VisualDensity.compact,
@@ -365,7 +367,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ),
           for (final t in types)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsetsDirectional.only(end: 8),
               child: FilterChip(
                 label: Text(labels[t] ?? t,
                     style: const TextStyle(fontSize: 12)),
@@ -380,7 +382,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     );
   }
 
-  Map<String, List<Map<String, dynamic>>> _groupByDay(
+  Map<String, List<Map<String, dynamic>>> _groupByDay(AppLocalizations l,
       List<Map<String, dynamic>> items) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -393,9 +395,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       final day = DateTime(ts.year, ts.month, ts.day);
       String label;
       if (day == today) {
-        label = 'Today';
+        label = l.today;
       } else if (day == yesterday) {
-        label = 'Yesterday';
+        label = l.yesterday;
       } else {
         label = '${day.day}/${day.month}/${day.year}';
       }

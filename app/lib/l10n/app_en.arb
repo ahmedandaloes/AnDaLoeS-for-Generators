@@ -307,5 +307,14 @@
   "onboard2Title": "Rent in minutes",
   "onboard2Body": "Pick your dates, send a request, and the owner delivers and sets up the generator at your location.",
   "onboard3Title": "Trusted owners only",
-  "onboard3Body": "Every company is verified. Real ratings from real rentals keep quality high across the platform."
+  "onboard3Body": "Every company is verified. Real ratings from real rentals keep quality high across the platform.",
+  "markAllRead": "Mark all read",
+  "allCaughtUp": "All caught up",
+  "notifEmptySubtitle": "Rental updates and owner alerts will appear here.",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "filterRentals": "Rentals",
+  "filterRatings": "Ratings",
+  "filterStatus": "Status",
+  "filterPayments": "Payments"
 }
