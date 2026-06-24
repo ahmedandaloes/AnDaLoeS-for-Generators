@@ -145,8 +145,8 @@ buildable in-app now. Definition of done (DoD) per sprint listed.
 ### Sprint 7 — Fulfillment timeline & disputes
 - [x] Fulfillment status timeline on the ticket (DB 0036 rental_timeline_events + auto-trigger; _StatusTimeline in My Rentals + _OwnerTimeline in OwnerRequestCard)
 - [x] Digital handover: DB 0037 rental_handovers (fuel_level, meter_reading, note, UNIQUE delivery+return per rental); owner dialogs on "Confirm Delivered" + "Mark Completed"; customer sees handover summary on active/completed card
-- [ ] Two-sided dispute/claim flow (extend reports: damage/no-show/wrong-spec + evidence + admin adjudication)
-- DoD: every active rental has an auditable timeline; disputes have an admin adjudication path.
+- [x] Two-sided dispute/claim flow — DB 0038 resolution_note/resolved_by/resolved_at + triggers; admin reports tab upgraded (under_review badge, resolve/dismiss dialogs with resolution notes); reporter notified on outcome
+- DoD: every active rental has an auditable timeline; disputes have an admin adjudication path. ✅
 
 ### Sprint 8 — Owner tooling & supply growth
 - [ ] Owner quick-add / bulk listing flow (low-friction OLX/Facebook migration)

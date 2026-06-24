@@ -20,6 +20,8 @@
   "cancel": "إلغاء",
   "save": "حفظ",
   "confirm": "تأكيد",
+  "apply": "تطبيق",
+  "delete": "حذف",
   "retry": "إعادة المحاولة",
   "close": "إغلاق",
   "viewDetails": "عرض التفاصيل",
@@ -313,6 +315,12 @@
   "generatorRentalItem": "إيجار مولّد",
   "offerAction": "عرض",
   "searchHint": "ابحث عن المولّدات أو المدينة…",
+  "savedSearches": "البحث المحفوظة",
+  "saveSearch": "حفظ البحث",
+  "noSavedSearches": "لا توجد بحوث محفوظة بعد. اضبط فلتر ثم اضغط حفظ البحث.",
+  "searchName": "اسم البحث",
+  "searchNameHint": "مثال: القاهرة 50 KVA ديزل",
+  "searchSaved": "تم حفظ البحث",
   "fuelTypeRequired": "نوع الوقود *",
   "bestForUseCases": "الأنسب لـ (حالات الاستخدام)",
   "governorateRequired": "المحافظة *",
@@ -520,5 +528,14 @@
   "returnHandoverBody": "سجّل حالة المولد عند الاستلام قبل إنهاء الإيجار.",
 
   "showPassword": "إظهار كلمة المرور",
-  "hidePassword": "إخفاء كلمة المرور"
+  "hidePassword": "إخفاء كلمة المرور",
+
+  "addAnotherGeneratorQ": "تمت إضافة المولد! هل تريد إضافة مولد آخر؟",
+  "addAnotherGenerator": "أضف مولدًا آخر",
+  "done": "تم",
+
+  "thinSupplyNudge": "المولدات مطلوبة في: {govs} — اضغط لإضافة مولدك",
+  "thinSupplyTitle": "مناطق الطلب العالي",
+  "thinSupplyBody": "هذه المحافظات لديها أقل من 3 مولدات متاحة. إضافة مولدك هناك ستساعدك في الحصول على حجوزات بشكل أسرع.",
+  "generatorsNeeded": "أقل من 3 متوفر"
 }

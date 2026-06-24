@@ -14,6 +14,7 @@ import '../providers/generators_providers.dart'
         showFavoritesOnlyProvider,
         recentSearchesProvider,
         currentProfileProvider;
+import '../providers/saved_search_provider.dart';
 import '../../owner_dashboard/providers/owner_providers.dart'
     show ownerPendingCountProvider;
 import 'widgets/fuel_chip.dart' show fuelLabel;
@@ -148,6 +149,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 onPressed: () => context.push(AppRoutes.map),
               ),
               if (loggedIn) ...[
+                IconButton(
+                  icon: const Icon(Icons.bookmark_border_outlined),
+                  tooltip: l.savedSearches,
+                  onPressed: () => _showSavedSearchesSheet(context, ref, filter),
+                ),
                 IconButton(
                   icon: const Icon(Icons.receipt_long_outlined),
                   tooltip: l.myRentals,
@@ -379,6 +385,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       _filterPill(fuelLabel(filter.fuelType!), () => ref
                           .read(filterProvider.notifier)
                           .state = filter.withFuelType(null)),
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 6),
+                      child: ActionChip(
+                        avatar: Icon(Icons.bookmark_add_outlined,
+                            size: 14, color: cs.primary),
+                        label: Text(l.saveSearch,
+                            style: TextStyle(fontSize: 12, color: cs.primary)),
+                        visualDensity: VisualDensity.compact,
+                        side: BorderSide(
+                            color: cs.primary.withValues(alpha: 0.35)),
+                        onPressed: () =>
+                            _showSaveSearchDialog(context, ref, filter),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -676,6 +696,74 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => FilterSheet(filter: filter, ref: ref),
+    );
+  }
+
+  Future<void> _showSaveSearchDialog(
+      BuildContext context, WidgetRef widgetRef, GeneratorFilter filter) async {
+    final l = AppLocalizations.of(context)!;
+    final nameCtrl = TextEditingController();
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.saveSearch),
+        content: TextField(
+          controller: nameCtrl,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: l.searchName,
+            hintText: l.searchNameHint,
+          ),
+          textCapitalization: TextCapitalization.sentences,
+          onSubmitted: (_) => Navigator.pop(ctx, true),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l.cancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l.saveSearch)),
+        ],
+      ),
+    );
+    if (saved == true && nameCtrl.text.trim().isNotEmpty && context.mounted) {
+      try {
+        await saveSearch(name: nameCtrl.text.trim(), filter: filter);
+        widgetRef.invalidate(savedSearchesProvider);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context)!.searchSaved)),
+          );
+        }
+      } catch (_) {}
+    }
+  }
+
+  void _showSavedSearchesSheet(
+      BuildContext context, WidgetRef widgetRef, GeneratorFilter currentFilter) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (sheetCtx) => _SavedSearchesSheet(
+        currentFilter: currentFilter,
+        onApply: (f) {
+          widgetRef.read(filterProvider.notifier).state = f;
+          Navigator.pop(sheetCtx);
+        },
+        onDelete: (id) async {
+          await deleteSavedSearch(id);
+          widgetRef.invalidate(savedSearchesProvider);
+        },
+        onSaveCurrent: currentFilter.hasActiveFilters
+            ? () {
+                Navigator.pop(sheetCtx);
+                _showSaveSearchDialog(context, widgetRef, currentFilter);
+              }
+            : null,
+      ),
     );
   }
 }
@@ -1038,6 +1126,126 @@ class _ErrorState extends StatelessWidget {
                 onPressed: onRetry, child: Text(l.tryAgain)),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Saved searches bottom sheet ───────────────────────────────────────────────
+class _SavedSearchesSheet extends ConsumerWidget {
+  const _SavedSearchesSheet({
+    required this.onApply,
+    required this.onDelete,
+    required this.currentFilter,
+    this.onSaveCurrent,
+  });
+  final void Function(GeneratorFilter) onApply;
+  final Future<void> Function(String id) onDelete;
+  final GeneratorFilter currentFilter;
+  final VoidCallback? onSaveCurrent;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
+    final searches = ref.watch(savedSearchesProvider);
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.55,
+      minChildSize: 0.35,
+      maxChildSize: 0.85,
+      expand: false,
+      builder: (ctx, scrollCtrl) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Row(children: [
+              Text(l.savedSearches,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+              const Spacer(),
+              if (onSaveCurrent != null)
+                TextButton.icon(
+                  icon: const Icon(Icons.bookmark_add_outlined, size: 18),
+                  label: Text(l.saveSearch,
+                      style: const TextStyle(fontSize: 13)),
+                  onPressed: onSaveCurrent,
+                ),
+            ]),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: searches.when(
+              loading: () =>
+                  const Center(child: CircularProgressIndicator()),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (list) {
+                if (list.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Text(l.noSavedSearches,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: cs.onSurfaceVariant, fontSize: 14)),
+                    ),
+                  );
+                }
+                return ListView.separated(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: list.length,
+                  separatorBuilder: (_, __) =>
+                      Divider(height: 1, color: cs.outlineVariant),
+                  itemBuilder: (_, i) {
+                    final s = list[i];
+                    final name = s['name'] as String? ?? '';
+                    final filterJson =
+                        (s['filter'] as Map?)?.cast<String, dynamic>() ??
+                            const {};
+                    final f = GeneratorFilter.fromJson(filterJson);
+                    final parts = <String>[
+                      if (f.governorate != null) f.governorate!,
+                      if (f.maxKva != null) '≤${f.maxKva!.toInt()} KVA',
+                      if (f.maxPrice != null)
+                        '≤${f.maxPrice!.toInt()} EGP/day',
+                      if (f.fuelType != null) f.fuelType!,
+                    ];
+                    return ListTile(
+                      leading:
+                          Icon(Icons.bookmark_outline, color: cs.primary),
+                      title: Text(name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w500, fontSize: 14)),
+                      subtitle: parts.isNotEmpty
+                          ? Text(parts.join(' · '),
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: cs.onSurfaceVariant))
+                          : null,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton(
+                              onPressed: () => onApply(f),
+                              child: Text(l.apply)),
+                          IconButton(
+                            icon:
+                                Icon(Icons.delete_outline, color: cs.error),
+                            tooltip: l.delete,
+                            onPressed: () => onDelete(s['id'] as String),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -179,14 +179,56 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
       }
 
       if (mounted) {
-        _snack(l.generatorAdded);
-        context.pop();
+        final addAnother = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(l.generatorAdded),
+            content: Text(l.addAnotherGeneratorQ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(l.done),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(l.addAnotherGenerator),
+              ),
+            ],
+          ),
+        );
+        if (!mounted) return;
+        if (addAnother == true) {
+          _resetForm();
+        } else {
+          context.pop();
+        }
       }
     } catch (e) {
       _snack('Error: $e');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  void _resetForm() {
+    setState(() {
+      for (final c in [
+        _titleController, _capacityController, _descController,
+        _pricePerDayController, _pricePerWeekController,
+        _pricePerMonthController, _depositController, _cityController,
+      ]) {
+        c.clear();
+      }
+      _governorate = null;
+      _fuelType = 'diesel';
+      _hireType = 'dry_hire';
+      _fuelPolicy = 'customer_provides';
+      _accessories.clear();
+      _useCases.clear();
+      _photos.clear();
+    });
+    // Scroll to top so owner starts fresh from the title field.
+    Scrollable.maybeOf(context)?.position.jumpTo(0);
   }
 
   Widget _accessoryChip(String key, String label) => FilterChip(

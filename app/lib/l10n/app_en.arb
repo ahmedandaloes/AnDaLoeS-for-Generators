@@ -20,6 +20,8 @@
   "cancel": "Cancel",
   "save": "Save",
   "confirm": "Confirm",
+  "apply": "Apply",
+  "delete": "Delete",
   "retry": "Retry",
   "close": "Close",
   "viewDetails": "View details",
@@ -333,6 +335,12 @@
   "generatorRentalItem": "Generator rental",
   "offerAction": "Offer",
   "searchHint": "Search generators, city…",
+  "savedSearches": "Saved searches",
+  "saveSearch": "Save search",
+  "noSavedSearches": "No saved searches yet. Set a filter and tap Save search.",
+  "searchName": "Search name",
+  "searchNameHint": "e.g. Cairo 50 KVA diesel",
+  "searchSaved": "Search saved",
   "fuelTypeRequired": "Fuel type *",
   "bestForUseCases": "Best for (use cases)",
   "governorateRequired": "Governorate *",
@@ -553,5 +561,15 @@
   "returnHandoverBody": "Record generator state at return before marking complete.",
 
   "showPassword": "Show password",
-  "hidePassword": "Hide password"
+  "hidePassword": "Hide password",
+
+  "addAnotherGeneratorQ": "Generator listed! Would you like to add another one?",
+  "addAnotherGenerator": "Add another",
+  "done": "Done",
+
+  "thinSupplyNudge": "Generators needed in: {govs} — tap to list yours",
+  "@thinSupplyNudge": { "placeholders": { "govs": { "type": "String" } } },
+  "thinSupplyTitle": "High-demand areas",
+  "thinSupplyBody": "These governorates have fewer than 3 available generators. Listing yours there can get you bookings faster.",
+  "generatorsNeeded": "Under 3 available"
 }

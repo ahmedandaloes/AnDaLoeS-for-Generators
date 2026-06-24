@@ -14,6 +14,7 @@ import '../../../core/utils/db_error.dart';
 import '../providers/owner_providers.dart';
 import '../../generators/providers/detail_providers.dart';
 import 'widgets/request_card.dart';
+import 'widgets/thin_supply_nudge.dart';
 import '../../../core/routing/app_routes.dart';
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -299,6 +300,7 @@ class _Dashboard extends StatelessWidget {
           ),
           _DashboardStats(
               companyId: company['id'].toString(), cs: cs, ref: ref),
+          ThinSupplyNudge(companyId: company['id'].toString(), cs: cs),
           TabBar(
             tabs: [
               Tab(text: l.tabRequests),
