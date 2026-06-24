@@ -287,3 +287,15 @@ autonomous-loops skill). GOAL.md is the cross-iteration context bridge
 ### CI gate (risky changes)
 For schema/auth/money changes, prefer a PR into `main` and wait for the
 `flutter.yml` checks before merge, instead of pushing straight through.
+
+---
+
+## 📘 Requirements v2.0 alignment (owner spec, 2026-06-24)
+The owner's authoritative spec is captured in [docs/REQUIREMENTS_v2.md](docs/REQUIREMENTS_v2.md);
+build-vs-spec gap analysis in [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md).
+Much of Phase 0–1 is built (marketplace, booking lifecycle, owner delivery + handshake,
+% commission ledger/COD, no-double-booking, VAT invoices, admin console, search).
+Key remaining: owner KYC publish-gating, Arabic-first/RTL, digital handover (photos+fuel/meter),
+new-customer trust fee, B2B renter ID, listing fields (operated/dry-hire, fuel policy, accessories),
+disputes workflow. Decisions needed: Section 18 (commission enforcement, trust-fee collection,
+listing approval, pricing guardrails, liability). Sequence proposed in GAP_ANALYSIS.md.
