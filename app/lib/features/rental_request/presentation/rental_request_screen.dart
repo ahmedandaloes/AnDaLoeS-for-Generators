@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'widgets/safety_ack_dialog.dart';
 
 import '../../../core/utils/pricing.dart';
 import '../../../core/widgets/press_scale.dart';
@@ -82,7 +83,10 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
     }
   }
 
-  void _reviewAndConfirm(Map<String, dynamic> gen) {
+  Future<void> _reviewAndConfirm(Map<String, dynamic> gen) async {
+    final acked = await SafetyAckDialog.checkAndShow(context);
+    if (!acked) return;
+    if (!context.mounted) return;
     final l = AppLocalizations.of(context)!;
     if (_range == null) {
       _snack(l.selectDatesFirst);

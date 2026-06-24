@@ -587,5 +587,8 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "safetyNoticeTitle": "Safety Notice",
+  "safetyNoticeBody": "Generators must always be operated outdoors in well-ventilated areas. Never run indoors — produces deadly CO gas.",
+  "safetyIUnderstand": "I understand"
 }
