@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -47,8 +48,9 @@ class _OwnerDashboardScreenState
           callback: (_) {
             ref.invalidate(ownerRequestsProvider(companyId));
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('New rental request received!'),
+              final l = AppLocalizations.of(context)!;
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(l.newRequestReceived),
                 behavior: SnackBarBehavior.floating,
               ));
             }
@@ -65,12 +67,13 @@ class _OwnerDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final companyAsync = ref.watch(myCompanyProvider);
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Owner Dashboard'),
+        title: Text(l.ownerDashboard),
         actions: [
           // Pending requests count badge in AppBar
           companyAsync.maybeWhen(
@@ -85,7 +88,7 @@ class _OwnerDashboardScreenState
                   0;
               if (pending == 0) return const SizedBox.shrink();
               return Padding(
-                padding: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsetsDirectional.only(end: 16),
                 child: Badge(
                   label: Text('$pending'),
                   child: const Icon(Icons.pending_actions_outlined),
@@ -123,6 +126,7 @@ class _NoCompanyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -137,7 +141,7 @@ class _NoCompanyState extends StatelessWidget {
               child: Icon(Icons.business_outlined, size: 36, color: cs.primary),
             ),
             const SizedBox(height: 20),
-            const Text('List your generators',
+            Text(l.listYourGenerators,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             Text(
@@ -148,7 +152,7 @@ class _NoCompanyState extends StatelessWidget {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: () => context.push(AppRoutes.companyOnboard),
-              child: const Text('Register your company'),
+              child: Text(l.registerYourCompany),
             ),
           ],
         ),
@@ -240,6 +244,7 @@ class _Dashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return DefaultTabController(
       length: 3,
       child: Column(
@@ -283,7 +288,7 @@ class _Dashboard extends StatelessWidget {
                       Icon(Icons.account_balance_wallet_outlined,
                           size: 14, color: cs.primary),
                       const SizedBox(width: 4),
-                      const Text('Earnings',
+                      Text(l.earnings,
                           style: TextStyle(fontSize: 12)),
                     ],
                   ),
@@ -294,10 +299,10 @@ class _Dashboard extends StatelessWidget {
           _DashboardStats(
               companyId: company['id'].toString(), cs: cs, ref: ref),
           TabBar(
-            tabs: const [
-              Tab(text: 'Requests'),
-              Tab(text: 'Generators'),
-              Tab(text: 'History'),
+            tabs: [
+              Tab(text: l.tabRequests),
+              Tab(text: l.tabGenerators),
+              Tab(text: l.tabHistory),
             ],
           ),
           Expanded(
@@ -328,6 +333,7 @@ class _RequestsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final requestsAsync = ref.watch(ownerRequestsProvider(companyId));
 
     return requestsAsync.when(
@@ -376,7 +382,7 @@ class _RequestsTab extends StatelessWidget {
                           ),
                         ]),
                         const SizedBox(height: 20),
-                        const Text('No requests yet',
+                        Text(l.noRequestsYet,
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.w700)),
                         const SizedBox(height: 8),
@@ -388,7 +394,7 @@ class _RequestsTab extends StatelessWidget {
                         const SizedBox(height: 20),
                         OutlinedButton.icon(
                           icon: const Icon(Icons.bolt_outlined, size: 16),
-                          label: const Text('Add a generator'),
+                          label: Text(l.addAGenerator),
                           onPressed: () => context.push(
                               AppRoutes.addGenerator(companyId)),
                         ),
@@ -448,18 +454,18 @@ class _RequestsTab extends StatelessWidget {
                     final confirmed = await showDialog<bool>(
                       context: ctx,
                       builder: (_) => AlertDialog(
-                        title: const Text('Reject request?'),
+                        title: Text(l.rejectRequestQ),
                         content: const Text(
                             'The customer will be notified that their request was rejected.'),
                         actions: [
                           TextButton(
                               onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text('Cancel')),
+                              child: Text(l.cancel)),
                           FilledButton(
                             style: FilledButton.styleFrom(
                                 backgroundColor: cs.error),
                             onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text('Reject'),
+                            child: Text(l.reject),
                           ),
                         ],
                       ),
@@ -476,7 +482,7 @@ class _RequestsTab extends StatelessWidget {
                 // Left side (swipe right = accept)
                 background: Container(
                   alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.only(left: 20),
+                  padding: const EdgeInsetsDirectional.only(start: 20),
                   decoration: BoxDecoration(
                     color: Colors.green.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
@@ -484,7 +490,7 @@ class _RequestsTab extends StatelessWidget {
                   child: Row(children: [
                     Icon(Icons.check_rounded, color: Colors.green.shade700),
                     const SizedBox(width: 6),
-                    Text('Accept',
+                    Text(l.accept,
                         style: TextStyle(
                             color: Colors.green.shade700,
                             fontWeight: FontWeight.w700)),
@@ -493,7 +499,7 @@ class _RequestsTab extends StatelessWidget {
                 // Right side (swipe left = reject)
                 secondaryBackground: Container(
                   alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 20),
+                  padding: const EdgeInsetsDirectional.only(end: 20),
                   decoration: BoxDecoration(
                     color: cs.error.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(16),
@@ -502,7 +508,7 @@ class _RequestsTab extends StatelessWidget {
                       children: [
                     Icon(Icons.close_rounded, color: cs.error),
                     const SizedBox(width: 6),
-                    Text('Reject',
+                    Text(l.reject,
                         style: TextStyle(
                             color: cs.error, fontWeight: FontWeight.w700)),
                   ]),
@@ -543,19 +549,20 @@ class _RequestsTab extends StatelessWidget {
 
   Future<void> _acceptAll(BuildContext context,
       List<Map<String, dynamic>> pending, String companyId) async {
+    final l = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Accept all?'),
+        title: Text(l.acceptAllQ),
         content: Text(
             'Accept all ${pending.length} pending requests at once?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(l.cancel)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Accept all')),
+              child: Text(l.acceptAll)),
         ],
       ),
     );
@@ -625,6 +632,7 @@ class _GeneratorsTabState extends State<_GeneratorsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final cs = widget.cs;
     final ref = widget.ref;
     final companyId = widget.companyId;
@@ -647,7 +655,7 @@ class _GeneratorsTabState extends State<_GeneratorsTab> {
                       const EdgeInsets.fromLTRB(16, 12, 16, 4),
                   child: Row(
                     children: [
-                      Text('Sort:',
+                      Text(l.sort,
                           style: TextStyle(
                               fontSize: 12,
                               color: cs.onSurfaceVariant)),
@@ -682,7 +690,7 @@ class _GeneratorsTabState extends State<_GeneratorsTab> {
                               Icon(Icons.bolt,
                                   size: 48, color: cs.onSurfaceVariant),
                               const SizedBox(height: 16),
-                              Text('No generators yet',
+                              Text(l.emptyGeneratorsTitle,
                                   style: TextStyle(
                                       color: cs.onSurfaceVariant)),
                             ],
@@ -710,7 +718,7 @@ class _GeneratorsTabState extends State<_GeneratorsTab> {
                   onPressed: () =>
                       context.push(AppRoutes.addGenerator(companyId)),
                   icon: const Icon(Icons.add),
-                  label: const Text('Add generator'),
+                  label: Text(l.addGenerator),
                 ),
               ),
             ],
@@ -731,6 +739,7 @@ class _OwnerGeneratorTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final isAvailable = gen['status']?.toString() == 'available';
     final countsAsync = ref.watch(activeRentalCountsProvider(companyId));
     final activeCount = countsAsync.valueOrNull?[gen['id']?.toString()] ?? 0;
@@ -793,7 +802,7 @@ class _OwnerGeneratorTile extends StatelessWidget {
           children: [
             IconButton(
               icon: const Icon(Icons.edit_outlined, size: 20),
-              tooltip: 'Edit',
+              tooltip: l.edit,
               onPressed: () =>
                   context.push(AppRoutes.editGenerator(gen['id'].toString())),
             ),
@@ -860,6 +869,7 @@ class _HistoryTabState extends State<_HistoryTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final historyAsync = ref.watch(ownerHistoryProvider(companyId));
 
     return historyAsync.when(
@@ -875,7 +885,7 @@ class _HistoryTabState extends State<_HistoryTab> {
                 children: [
                   Icon(Icons.history, size: 48, color: cs.onSurfaceVariant),
                   const SizedBox(height: 16),
-                  Text('No completed rentals yet',
+                  Text(l.noCompletedRentals,
                       style: TextStyle(color: cs.onSurfaceVariant)),
                 ],
               ),
@@ -1002,7 +1012,7 @@ class _HistoryTabState extends State<_HistoryTab> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Total earned',
+                              Text(l.totalEarned,
                                   style: TextStyle(
                                       color: Colors.white70, fontSize: 12)),
                               Text(
@@ -1020,7 +1030,7 @@ class _HistoryTabState extends State<_HistoryTab> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text('Jobs done',
+                            Text(l.jobsDone,
                                 style: TextStyle(
                                     color: Colors.white70, fontSize: 12)),
                             Text(
@@ -1101,7 +1111,7 @@ class _HistoryTabState extends State<_HistoryTab> {
                           Icon(Icons.bar_chart_rounded,
                               size: 16, color: cs.secondary),
                           const SizedBox(width: 6),
-                          Text('Monthly earnings',
+                          Text(l.monthlyEarnings,
                               style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
@@ -1267,7 +1277,7 @@ class _HistoryTabState extends State<_HistoryTab> {
                                     size: 14,
                                     color: Colors.amber.shade600),
                                 const SizedBox(width: 4),
-                                Text('Customer rated',
+                                Text(l.customerRated,
                                     style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.amber.shade700,
@@ -1287,7 +1297,7 @@ class _HistoryTabState extends State<_HistoryTab> {
                             icon: const Icon(
                                 Icons.star_outline_rounded,
                                 size: 15),
-                            label: const Text('Rate customer'),
+                            label: Text(l.rateCustomer),
                           );
                         }),
                       ],
@@ -1306,7 +1316,7 @@ class _HistoryTabState extends State<_HistoryTab> {
                   heroTag: 'export_csv',
                   onPressed: () => _exportCsv(context, completed),
                   icon: const Icon(Icons.download_outlined),
-                  label: const Text('Export CSV'),
+                  label: Text(l.exportCsv),
                 )
               : const SizedBox.shrink(),
         ),
@@ -1323,9 +1333,9 @@ class _HistoryTabState extends State<_HistoryTab> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsetsDirectional.only(end: 8),
                     child: FilterChip(
-                      label: const Text('All',
+                      label: Text(l.tabAll,
                           style: TextStyle(fontSize: 11)),
                       selected: _selectedMonth == null,
                       onSelected: (_) =>
@@ -1335,7 +1345,7 @@ class _HistoryTabState extends State<_HistoryTab> {
                   ),
                   for (final m in allMonths)
                     Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsetsDirectional.only(end: 8),
                       child: FilterChip(
                         label: Text(
                           () {
@@ -1427,6 +1437,7 @@ class _DashboardStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final requestsAsync = ref.watch(ownerRequestsProvider(companyId));
     final historyAsync = ref.watch(ownerHistoryProvider(companyId));
     final pending = requestsAsync.valueOrNull?.where((r) => r['status'] == 'pending').length ?? 0;
@@ -1499,12 +1510,12 @@ class _DashboardStats extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('${accepted + active} active',
+                  Text(l.activeCount(accepted + active),
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: cs.primary)),
-                  Text('$completed total done',
+                  Text(l.totalDoneCount(completed),
                       style: TextStyle(
                           fontSize: 11,
                           color: cs.onSurfaceVariant)),
