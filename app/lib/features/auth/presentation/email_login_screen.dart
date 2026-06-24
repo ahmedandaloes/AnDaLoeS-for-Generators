@@ -153,6 +153,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
                       ),
+                      tooltip: _obscure ? l.showPassword : l.hidePassword,
                       onPressed: () =>
                           setState(() => _obscure = !_obscure),
                     ),

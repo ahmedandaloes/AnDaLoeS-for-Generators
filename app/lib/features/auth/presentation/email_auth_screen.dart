@@ -144,6 +144,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
                 suffixIcon: IconButton(
                   icon: Icon(
                       _obscure ? Icons.visibility_off : Icons.visibility),
+                  tooltip: _obscure ? l.showPassword : l.hidePassword,
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),

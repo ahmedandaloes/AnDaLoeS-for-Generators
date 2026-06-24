@@ -218,6 +218,7 @@ class _FullScreenGalleryState extends State<FullScreenGallery>
                   child: Row(children: [
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.white),
+                      tooltip: 'Close',
                       style: IconButton.styleFrom(
                           backgroundColor: Colors.black38),
                       onPressed: () => Navigator.pop(context),

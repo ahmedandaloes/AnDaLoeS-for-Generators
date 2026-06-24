@@ -77,6 +77,7 @@ class _SearchAutocompleteState extends ConsumerState<SearchAutocomplete> {
             suffixIcon: query.isNotEmpty
                 ? IconButton(
                     icon: const Icon(Icons.clear),
+                    tooltip: AppLocalizations.of(context)!.close,
                     onPressed: () {
                       if (query.trim().isNotEmpty) widget.onSaveRecent(query);
                       widget.controller.clear();

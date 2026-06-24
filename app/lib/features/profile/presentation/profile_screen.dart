@@ -274,6 +274,7 @@ class ProfileScreen extends ConsumerWidget {
             ),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_rounded),
+              tooltip: l.back,
               onPressed: () =>
                   context.canPop() ? context.pop() : context.go(AppRoutes.home),
             ),

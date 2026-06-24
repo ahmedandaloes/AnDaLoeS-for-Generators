@@ -175,6 +175,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Icon(Icons.person_outline,
                         size: 18, color: cs.onPrimaryContainer),
                   ),
+                  tooltip: l.navProfile,
                   onPressed: () => context.push(AppRoutes.profile),
                 ),
               ] else

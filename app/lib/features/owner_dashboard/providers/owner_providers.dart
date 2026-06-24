@@ -84,7 +84,10 @@ final ownerGeneratorsProvider =
         (ref, companyId) async {
   final data = await supabase
       .from('generators')
-      .select('id, title, capacity_kva, price_per_day, city, status, photos')
+      .select(
+          'id, title, capacity_kva, description, price_per_day, price_per_week, '
+          'price_per_month, deposit_amount, city, governorate, status, photos, '
+          'fuel_type, hire_type, fuel_policy, accessories, use_cases')
       .eq('company_id', companyId)
       .order('created_at', ascending: false);
   return (data as List).cast<Map<String, dynamic>>();

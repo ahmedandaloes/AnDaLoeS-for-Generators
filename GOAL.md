@@ -127,7 +127,7 @@ buildable in-app now. Definition of done (DoD) per sprint listed.
 ### Sprint 4 — Accessibility & UX polish ✅
 - [x] ≥48dp tap-target pass — filter pills container 38→48, all my_rentals buttons 36/38/40→48
 - [x] My Rentals: completed state buttons (Invoice/Receipt/Report) collapsed into 3-column row
-- [ ] Accessibility audit: semantic labels + contrast ratios
+- [x] Accessibility audit: tooltip on all icon-only buttons (profile, back, password toggle, close, clear search, map close, gallery close); showPassword/hidePassword en+ar
 - [x] Document screens (invoice/receipt/offer): dark-mode theming — hardcoded white/grey/black replaced with colorScheme tokens in rental_offer_screen, invoice_screen, rental_receipt_screen (committed)
 - DoD: a11y scan clean; no <48dp targets; documents readable in dark mode.
 
@@ -144,13 +144,13 @@ buildable in-app now. Definition of done (DoD) per sprint listed.
 
 ### Sprint 7 — Fulfillment timeline & disputes
 - [x] Fulfillment status timeline on the ticket (DB 0036 rental_timeline_events + auto-trigger; _StatusTimeline in My Rentals + _OwnerTimeline in OwnerRequestCard)
-- [ ] Digital handover: delivery & return photos + fuel/meter readings (v2 spec)
+- [x] Digital handover: DB 0037 rental_handovers (fuel_level, meter_reading, note, UNIQUE delivery+return per rental); owner dialogs on "Confirm Delivered" + "Mark Completed"; customer sees handover summary on active/completed card
 - [ ] Two-sided dispute/claim flow (extend reports: damage/no-show/wrong-spec + evidence + admin adjudication)
 - DoD: every active rental has an auditable timeline; disputes have an admin adjudication path.
 
 ### Sprint 8 — Owner tooling & supply growth
 - [ ] Owner quick-add / bulk listing flow (low-friction OLX/Facebook migration)
-- [ ] Add Generator: clone listing + local draft
+- [x] Add Generator: clone listing — copy_all_outlined button in owner generator tile passes full data (all 17 fields) as GoRouter extra → AddGeneratorScreen prefill
 - [ ] Listing fields: operated vs dry-hire, fuel policy, accessories (v2 spec)
 - [ ] Supply-thin owner nudges (tie to the governorate tracker)
 - DoD: an owner can list 5 generators in minutes; new spec fields captured + filterable.

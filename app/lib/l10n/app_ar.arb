@@ -272,6 +272,8 @@
   "signInToContinue": "سجّل الدخول للمتابعة.",
   "emailLabel": "البريد الإلكتروني",
   "passwordLabel": "كلمة المرور",
+  "showPassword": "إظهار كلمة المرور",
+  "hidePassword": "إخفاء كلمة المرور",
   "browseAsGuest": "التصفّح كضيف",
   "passwordMinLength": "يجب أن تكون كلمة المرور 6 أحرف على الأقل.",
   "invalidEmail": "أدخل بريدًا إلكترونيًا صحيحًا.",

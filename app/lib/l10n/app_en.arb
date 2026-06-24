@@ -292,6 +292,8 @@
   "signInToContinue": "Sign in to continue.",
   "emailLabel": "Email",
   "passwordLabel": "Password",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
   "browseAsGuest": "Browse as guest",
   "passwordMinLength": "Password must be at least 6 characters.",
   "invalidEmail": "Enter a valid email address.",

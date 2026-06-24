@@ -355,6 +355,7 @@ class _GeneratorMapCard extends StatelessWidget {
               const SizedBox(width: 8),
               IconButton(
                 onPressed: onClose,
+                tooltip: l.close,
                 icon: const Icon(Icons.close),
                 iconSize: 18,
                 style: IconButton.styleFrom(
