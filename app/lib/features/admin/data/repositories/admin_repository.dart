@@ -225,7 +225,9 @@ class AdminRepository implements IAdminRepository {
   Future<List<Map<String, dynamic>>> fetchPendingCompaniesAdmin() async {
     final data = await supabase
         .from('companies')
-        .select('*, profiles!owner_user_id(full_name, phone)')
+        .select(
+            '*, profiles!owner_user_id(full_name, phone), '
+            'company_documents(id, doc_type, file_url, verified)')
         .inFilter(
             'verification_status', ['pending', 'under_review']).order(
         'created_at');
@@ -312,6 +314,22 @@ class AdminRepository implements IAdminRepository {
 
   Future<void> setReportStatus(String id, String status) async {
     await supabase.from('reports').update({'status': status}).eq('id', id);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchCompanyDocuments(
+      String companyId) async {
+    final rows = await supabase
+        .from('company_documents')
+        .select('id, doc_type, file_url, verified, created_at')
+        .eq('company_id', companyId)
+        .order('created_at');
+    return (rows as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<void> verifyCompanyDocument(String docId) async {
+    await supabase
+        .from('company_documents')
+        .update({'verified': true}).eq('id', docId);
   }
 
   Future<int> expireStaleRequests() async {

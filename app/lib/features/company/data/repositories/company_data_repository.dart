@@ -51,6 +51,7 @@ class CompanyDataRepository {
 
   Future<void> appendDocumentUrl(
       String companyId, String remotePath, String docType) async {
+    // 1. Keep the legacy document_urls array on companies (admin panel reads it).
     final existing = await supabase
         .from('companies')
         .select('document_urls')
@@ -63,6 +64,27 @@ class CompanyDataRepository {
     await supabase
         .from('companies')
         .update({'document_urls': urls}).eq('id', companyId);
+
+    // 2. Wire the company_documents table (KYC review audit trail).
+    // Store the storage path so admins can generate signed URLs for review.
+    await supabase.from('company_documents').upsert(
+      {
+        'company_id': companyId,
+        'doc_type': docType,
+        'file_url': remotePath,
+        'verified': false,
+      },
+      onConflict: 'company_id,doc_type',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchDocuments(String companyId) async {
+    final rows = await supabase
+        .from('company_documents')
+        .select('id, doc_type, file_url, verified, created_at')
+        .eq('company_id', companyId)
+        .order('created_at');
+    return (rows as List).cast<Map<String, dynamic>>();
   }
 
   Future<Map<String, dynamic>?> fetchCompanyProfile(
