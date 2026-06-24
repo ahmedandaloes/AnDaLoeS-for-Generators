@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/supabase.dart';
+import '../../../core/config/tax_config_provider.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/utils/db_error.dart';
+import '../../../core/utils/tax.dart';
 import '../../../l10n/app_localizations.dart';
 
 class PaymentConfirmationScreen extends ConsumerStatefulWidget {
@@ -155,6 +157,7 @@ class _PaymentConfirmationScreenState
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l = AppLocalizations.of(context)!;
+    final tax = ref.watch(taxConfigProvider).valueOrNull;
     final gen = widget.generator;
     String dtLabel(String v) => switch (v) {
           'Morning' => l.deliveryMorning,
@@ -278,6 +281,17 @@ class _PaymentConfirmationScreenState
                         l.rentalDaysLine(widget.days),
                         'EGP ${rental.toStringAsFixed(0)}',
                         sub: l.bestRateApplied),
+                    // VAT breakdown (transparency; total unchanged) — only when
+                    // tax applies at booking. price_total is VAT-inclusive.
+                    if (tax != null &&
+                        tax.rate > 0 &&
+                        vatShownAtBooking(tax.appliesWhen)) ...[
+                      line(l.subtotalExcl(tax.label),
+                          'EGP ${vatBreakdown(rental, tax.rate).subtotal.toStringAsFixed(0)}'),
+                      line(
+                          '${tax.label} (${(tax.rate * 100).toStringAsFixed(tax.rate * 100 % 1 == 0 ? 0 : 1)}%)',
+                          'EGP ${vatBreakdown(rental, tax.rate).vat.toStringAsFixed(0)}'),
+                    ],
                     if (deposit > 0)
                       line(l.refundableDeposit,
                           'EGP ${deposit.toStringAsFixed(0)}',

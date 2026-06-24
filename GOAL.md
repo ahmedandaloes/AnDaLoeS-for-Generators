@@ -328,7 +328,7 @@ TODO (next cycles):
 - [ ] HIGH: "Mark as received" sets status=completed (wrong + RLS-rejected); make it informational or route via owner/Edge Fn + align RLS/copy (my_rentals ~865).
 - [x] HIGH: router role-gating — cached role provider (refreshed on auth change); GoRouter redirect sends non-admins away from /admin and non-owners/non-admins away from /owner/* (defense-in-depth on RLS). /owner-dashboard stays open (onboarding entry).
 - [x] HIGH: guest/anonymous gating — detail Rent Now/report/favorite require a real (non-anonymous) account (push login); company onboarding shows "create an account first" for anonymous users.
-- [ ] HIGH: VAT shown on invoice but not at booking; honor tax_config.applies_when; show VAT consistently.
+- [x] VAT consistency: shared vatBreakdown helper used by invoice; payment confirmation now shows a VAT line (subtotal + label+%) when tax_config.applies_when=='always' (total payable unchanged — price_total is VAT-inclusive). NOTE: VAT treatment (inclusive vs added-on) + applies_when policy need owner/accountant confirmation.
 - [x] MED: completion trigger now clamps commission to [0, price_total] (DB 0033) — owner net never negative.
 - [ ] MED: priced days (exclusive) vs blocked days (inclusive daterange) off-by-one; standardize.
 - [x] MED: rate + receipt screens now gate on completed status when reached by route (friendly state otherwise).

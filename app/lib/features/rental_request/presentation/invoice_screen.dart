@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/utils/tax.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -416,9 +417,10 @@ class _InvoiceDocument extends StatelessWidget {
                   ? total.toDouble()
                   : double.tryParse('$total') ?? 0;
               if (t <= 0 || taxRate <= 0) return const SizedBox.shrink();
-              // Displayed total is tax-inclusive: tax = total − total/(1+rate).
-              final tax = t - t / (1 + taxRate);
-              final net = t - tax;
+              // Displayed total is tax-inclusive — shared helper splits it.
+              final b = vatBreakdown(t, taxRate);
+              final tax = b.vat;
+              final net = b.subtotal;
               final pctLabel =
                   (taxRate * 100).toStringAsFixed(taxRate * 100 % 1 == 0 ? 0 : 1);
               final s = TextStyle(fontSize: 12, color: Colors.grey.shade700);
