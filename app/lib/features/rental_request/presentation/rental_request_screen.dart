@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/pricing.dart';
 import '../../../core/widgets/press_scale.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../generators/data/generator_repository.dart';
-import '../data/rental_repository.dart';
+import '../../generators/data/repositories/generator_repository.dart';
+import '../data/repositories/rental_repository.dart';
 import 'payment_confirmation_screen.dart';
 
 final _generatorForRequestProvider =

@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../providers/rental_providers.dart' show rentalRepositoryProvider;
+import 'providers/rental_providers.dart' show rentalRepositoryProvider;
 
 final _receiptProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(

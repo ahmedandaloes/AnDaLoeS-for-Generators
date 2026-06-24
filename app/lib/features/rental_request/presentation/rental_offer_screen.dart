@@ -6,7 +6,7 @@ import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../providers/rental_providers.dart' show rentalRepositoryProvider;
+import 'providers/rental_providers.dart' show rentalRepositoryProvider;
 import 'doc_widgets.dart';
 
 final _offerDataProvider =

@@ -7,7 +7,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/config/company_info.dart';
 import '../../../core/config/tax_config_provider.dart';
-import '../providers/rental_providers.dart' show rentalRepositoryProvider;
+import 'providers/rental_providers.dart' show rentalRepositoryProvider;
 import 'doc_widgets.dart';
 
 final _invoiceDataProvider =

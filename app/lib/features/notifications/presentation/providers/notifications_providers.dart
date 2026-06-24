@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/notifications_repository.dart';
+import '../../data/repositories/notifications_repository.dart';
 
 final notificationsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>(

@@ -8,11 +8,11 @@ import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/commission.dart';
 import '../../../../core/utils/db_error.dart';
 import '../../../../core/widgets/press_scale.dart';
-import '../../../chat/providers/chat_providers.dart';
+import '../../../chat/presentation/providers/chat_providers.dart';
 import '../../../ratings/presentation/rate_rental_screen.dart';
-import '../../../rental_request/data/rental_repository.dart'
+import '../../../rental_request/data/repositories/rental_repository.dart'
     show rentalRepositoryProvider, rentalTimelineProvider, rentalHandoversProvider;
-import '../../providers/owner_providers.dart'
+import '../providers/owner_providers.dart'
     show ownerRequestsProvider, commissionConfigProvider, ownerRepositoryProvider;
 
 class OwnerRequestCard extends StatelessWidget {

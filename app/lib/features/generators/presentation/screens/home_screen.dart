@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
-import '../../../notifications/providers/notifications_providers.dart'
+import '../../../notifications/presentation/providers/notifications_providers.dart'
     show unreadCountProvider;
 import '../providers/generators_providers.dart'
     show
@@ -15,7 +15,7 @@ import '../providers/generators_providers.dart'
         recentSearchesProvider,
         currentProfileProvider;
 import '../providers/saved_search_provider.dart';
-import '../../../owner_dashboard/providers/owner_providers.dart'
+import '../../../owner_dashboard/presentation/providers/owner_providers.dart'
     show ownerPendingCountProvider;
 import '../widgets/fuel_chip.dart' show fuelLabel;
 import '../widgets/generator_filter.dart';

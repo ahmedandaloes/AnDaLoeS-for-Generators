@@ -9,7 +9,7 @@ import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/status_colors.dart';
 import '../../../../core/utils/ics.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../data/rental_repository.dart'
+import '../../data/repositories/rental_repository.dart'
     show rentalHandoversProvider;
 import '../providers/rental_providers.dart'
     show myRentalsProvider, rentalRepositoryProvider;

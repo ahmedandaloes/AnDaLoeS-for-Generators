@@ -7,7 +7,7 @@ import '../../../../core/routing/app_routes.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../../core/widgets/app_error_state.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../data/notifications_repository.dart';
+import '../../data/repositories/notifications_repository.dart';
 import '../providers/notifications_providers.dart'
     show notificationsProvider, unreadCountProvider;
 

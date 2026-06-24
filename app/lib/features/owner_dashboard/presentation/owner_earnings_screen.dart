@@ -3,7 +3,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/owner_providers.dart' show ownerRepositoryProvider;
+import 'providers/owner_providers.dart' show ownerRepositoryProvider;
 
 final _earningsProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(

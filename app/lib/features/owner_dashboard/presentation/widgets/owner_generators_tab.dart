@@ -6,7 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/widgets/app_error_state.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../providers/owner_providers.dart'
+import '../providers/owner_providers.dart'
     show ownerGeneratorsProvider, activeRentalCountsProvider, ownerRepositoryProvider;
 
 enum _GenSort { status, kva, price }

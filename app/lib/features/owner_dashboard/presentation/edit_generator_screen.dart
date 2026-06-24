@@ -14,7 +14,7 @@ import '../../../core/constants/generator_sizes.dart';
 import '../../../core/constants/generator_use_cases.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_snack_bar.dart';
-import '../providers/owner_providers.dart' show ownerRepositoryProvider;
+import 'providers/owner_providers.dart' show ownerRepositoryProvider;
 
 const _editGovernorates = [
   'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',

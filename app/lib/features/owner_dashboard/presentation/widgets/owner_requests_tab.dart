@@ -6,7 +6,7 @@ import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/db_error.dart';
 import '../../../../core/widgets/app_error_state.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../providers/owner_providers.dart'
+import '../providers/owner_providers.dart'
     show ownerRequestsProvider, ownerRepositoryProvider;
 import 'request_card.dart';
 

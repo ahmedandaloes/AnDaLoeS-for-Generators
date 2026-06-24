@@ -8,7 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/status_colors.dart';
 import '../../../../core/widgets/app_error_state.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../providers/owner_providers.dart';
+import '../providers/owner_providers.dart';
 
 String _monthAbbr(int m) => const [
       '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',

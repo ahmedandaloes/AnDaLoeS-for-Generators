@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/widgets/app_error_state.dart';
 import '../../../l10n/app_localizations.dart';
-import '../providers/owner_providers.dart';
+import 'providers/owner_providers.dart';
 import 'widgets/owner_generators_tab.dart';
 import 'widgets/owner_history_tab.dart';
 import 'widgets/owner_requests_tab.dart';

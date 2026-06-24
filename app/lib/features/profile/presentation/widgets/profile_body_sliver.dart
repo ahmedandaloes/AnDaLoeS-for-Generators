@@ -7,7 +7,7 @@ import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
-import '../../../owner_dashboard/providers/owner_providers.dart' show myCompanyProvider;
+import '../../../owner_dashboard/presentation/providers/owner_providers.dart' show myCompanyProvider;
 import '../providers/profile_screen_providers.dart';
 import 'profile_referral_card.dart';
 import 'profile_settings_section.dart';

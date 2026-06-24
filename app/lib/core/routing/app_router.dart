@@ -23,7 +23,7 @@ import '../../features/owner_dashboard/presentation/edit_generator_screen.dart';
 import '../../features/owner_dashboard/presentation/owner_dashboard_screen.dart';
 import '../../features/owner_dashboard/presentation/owner_earnings_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
-import '../../features/notifications/presentation/notifications_screen.dart';
+import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/ratings/presentation/rate_rental_screen.dart';
 import '../../features/rental_request/presentation/my_rentals_screen.dart';
 import '../../features/rental_request/presentation/rental_receipt_screen.dart';

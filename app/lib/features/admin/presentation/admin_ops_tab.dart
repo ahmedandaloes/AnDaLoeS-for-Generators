@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../rental_request/data/rental_repository.dart';
+import '../../rental_request/data/repositories/rental_repository.dart';
 import '../data/repositories/admin_repository.dart';
 
 final _overdueActiveProvider = FutureProvider.autoDispose(

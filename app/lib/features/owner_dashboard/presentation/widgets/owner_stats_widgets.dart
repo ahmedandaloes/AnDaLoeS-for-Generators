@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../generators/presentation/providers/detail_providers.dart'
     show avgResponseTimeProvider;
-import '../../providers/owner_providers.dart';
+import '../providers/owner_providers.dart';
 
 class OwnerDashboardStats extends StatelessWidget {
   const OwnerDashboardStats(

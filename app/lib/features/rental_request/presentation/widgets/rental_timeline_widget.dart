@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/app_localizations.dart';
-import '../../data/rental_repository.dart'
+import '../../data/repositories/rental_repository.dart'
     show rentalTimelineProvider;
 
 // ── Status progress timeline ──────────────────────────────────────────────────

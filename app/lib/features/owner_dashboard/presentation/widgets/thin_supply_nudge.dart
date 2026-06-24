@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/app_routes.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../providers/owner_providers.dart' show ownerRepositoryProvider;
+import '../providers/owner_providers.dart' show ownerRepositoryProvider;
 
 /// Governorates with fewer than 3 available generators.
 final thinSupplyProvider =

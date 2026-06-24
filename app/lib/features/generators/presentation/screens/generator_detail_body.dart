@@ -10,7 +10,7 @@ import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/status_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
-import '../../../company/data/company_repository.dart';
+import '../../../company/data/repositories/company_repository.dart';
 import '../../data/repositories/generator_repository.dart';
 import '../providers/detail_providers.dart';
 import '../widgets/detail_sections.dart';

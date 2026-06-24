@@ -7,7 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/routing/app_routes.dart';
-import '../data/company_repository.dart';
+import '../data/repositories/company_repository.dart';
 import '../data/repositories/company_data_repository.dart';
 
 final _companyProfileProvider =
