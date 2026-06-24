@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -82,12 +83,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     final generatorsAsync = ref.watch(_mapGeneratorsProvider);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Generator Map'),
+        title: Text(l.generatorMap),
         backgroundColor: cs.surface.withValues(alpha: 0.92),
         elevation: 0,
       ),
@@ -240,6 +242,7 @@ class _GeneratorMapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final photo = (generator['photos'] as List?)?.isNotEmpty == true
         ? generator['photos'][0].toString()
         : null;
@@ -365,7 +368,7 @@ class _GeneratorMapCard extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onView,
               icon: const Icon(Icons.open_in_new_rounded, size: 16),
-              label: const Text('View details'),
+              label: Text(l.viewDetails),
               style: FilledButton.styleFrom(
                   minimumSize: const Size(double.infinity, 44)),
             ),

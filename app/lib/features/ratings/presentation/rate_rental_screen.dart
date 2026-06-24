@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/supabase.dart';
@@ -27,7 +28,7 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
   final _commentController = TextEditingController();
   bool _submitting = false;
   bool? _eligible; // null = checking
-  String _ineligibleReason = '';
+  bool _alreadyRated = false;
 
   @override
   void initState() {
@@ -46,13 +47,7 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
           .eq('id', widget.rentalRequestId)
           .maybeSingle();
       if (rr?['status']?.toString() != 'completed') {
-        if (mounted) {
-          setState(() {
-            _eligible = false;
-            _ineligibleReason =
-                'You can leave a review once the rental is completed.';
-          });
-        }
+        if (mounted) setState(() => _eligible = false);
         return;
       }
       if (uid != null) {
@@ -66,7 +61,7 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
           if (mounted) {
             setState(() {
               _eligible = false;
-              _ineligibleReason = 'You have already reviewed this rental.';
+              _alreadyRated = true;
             });
           }
           return;
@@ -86,8 +81,9 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
   }
 
   Future<void> _submit() async {
+    final l = AppLocalizations.of(context)!;
     if (_score == 0) {
-      _snack('Select a star rating');
+      _snack(l.selectStarRating);
       return;
     }
     setState(() => _submitting = true);
@@ -101,14 +97,14 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
           'comment': _commentController.text.trim(),
       });
       if (mounted) {
-        _snack('Thank you for your review!');
+        _snack(l.thankYouReview);
         context.pop();
         // The calling screen will invalidate its own providers via
         // Riverpod ref.invalidate — the rating badge updates on next build.
       }
     } catch (e) {
       _snack(friendlyDbError(e,
-          fallback: 'Could not submit your rating. Please try again.'));
+          fallback: l.couldNotSubmitRating));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -129,6 +125,7 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     if (_eligible == null) {
       return const Scaffold(
@@ -137,7 +134,7 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
     }
     if (_eligible == false) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Leave a Review')),
+        appBar: AppBar(title: Text(l.leaveAReview)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
@@ -147,13 +144,13 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
                 Icon(Icons.reviews_outlined,
                     size: 48, color: cs.onSurfaceVariant),
                 const SizedBox(height: 14),
-                Text(_ineligibleReason,
+                Text(_alreadyRated ? l.alreadyReviewed : l.reviewWhenCompleted,
                     textAlign: TextAlign.center,
                     style: TextStyle(color: cs.onSurfaceVariant)),
                 const SizedBox(height: 16),
                 FilledButton(
                     onPressed: () => context.pop(),
-                    child: const Text('Back')),
+                    child: Text(l.back)),
               ],
             ),
           ),
@@ -162,7 +159,7 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Leave a Review')),
+      appBar: AppBar(title: Text(l.leaveAReview)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -194,8 +191,8 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
                   const SizedBox(height: 12),
                   Text(
                     widget.isOwnerRating
-                        ? 'Rate the customer'
-                        : 'Rate your experience',
+                        ? l.rateTheCustomer
+                        : l.rateYourExperience,
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.w700),
                   ),
@@ -235,7 +232,7 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
             const SizedBox(height: 8),
             Center(
               child: Text(
-                _scoreLabel(_score),
+                _scoreLabel(_score, l),
                 style: TextStyle(
                   fontSize: 14,
                   color: _score > 0 ? cs.primary : cs.onSurfaceVariant,
@@ -275,10 +272,9 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
             TextField(
               controller: _commentController,
               maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Comment (optional)',
-                hintText:
-                    'Share details about your experience…',
+              decoration: InputDecoration(
+                labelText: l.commentOptional,
+                hintText: l.commentHint,
                 alignLabelWithHint: true,
               ),
             ),
@@ -293,12 +289,12 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: cs.onPrimary),
                     )
-                  : const Text('Submit review'),
+                  : Text(l.submitReview),
             ),
             const SizedBox(height: 12),
             TextButton(
               onPressed: () => context.pop(),
-              child: const Text('Skip'),
+              child: Text(l.skip),
             ),
           ],
         ),
@@ -333,14 +329,14 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
           ],
       };
 
-  String _scoreLabel(int score) {
+  String _scoreLabel(int score, AppLocalizations l) {
     return switch (score) {
-      1 => 'Poor',
-      2 => 'Fair',
-      3 => 'Good',
-      4 => 'Very good',
-      5 => 'Excellent!',
-      _ => 'Tap to rate',
+      1 => l.scorePoor,
+      2 => l.scoreFair,
+      3 => l.scoreGood,
+      4 => l.scoreVeryGood,
+      5 => l.scoreExcellent,
+      _ => l.tapToRate,
     };
   }
 }
