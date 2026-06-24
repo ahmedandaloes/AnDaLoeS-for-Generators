@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -42,8 +43,8 @@ class HomeGeneratorCard extends StatelessWidget {
             AspectRatio(
               aspectRatio: 16 / 10,
               child: photo != null
-                  ? Image.network(photo, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _placeholder(cs))
+                  ? CachedNetworkImage(imageUrl: photo, fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => _placeholder(cs))
                   : _placeholder(cs),
             ),
             Expanded(

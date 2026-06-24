@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../../core/theme/status_colors.dart';
@@ -132,11 +133,11 @@ class _GenCard extends StatelessWidget {
                 bottomLeft: Radius.circular(13),
               ),
               child: photo != null
-                  ? Image.network(photo,
+                  ? CachedNetworkImage(imageUrl: photo,
                       width: 80,
                       height: 80,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _placeholder(cs))
+                      errorWidget: (_, __, ___) => _placeholder(cs))
                   : _placeholder(cs),
             ),
             const SizedBox(width: 12),

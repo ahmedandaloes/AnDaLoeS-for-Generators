@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/routing/app_routes.dart';
 
 class SimilarGeneratorsSection extends StatelessWidget {
@@ -58,12 +59,12 @@ class SimilarGeneratorsSection extends StatelessWidget {
                         borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(12)),
                         child: photo != null
-                            ? Image.network(
+                            ? CachedNetworkImage(imageUrl: 
                                 photo,
                                 height: 80,
                                 width: 140,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
+                                errorWidget: (_, __, ___) =>
                                     _placeholder(cs),
                               )
                             : _placeholder(cs),

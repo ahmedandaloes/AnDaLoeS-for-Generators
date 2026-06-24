@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/widgets/app_error_state.dart';
@@ -172,12 +173,12 @@ class _OwnerGeneratorTile extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: firstPhoto != null
-                  ? Image.network(
+                  ? CachedNetworkImage(imageUrl: 
                       firstPhoto,
                       width: 48,
                       height: 48,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
+                      errorWidget: (_, __, ___) =>
                           _GenIcon(isAvailable: isAvailable, cs: cs),
                     )
                   : _GenIcon(isAvailable: isAvailable, cs: cs),

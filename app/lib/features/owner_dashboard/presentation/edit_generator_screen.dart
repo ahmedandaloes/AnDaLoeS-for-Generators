@@ -7,6 +7,7 @@ import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/constants/generator_sizes.dart';
@@ -595,7 +596,7 @@ class _NetworkPhotoThumb extends StatelessWidget {
         child: Stack(children: [
           Center(
             child: InteractiveViewer(
-              child: Image.network(url, fit: BoxFit.contain),
+              child: CachedNetworkImage(imageUrl: url, fit: BoxFit.contain),
             ),
           ),
           Positioned(
@@ -630,7 +631,7 @@ class _NetworkPhotoThumb extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               image: DecorationImage(
-                image: NetworkImage(url),
+                image: CachedNetworkImageProvider(url),
                 fit: BoxFit.cover,
               ),
             ),

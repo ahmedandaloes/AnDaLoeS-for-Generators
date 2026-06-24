@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../core/config/supabase.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -284,11 +285,11 @@ class _GeneratorMapCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: photo != null
-                    ? Image.network(photo,
+                    ? CachedNetworkImage(imageUrl: photo,
                         width: 72,
                         height: 72,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _placeholder(cs))
+                        errorWidget: (_, __, ___) => _placeholder(cs))
                     : _placeholder(cs),
               ),
               const SizedBox(width: 14),

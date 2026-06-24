@@ -4,6 +4,7 @@ import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
@@ -430,12 +431,12 @@ class _CompanyGeneratorTile extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: firstPhoto != null
-                    ? Image.network(
+                    ? CachedNetworkImage(imageUrl: 
                         firstPhoto,
                         width: 56,
                         height: 56,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        errorWidget: (_, __, ___) => Container(
                           width: 56,
                           height: 56,
                           color: cs.primaryContainer,

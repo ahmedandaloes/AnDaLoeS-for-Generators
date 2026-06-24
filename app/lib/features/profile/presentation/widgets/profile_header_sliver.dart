@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../core/routing/app_routes.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -72,7 +73,7 @@ class ProfileHeaderSliver extends StatelessWidget {
                           ],
                           image: avatarUrl != null
                               ? DecorationImage(
-                                  image: NetworkImage(avatarUrl!),
+                                  image: CachedNetworkImageProvider(avatarUrl!),
                                   fit: BoxFit.cover,
                                 )
                               : null,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/status_colors.dart';
@@ -122,12 +123,12 @@ class RentalCard extends ConsumerWidget {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: firstPhoto != null
-                            ? Image.network(
+                            ? CachedNetworkImage(imageUrl: 
                                 firstPhoto,
                                 width: 56,
                                 height: 56,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _photoPlaceholder(cs),
+                                errorWidget: (_, __, ___) => _photoPlaceholder(cs),
                               )
                             : _photoPlaceholder(cs),
                       ),
