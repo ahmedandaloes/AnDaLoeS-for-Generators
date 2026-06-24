@@ -61,6 +61,9 @@ class _Body extends ConsumerWidget {
         ref.watch(ownerAcceptanceRateProvider(companyId));
     final bookedAsync = ref.watch(bookedDatesProvider(generatorId));
     final similarAsync = ref.watch(similarGeneratorsProvider(gen));
+    final isFav =
+        ref.watch(isFavProvider(generatorId)).valueOrNull ?? false;
+    final loggedIn = supabase.auth.currentUser?.isAnonymous == false;
 
     return CustomScrollView(
       controller: scrollController,
@@ -70,6 +73,46 @@ class _Body extends ConsumerWidget {
           expandedHeight: 300,
           pinned: true,
           stretch: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.share_outlined),
+              tooltip: l.share,
+              onPressed: () => _shareGenerator(ref, generatorId),
+            ),
+            IconButton(
+              icon: const Icon(Icons.link_rounded),
+              tooltip: l.copyLink,
+              onPressed: () => _copyLink(context, generatorId),
+            ),
+            IconButton(
+              icon: Icon(
+                isFav ? Icons.favorite_rounded : Icons.favorite_border,
+                color: isFav ? Colors.red.shade400 : null,
+              ),
+              tooltip: isFav ? l.removeFromSaved : l.save,
+              onPressed: () => _toggleFav(ref, generatorId, isFav),
+            ),
+            if (loggedIn)
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (v) {
+                  if (v == 'report') {
+                    _showReportSheet(context, ref, generatorId, cs);
+                  }
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'report',
+                    child: Row(children: [
+                      Icon(Icons.flag_outlined,
+                          size: 16, color: cs.error),
+                      const SizedBox(width: 8),
+                      Text(l.reportProblem),
+                    ]),
+                  ),
+                ],
+              ),
+          ],
           flexibleSpace: FlexibleSpaceBar(
             stretchModes: const [
               StretchMode.zoomBackground,
@@ -560,286 +603,171 @@ class _Body extends ConsumerWidget {
 
 // ── Similar generators ────────────────────────────────────────────────────────
 
-// ── Rent Now FAB — scroll-aware sticky wrapper ────────────────────────────────
-class GeneratorDetailWrapper extends ConsumerStatefulWidget {
+// ── Shared helpers (used by _Body actions + wrapper) ─────────────────────────
+
+Future<void> _shareGenerator(WidgetRef ref, String id) async {
+  final cached = ref.read(generatorDetailProvider(id)).valueOrNull;
+  final title = cached?['title']?.toString() ?? 'a generator';
+  final kva = cached?['capacity_kva'];
+  final price = cached?['price_per_day'];
+  final city = cached?['city']?.toString();
+  final gov = cached?['governorate']?.toString();
+  final companyName = (cached?['companies'] as Map?)?['name']?.toString();
+  final avgScore = (cached?['avg_score'] as num?)?.toDouble();
+  final ratingCount = (cached?['rating_count'] as num?)?.toInt() ?? 0;
+  final location =
+      [city, gov].where((v) => v != null && v.isNotEmpty).join(', ');
+  final ratingStr = (avgScore != null && ratingCount > 0)
+      ? '⭐ ${avgScore.toStringAsFixed(1)} ($ratingCount reviews)'
+      : null;
+  final lines = <String>[
+    '🔌 $title',
+    if (kva != null || price != null)
+      [
+        if (kva != null) '$kva KVA',
+        if (price != null) 'EGP $price/day',
+      ].join(' · '),
+    if (location.isNotEmpty) '📍 $location',
+    if (companyName != null) '🏢 $companyName',
+    if (ratingStr != null) ratingStr,
+    '',
+    'Book on AnDaLoeS for Generators',
+    'https://andaloes.app/generator/$id',
+  ];
+  await Share.share(lines.join('\n'), subject: title);
+}
+
+Future<void> _copyLink(BuildContext context, String id) async {
+  final link = 'https://andaloes.app/generator/$id';
+  await Clipboard.setData(ClipboardData(text: link));
+  if (context.mounted) {
+    final l = AppLocalizations.of(context)!;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l.linkCopied),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+}
+
+Future<void> _toggleFav(WidgetRef ref, String id, bool isFav) async {
+  HapticFeedback.lightImpact();
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) return;
+  if (isFav) {
+    await supabase
+        .from('user_favorites')
+        .delete()
+        .eq('user_id', uid)
+        .eq('generator_id', id);
+  } else {
+    await supabase
+        .from('user_favorites')
+        .upsert({'user_id': uid, 'generator_id': id});
+  }
+  ref.invalidate(isFavProvider(id));
+}
+
+void _showReportSheet(
+    BuildContext context, WidgetRef ref, String id, ColorScheme cs) {
+  final gen = ref.read(generatorDetailProvider(id)).valueOrNull;
+  final name = gen?['title']?.toString() ?? 'Generator';
+  final l = AppLocalizations.of(context)!;
+
+  const issues = [
+    ('misrepresentation', Icons.info_outline, 'Specs mismatch',
+        'Capacity, price or photos don\'t match reality'),
+    ('fraud', Icons.security_outlined, 'Suspected fraud',
+        'Suspicious activity or payment request'),
+    ('no_show', Icons.cancel_outlined, 'Generator unavailable',
+        'Listed as available but owner not responding'),
+    ('damage', Icons.build_outlined, 'Equipment damage',
+        'Generator was returned damaged or in bad condition'),
+    ('other', Icons.more_horiz, 'Other issue', 'Something else'),
+  ];
+
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 12),
+          Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(children: [
+              Icon(Icons.flag_outlined, size: 18, color: cs.error),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(l.reportProblemWith(name),
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w700)),
+              ),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          ...issues.map((issue) => ListTile(
+                leading: Icon(issue.$2, color: cs.onSurfaceVariant),
+                title: Text(issue.$3,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600)),
+                subtitle: Text(issue.$4,
+                    style: TextStyle(
+                        fontSize: 12, color: cs.onSurfaceVariant)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  context.push(AppRoutes.report(
+                      type: 'generator',
+                      id: id,
+                      name: name,
+                      reason: issue.$1));
+                },
+              )),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
+}
+
+// ── Rent Now sticky wrapper ───────────────────────────────────────────────────
+class GeneratorDetailWrapper extends ConsumerWidget {
   const GeneratorDetailWrapper({super.key, required this.id});
   final String id;
 
   @override
-  ConsumerState<GeneratorDetailWrapper> createState() =>
-      _GeneratorDetailWrapperState();
-}
-
-class _GeneratorDetailWrapperState
-    extends ConsumerState<GeneratorDetailWrapper> {
-  final _scrollController = ScrollController();
-  bool _fabVisible = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(() {
-      final offset = _scrollController.offset;
-      final visible = offset < 100 || _scrollController.position.userScrollDirection.name == 'forward';
-      if (visible != _fabVisible) setState(() => _fabVisible = visible);
-    });
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final l = AppLocalizations.of(context)!;
-    // A real (non-anonymous) account is required to book/report — guests must
-    // sign in so the owner can contact them and the request isn't orphaned.
-    final user = supabase.auth.currentUser;
-    final loggedIn = user != null && !user.isAnonymous;
-    final isFavAsync = ref.watch(isFavProvider(widget.id));
-    final isFav = isFavAsync.valueOrNull ?? false;
-    final id = widget.id;
 
     return Scaffold(
-      body: GeneratorDetailScreen(id: id, scrollController: _scrollController),
-      floatingActionButton: AnimatedSlide(
-        duration: const Duration(milliseconds: 250),
-        offset: _fabVisible ? Offset.zero : const Offset(0, 1.5),
-        curve: Curves.easeInOut,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 200),
-          opacity: _fabVisible ? 1.0 : 0.0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Share button
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 10),
-                child: FloatingActionButton.small(
-                  heroTag: 'share',
-                  backgroundColor: cs.surfaceContainerHighest,
-                  foregroundColor: cs.onSurfaceVariant,
-                  tooltip: l.share,
-                  onPressed: () => _shareGenerator(ref, id),
-                  child: const Icon(Icons.share_outlined, size: 18),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 10),
-                child: FloatingActionButton.small(
-                  heroTag: 'copy_link',
-                  backgroundColor: cs.surfaceContainerHighest,
-                  foregroundColor: cs.onSurfaceVariant,
-                  tooltip: l.copyLink,
-                  onPressed: () => _copyLink(context, id),
-                  child: const Icon(Icons.link_rounded, size: 18),
-                ),
-              ),
-              // Favorite button
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 10),
-                child: FloatingActionButton.small(
-                  heroTag: 'fav',
-                  backgroundColor: isFav
-                      ? Colors.red.shade50
-                      : cs.surfaceContainerHighest,
-                  foregroundColor:
-                      isFav ? Colors.red.shade400 : cs.onSurfaceVariant,
-                  tooltip: isFav ? l.removeFromSaved : l.save,
-                  onPressed: () => _toggleFav(ref, id, isFav),
-                  child: TweenAnimationBuilder<double>(
-                    key: ValueKey(isFav),
-                    tween: Tween(begin: 1.4, end: 1.0),
-                    duration: const Duration(milliseconds: 380),
-                    curve: Curves.elasticOut,
-                    builder: (_, scale, child) =>
-                        Transform.scale(scale: scale, child: child),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: Icon(
-                        isFav ? Icons.favorite_rounded : Icons.favorite_border,
-                        key: ValueKey(isFav),
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              // Report button
-              if (loggedIn)
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(end: 10),
-                  child: FloatingActionButton.small(
-                    heroTag: 'report',
-                    backgroundColor: cs.errorContainer,
-                    foregroundColor: cs.onErrorContainer,
-                    tooltip: l.reportProblem,
-                    onPressed: () => _showReportSheet(context, ref, id, cs),
-                    child: const Icon(Icons.flag_outlined, size: 18),
-                  ),
-                ),
-              FloatingActionButton.extended(
-                heroTag: 'rent',
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                  if (!loggedIn) {
-                    context.push(AppRoutes.login);
-                    return;
-                  }
-                  context.push(AppRoutes.generatorRequest(id));
-                },
-                icon: const Icon(Icons.calendar_month_outlined),
-                label: Text(l.rentNow),
-                backgroundColor: cs.primary,
-                foregroundColor: cs.onPrimary,
-              ),
-            ],
-          ),
-        ),
+      body: GeneratorDetailScreen(id: id),
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'rent',
+        onPressed: () {
+          HapticFeedback.mediumImpact();
+          // Guests (anonymous) can browse the booking form and pick dates.
+          // Auth is enforced at the final "Send request" step.
+          context.push(AppRoutes.generatorRequest(id));
+        },
+        icon: const Icon(Icons.calendar_month_outlined),
+        label: Text(l.rentNow),
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
       ),
-      floatingActionButtonLocation:
-          FloatingActionButtonLocation.centerFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
-  }
-
-  void _showReportSheet(
-      BuildContext context, WidgetRef ref, String id, ColorScheme cs) {
-    final gen = ref.read(generatorDetailProvider(id)).valueOrNull;
-    final name = gen?['title']?.toString() ?? 'Generator';
-    final l = AppLocalizations.of(context)!;
-
-    const issues = [
-      ('misrepresentation', Icons.info_outline, 'Specs mismatch',
-          'Capacity, price or photos don\'t match reality'),
-      ('fraud', Icons.security_outlined, 'Suspected fraud',
-          'Suspicious activity or payment request'),
-      ('no_show', Icons.cancel_outlined, 'Generator unavailable',
-          'Listed as available but owner not responding'),
-      ('damage', Icons.build_outlined, 'Equipment damage',
-          'Generator was returned damaged or in bad condition'),
-      ('other', Icons.more_horiz, 'Other issue', 'Something else'),
-    ];
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: cs.outlineVariant,
-                    borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(children: [
-                Icon(Icons.flag_outlined, size: 18, color: cs.error),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(l.reportProblemWith(name),
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w700)),
-                ),
-              ]),
-            ),
-            const SizedBox(height: 12),
-            ...issues.map((issue) => ListTile(
-                  leading: Icon(issue.$2, color: cs.onSurfaceVariant),
-                  title: Text(issue.$3,
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w600)),
-                  subtitle: Text(issue.$4,
-                      style: TextStyle(
-                          fontSize: 12, color: cs.onSurfaceVariant)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    context.push(AppRoutes.report(
-                        type: 'generator',
-                        id: id,
-                        name: name,
-                        reason: issue.$1));
-                  },
-                )),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _copyLink(BuildContext context, String id) async {
-    final link = 'https://andaloes.app/generator/$id';
-    await Clipboard.setData(ClipboardData(text: link));
-    if (context.mounted) {
-      final l = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l.linkCopied),
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  Future<void> _shareGenerator(WidgetRef ref, String id) async {
-    final cached = ref.read(generatorDetailProvider(id)).valueOrNull;
-    final title = cached?['title']?.toString() ?? 'a generator';
-    final kva = cached?['capacity_kva'];
-    final price = cached?['price_per_day'];
-    final city = cached?['city']?.toString();
-    final gov = cached?['governorate']?.toString();
-    final companyName = (cached?['companies'] as Map?)?['name']?.toString();
-    final avgScore = (cached?['avg_score'] as num?)?.toDouble();
-    final ratingCount = (cached?['rating_count'] as num?)?.toInt() ?? 0;
-    final location = [city, gov]
-        .where((v) => v != null && v.isNotEmpty)
-        .join(', ');
-    final ratingStr = (avgScore != null && ratingCount > 0)
-        ? '⭐ ${avgScore.toStringAsFixed(1)} ($ratingCount reviews)'
-        : null;
-    final lines = <String>[
-      '🔌 $title',
-      if (kva != null || price != null)
-        [
-          if (kva != null) '$kva KVA',
-          if (price != null) 'EGP $price/day',
-        ].join(' · '),
-      if (location.isNotEmpty) '📍 $location',
-      if (companyName != null) '🏢 $companyName',
-      if (ratingStr != null) ratingStr,
-      '',
-      'Book on AnDaLoeS for Generators',
-      'https://andaloes.app/generator/$id',
-    ];
-    await Share.share(lines.join('\n'), subject: title);
-  }
-
-  Future<void> _toggleFav(WidgetRef ref, String id, bool isFav) async {
-    HapticFeedback.lightImpact();
-    final uid = supabase.auth.currentUser?.id;
-    if (uid == null) return;
-    if (isFav) {
-      await supabase
-          .from('user_favorites')
-          .delete()
-          .eq('user_id', uid)
-          .eq('generator_id', id);
-    } else {
-      await supabase
-          .from('user_favorites')
-          .upsert({'user_id': uid, 'generator_id': id});
-    }
-    ref.invalidate(isFavProvider(widget.id));
   }
 }
 

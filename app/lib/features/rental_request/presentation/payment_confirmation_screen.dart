@@ -44,10 +44,16 @@ class _PaymentConfirmationScreenState
 
   Future<void> _confirm() async {
     HapticFeedback.mediumImpact();
+    // Guests who browsed the form without signing in are redirected here.
+    final user = supabase.auth.currentUser;
+    if (user == null || user.isAnonymous) {
+      if (mounted) context.push(AppRoutes.login);
+      return;
+    }
     setState(() => _submitting = true);
     try {
       await supabase.from('rental_requests').insert({
-        'customer_id': supabase.auth.currentUser!.id,
+        'customer_id': user.id,
         'generator_id': widget.generator['id'],
         'company_id': widget.generator['company_id'],
         'start_date': widget.startDate.toIso8601String().substring(0, 10),
