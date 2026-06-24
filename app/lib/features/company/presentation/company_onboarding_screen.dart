@@ -2,13 +2,14 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import '../../../l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
-import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/utils/db_error.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../auth/data/repositories/auth_repository.dart';
+import '../data/repositories/company_data_repository.dart';
 
 const _governorates = [
   'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',
@@ -30,15 +31,16 @@ String _docLabel(String key, AppLocalizations l) => switch (key) {
       _ => l.docNationalId,
     };
 
-class CompanyOnboardingScreen extends StatefulWidget {
+class CompanyOnboardingScreen extends ConsumerStatefulWidget {
   const CompanyOnboardingScreen({super.key});
 
   @override
-  State<CompanyOnboardingScreen> createState() =>
+  ConsumerState<CompanyOnboardingScreen> createState() =>
       _CompanyOnboardingScreenState();
 }
 
-class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
+class _CompanyOnboardingScreenState
+    extends ConsumerState<CompanyOnboardingScreen> {
   // Step 1 — company info
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -79,26 +81,20 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
 
     setState(() => _submitting = true);
     try {
+      final uid = ref.read(authRepositoryProvider).currentUserId;
+      if (uid == null) { _snack(l.createAnAccountFirst); return; }
       final desc = _descriptionController.text.trim();
-      final data = await supabase.from('companies').insert({
-        'owner_user_id': supabase.auth.currentUser!.id,
-        'name': name,
-        'contact_phone': phone.isNotEmpty ? phone : null,
-        'description': desc.isNotEmpty ? desc : null,
-        // The picker is a governorate selector; store it as governorate (and
-        // city for back-compat) so company location + filtering work.
-        'city': _city,
-        'governorate': _city,
-        'verification_status': 'pending',
-      }).select('id').single();
+      final repo = ref.read(companyDataRepositoryProvider);
+      final data = await repo.createCompany(
+        ownerUserId: uid,
+        name: name,
+        contactPhone: phone.isNotEmpty ? phone : null,
+        description: desc.isNotEmpty ? desc : null,
+        city: _city!,
+      );
 
       // Promote user to owner role on first company creation
-      final uid = supabase.auth.currentUser!.id;
-      await supabase
-          .from('profiles')
-          .update({'role': 'owner'})
-          .eq('id', uid)
-          .eq('role', 'customer'); // only if still customer (don't demote admin)
+      await repo.promoteToOwner(uid);
 
       if (mounted) {
         setState(() {
@@ -118,7 +114,8 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
 
   Future<void> _pickAndUpload(String docType) async {
     final l = AppLocalizations.of(context)!;
-    final uid = supabase.auth.currentUser!.id;
+    final uid = ref.read(authRepositoryProvider).currentUserId;
+    if (uid == null) { _snack(l.createAnAccountFirst); return; }
     final cid = _companyId!;
 
     FilePickerResult? result;
@@ -137,31 +134,21 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
     if (file.path == null) { _snack(l.cannotReadFile); return; }
 
     final ext = file.extension ?? 'pdf';
-    final remotePath = '$uid/$cid/${docType}_${DateTime.now().millisecondsSinceEpoch}.$ext';
+    final remotePath =
+        '$uid/$cid/${docType}_${DateTime.now().millisecondsSinceEpoch}.$ext';
 
     setState(() => _uploading[docType] = true);
     try {
-      await supabase.storage.from('company-docs').upload(
-        remotePath,
-        File(file.path!),
-        fileOptions: const FileOptions(upsert: true),
+      final bytes = await File(file.path!).readAsBytes();
+      final repo = ref.read(companyDataRepositoryProvider);
+      await repo.uploadCompanyDocument(
+        uid: uid,
+        companyId: cid,
+        remotePath: remotePath,
+        bytes: bytes,
+        contentType: 'application/$ext',
       );
-
-      // Save path into companies.document_urls (append)
-      final existing = await supabase
-          .from('companies')
-          .select('document_urls')
-          .eq('id', cid)
-          .single();
-      final urls = List<String>.from(
-          existing['document_urls'] as List? ?? []);
-      // Replace or append this slot's entry
-      urls.removeWhere((u) => u.contains('/$docType'));
-      urls.add(remotePath);
-      await supabase
-          .from('companies')
-          .update({'document_urls': urls}).eq('id', cid);
-
+      await repo.appendDocumentUrl(cid, remotePath, docType);
       if (mounted) setState(() => _uploadedPaths[docType] = remotePath);
     } catch (e) {
       _snack(l.uploadFailed);
@@ -189,8 +176,9 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     // Owners must have a real (non-anonymous) account before listing.
-    final user = supabase.auth.currentUser;
-    if (user == null || user.isAnonymous) {
+    final authRepo = ref.read(authRepositoryProvider);
+    final uid = authRepo.currentUserId;
+    if (uid == null || authRepo.isCurrentUserAnonymous) {
       final cs = Theme.of(context).colorScheme;
       return Scaffold(
         appBar: AppBar(title: Text(l.registerCompany)),

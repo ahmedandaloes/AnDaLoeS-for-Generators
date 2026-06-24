@@ -6,19 +6,16 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
 import '../data/company_repository.dart';
+import '../data/repositories/company_data_repository.dart';
 
 final _companyProfileProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>?, String>(
         (ref, companyId) async {
-  final data = await supabase
-      .from('companies')
-      .select('id, name, city, governorate, contact_phone, verification_status')
-      .eq('id', companyId)
-      .maybeSingle();
-  return data;
+  return ref
+      .read(companyDataRepositoryProvider)
+      .fetchCompanyProfile(companyId);
 });
 
 // Company acceptance / response / on-time stats come from the shared
@@ -27,14 +24,9 @@ final _companyProfileProvider =
 final _companyGeneratorsProvider =
     FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
         (ref, companyId) async {
-  final data = await supabase
-      .from('generators')
-      .select(
-          'id, title, capacity_kva, price_per_day, city, photos, avg_score, rating_count')
-      .eq('company_id', companyId)
-      .eq('status', 'available')
-      .order('avg_score', ascending: false);
-  return (data as List).cast<Map<String, dynamic>>();
+  return ref
+      .read(companyDataRepositoryProvider)
+      .fetchCompanyGenerators(companyId);
 });
 
 class CompanyProfileScreen extends ConsumerWidget {
