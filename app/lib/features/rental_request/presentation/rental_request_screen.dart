@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/pricing.dart';
 import '../../../core/widgets/press_scale.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../generators/data/generator_repository.dart';
 import '../data/rental_repository.dart';
 import 'payment_confirmation_screen.dart';
@@ -82,13 +83,14 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
   }
 
   void _reviewAndConfirm(Map<String, dynamic> gen) {
+    final l = AppLocalizations.of(context)!;
     if (_range == null) {
-      _snack('Please select rental dates');
+      _snack(l.selectDatesFirst);
       return;
     }
     final days = _range!.end.difference(_range!.start).inDays;
     if (days < 1) {
-      _snack('Rental must be at least 1 day');
+      _snack(l.minOneDay);
       return;
     }
 
@@ -133,9 +135,10 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
     final bookedAsync =
         ref.watch(_requestBookedRangesProvider(widget.generatorId));
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Rent Generator')),
+      appBar: AppBar(title: Text(l.rentGenerator)),
       body: genAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => const AppErrorState(),
@@ -290,7 +293,7 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                 ],
 
                 // Date picker
-                _SectionLabel('Rental dates'),
+                _SectionLabel(l.rentalDates),
                 GestureDetector(
                   onTap: _pickDates,
                   child: Container(
@@ -316,7 +319,7 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _range == null
-                              ? Text('Select start & end date',
+                              ? Text(l.selectDates,
                                   style: TextStyle(
                                       color: cs.onSurfaceVariant,
                                       fontSize: 15))
@@ -397,24 +400,31 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                 if (_range != null && days > 0) const SizedBox(height: 16),
 
                 // Delivery address
-                _SectionLabel('Delivery address'),
+                _SectionLabel(l.deliveryAddress),
                 TextField(
                   controller: _addressController,
                   maxLines: 2,
-                  decoration: const InputDecoration(
-                    hintText: 'Street, building, city…',
-                    prefixIcon: Icon(Icons.location_on_outlined),
+                  decoration: InputDecoration(
+                    hintText: l.deliveryAddressHint,
+                    prefixIcon: const Icon(Icons.location_on_outlined),
                   ),
                 ),
                 const SizedBox(height: 16),
 
                 // Preferred delivery time
-                _SectionLabel('Preferred delivery time'),
+                _SectionLabel(l.preferredDeliveryTime),
                 Wrap(
                   spacing: 8,
                   children: ['Morning', 'Afternoon', 'Evening', 'Flexible']
                       .map((t) => ChoiceChip(
-                            label: Text(t, style: const TextStyle(fontSize: 13)),
+                            label: Text(
+                                switch (t) {
+                                  'Morning' => l.deliveryMorning,
+                                  'Afternoon' => l.deliveryAfternoon,
+                                  'Evening' => l.deliveryEvening,
+                                  _ => l.deliveryFlexible,
+                                },
+                                style: const TextStyle(fontSize: 13)),
                             selected: _deliveryTime == t,
                             onSelected: (_) =>
                                 setState(() => _deliveryTime = t),
@@ -424,12 +434,12 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                 const SizedBox(height: 16),
 
                 // Notes
-                _SectionLabel('Note to owner (optional)'),
+                _SectionLabel(l.noteToOwner),
                 TextField(
                   controller: _noteController,
                   maxLines: 2,
-                  decoration: const InputDecoration(
-                    hintText: 'Special requirements, access instructions…',
+                  decoration: InputDecoration(
+                    hintText: l.noteHint,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -442,7 +452,7 @@ class _RentalRequestScreenState extends ConsumerState<RentalRequestScreen> {
                         ? null
                         : () => _reviewAndConfirm(gen),
                     icon: const Icon(Icons.arrow_forward_rounded),
-                    label: const Text('Review & confirm'),
+                    label: Text(l.reviewAndConfirm),
                     style: FilledButton.styleFrom(
                         minimumSize: const Size.fromHeight(50)),
                   ),
@@ -535,6 +545,7 @@ class _DateSummaryCardState extends State<_DateSummaryCard>
   @override
   Widget build(BuildContext context) {
     final cs = widget.cs;
+    final l = AppLocalizations.of(context)!;
     return ScaleTransition(
       scale: _scale,
       child: Container(
@@ -557,7 +568,7 @@ class _DateSummaryCardState extends State<_DateSummaryCard>
               Icon(Icons.check_circle_rounded,
                   size: 18, color: cs.primary),
               const SizedBox(width: 8),
-              Text('Dates confirmed',
+              Text(l.datesConfirmed,
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -597,7 +608,7 @@ class _DateSummaryCardState extends State<_DateSummaryCard>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Estimated total',
+                Text(l.estimatedTotal,
                     style: TextStyle(
                         fontSize: 12, color: cs.onSurfaceVariant)),
                 Text(
@@ -672,6 +683,7 @@ class _NextAvailableBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final next = _computeNext();
     if (next == null) return const SizedBox.shrink();
+    final l = AppLocalizations.of(context)!;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -687,7 +699,7 @@ class _NextAvailableBanner extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Next available window',
+              Text(l.nextAvailableWindow,
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -707,7 +719,7 @@ class _NextAvailableBanner extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8),
           ),
           onPressed: () => onTap(next),
-          child: const Text('Use this'),
+          child: Text(l.useThis),
         ),
       ]),
     );
