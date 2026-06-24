@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
@@ -58,8 +59,9 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
   }
 
   Future<void> _pickPhoto() async {
+    final l = AppLocalizations.of(context)!;
     if (_photos.length >= _maxPhotos) {
-      _snack('Maximum $_maxPhotos photos allowed');
+      _snack(l.maxPhotosAllowed(_maxPhotos));
       return;
     }
     try {
@@ -72,21 +74,22 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
       if (path == null) return;
       setState(() => _photos.add(File(path)));
     } catch (e) {
-      _snack('Could not open photo picker: $e');
+      _snack(l.photoPickerError);
     }
   }
 
   Future<void> _submit() async {
+    final l = AppLocalizations.of(context)!;
     final title = _titleController.text.trim();
     final capacityStr = _capacityController.text.trim();
     final priceStr = _pricePerDayController.text.trim();
 
     if (title.isEmpty || capacityStr.isEmpty || priceStr.isEmpty) {
-      _snack('Title, capacity, and daily price are required');
+      _snack(l.requiredFieldsGenerator);
       return;
     }
     if (_governorate == null) {
-      _snack('Select a governorate');
+      _snack(l.selectGovernorateError);
       return;
     }
 
@@ -140,7 +143,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
       }
 
       if (mounted) {
-        _snack('Generator added!');
+        _snack(l.generatorAdded);
         context.pop();
       }
     } catch (e) {
@@ -162,16 +165,17 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Generator')),
+      appBar: AppBar(title: Text(l.addGenerator)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── Photos ──────────────────────────────────────────────────
-            _Section('Photos (optional)'),
+            _Section(l.photosOptional),
             SizedBox(
               height: 110,
               child: ListView(
@@ -195,16 +199,16 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Up to $_maxPhotos photos — shown in the generator listing',
+              l.photosUpToNote(_maxPhotos),
               style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 20),
 
             // ── Basic info ──────────────────────────────────────────────
-            _Section('Basic info'),
-            _Field('Title *', 'e.g. Cummins 100 KVA Diesel', _titleController),
+            _Section(l.basicInfo),
+            _Field(l.titleRequired, l.titleHint, _titleController),
             const SizedBox(height: 12),
-            _Label('Capacity *'),
+            _Label(l.capacityRequired),
             DropdownButtonFormField<int>(
               value: int.tryParse(_capacityController.text),
               isExpanded: true,
@@ -217,7 +221,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                 ),
                 prefixIcon: const Icon(Icons.electric_bolt_outlined),
               ),
-              hint: const Text('Select size (kVA / kW)'),
+              hint: Text(l.selectSize),
               items: [
                 for (final kva in kGeneratorKvaSizes)
                   DropdownMenuItem(
@@ -239,13 +243,13 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                 ),
                 prefixIcon: const Icon(Icons.local_gas_station_outlined),
               ),
-              items: const [
-                DropdownMenuItem(value: 'diesel', child: Text('Diesel')),
-                DropdownMenuItem(value: 'petrol', child: Text('Petrol')),
-                DropdownMenuItem(value: 'gas', child: Text('Gas (LPG)')),
+              items: [
+                DropdownMenuItem(value: 'diesel', child: Text(l.fuelDiesel)),
+                DropdownMenuItem(value: 'petrol', child: Text(l.fuelPetrol)),
+                DropdownMenuItem(value: 'gas', child: Text(l.fuelGasLpg)),
                 DropdownMenuItem(
-                    value: 'natural_gas', child: Text('Natural Gas')),
-                DropdownMenuItem(value: 'solar', child: Text('Solar')),
+                    value: 'natural_gas', child: Text(l.fuelNaturalGas)),
+                DropdownMenuItem(value: 'solar', child: Text(l.fuelSolar)),
               ],
               onChanged: (v) => setState(() => _fuelType = v ?? 'diesel'),
             ),
@@ -271,14 +275,14 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
               }).toList(),
             ),
             const SizedBox(height: 12),
-            _Field('Description', 'Optional details about the generator',
+            _Field(l.descriptionCol, l.descriptionHint,
                 _descController,
                 maxLines: 3),
             const SizedBox(height: 20),
 
             // ── Location ────────────────────────────────────────────────
-            _Section('Location'),
-            _Field('City', 'e.g. Nasr City', _cityController),
+            _Section(l.location),
+            _Field(l.cityLabel, l.cityHint, _cityController),
             const SizedBox(height: 12),
             _Label('Governorate *'),
             DropdownButtonFormField<String>(
@@ -292,7 +296,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                 ),
                 prefixIcon: const Icon(Icons.location_on_outlined),
               ),
-              hint: const Text('Select governorate'),
+              hint: Text(l.selectGovernorate),
               items: _governorates
                   .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                   .toList(),
@@ -301,30 +305,30 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
             const SizedBox(height: 20),
 
             // ── Pricing ─────────────────────────────────────────────────
-            _Section('Pricing (EGP)'),
-            _NumField('Per day (8 hrs) *', '0', _pricePerDayController),
+            _Section(l.pricingEgp),
+            _NumField(l.perDay8hRequired, '0', _pricePerDayController),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                     child: _NumField(
-                        'Per week', 'optional', _pricePerWeekController)),
+                        l.perWeek, l.optionalField, _pricePerWeekController)),
                 const SizedBox(width: 12),
                 Expanded(
                     child: _NumField(
-                        'Per month', 'optional', _pricePerMonthController)),
+                        l.perMonth, l.optionalField, _pricePerMonthController)),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              '1 day = 8 operating hours. Lower week/month rates attract more bookings.',
+              l.pricingNote,
               style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
-            _NumField('Refundable deposit', 'optional', _depositController),
+            _NumField(l.refundableDeposit, l.optionalField, _depositController),
             const SizedBox(height: 4),
             Text(
-              'A refundable security deposit reassures you against damage. Shown to the customer at booking.',
+              l.depositNote,
               style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 28),
@@ -338,9 +342,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: cs.onPrimary),
                     )
-                  : Text(_photos.isEmpty
-                      ? 'Add generator'
-                      : 'Add generator + ${_photos.length} photo${_photos.length == 1 ? '' : 's'}'),
+                  : Text(l.addGeneratorWithPhotos(_photos.length)),
             ),
           ],
         ),
@@ -358,12 +360,13 @@ class _PhotoAddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 96,
         height: 96,
-        margin: const EdgeInsets.only(right: 10),
+        margin: const EdgeInsetsDirectional.only(end: 10),
         decoration: BoxDecoration(
           color: cs.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(12),
@@ -379,7 +382,7 @@ class _PhotoAddButton extends StatelessWidget {
             Icon(Icons.add_a_photo_outlined,
                 size: 28, color: cs.onSurfaceVariant),
             const SizedBox(height: 4),
-            Text('Add photo',
+            Text(l.addPhoto,
                 style:
                     TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
           ],
@@ -455,7 +458,7 @@ class _PhotoThumb extends StatelessWidget {
           child: Container(
             width: 96,
             height: 96,
-            margin: const EdgeInsets.only(right: 10),
+            margin: const EdgeInsetsDirectional.only(end: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               image: DecorationImage(
