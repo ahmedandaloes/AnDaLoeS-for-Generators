@@ -331,4 +331,4 @@ TODO (next cycles):
 - [ ] HIGH: VAT shown on invoice but not at booking; honor tax_config.applies_when; show VAT consistently.
 - [x] MED: completion trigger now clamps commission to [0, price_total] (DB 0033) — owner net never negative.
 - [ ] MED: priced days (exclusive) vs blocked days (inclusive daterange) off-by-one; standardize.
-- [ ] MED: rate screen / receipt screen lack status gate when reached by route.
+- [x] MED: rate + receipt screens now gate on completed status when reached by route (friendly state otherwise).

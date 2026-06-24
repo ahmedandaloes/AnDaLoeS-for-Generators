@@ -93,6 +93,28 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => const AppErrorState(),
         data: (r) {
+          // A paid receipt only exists for a completed rental.
+          if (r['status']?.toString() != 'completed') {
+            final cs = Theme.of(context).colorScheme;
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.receipt_long_outlined,
+                        size: 48, color: cs.onSurfaceVariant),
+                    const SizedBox(height: 14),
+                    Text(
+                      'The receipt will be available once the rental is completed.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: cs.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
           final gen = r['generators'] as Map<String, dynamic>?;
           final customer = r['profiles'] as Map<String, dynamic>?;
           final total = r['price_total'];
