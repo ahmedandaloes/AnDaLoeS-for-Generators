@@ -343,3 +343,13 @@ The app now launches in **Arabic with full RTL** by default (Arabic-first).
 Functional/regression QA: 0 CRITICAL/HIGH (wiring, ICU args, l-scope/null-safety, DB-value separation all verified correct).
 Arabic/RTL QA: Arabic quality high; fixed — directional arrow glyph removed (continueToDocuments), chat bubbles/typing indicator now AlignmentDirectional + BorderRadiusDirectional, ≤→حتى, forNDays/daysCount converted to proper Arabic plurals, طلبًا. Localized leftover English: invoice section labels (Services Rendered/Rental Details/Generator rental), offer Note-from-Owner, my-rentals Offer, profile Account, add/edit-generator labels (Fuel type/Best for/Governorate), owner status chips (request_card + dashboard), and the customer search hint. ~16 new ARB keys.
 Remaining LOW (optional): owner sort chips, raw 'Error: $e' snackbars, dev/admin minor labels, EGP-vs-ج.م currency token consistency.
+
+## 🏁 ARABIC-FIRST ROLLOUT — COMPLETE
+- ~31 screens fully localized (en + real natural ar); default locale = Arabic + RTL; English switchable in Profile → Language (persists).
+- DB values stay English/codes (fuel/status/reason/doc-type/governorate) — queries + RLS unaffected.
+- Arabic plural grammar (zero/one/two/few/many/other) for day & rental counts.
+- RTL-safe: directional insets/alignment/border-radius; chat bubbles mirror correctly.
+- Both QA agents run; all CRITICAL/HIGH/MED findings fixed; owner sort chips localized.
+- **Currency token decision:** raw numeric amounts keep Latin "EGP" (LTR-stable in document tables); Arabic "ج.م" used in Arabic UI labels (pricing/earnings/filters). Intentional — left as-is.
+- Remaining LOW (optional, deferred): raw 'Error: $e' diagnostic snackbars, dev/admin-only minor labels.
+- All work on `development`; every step analyze-clean (0 errors/warnings) + 22 tests green.

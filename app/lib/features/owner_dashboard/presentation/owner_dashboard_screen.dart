@@ -664,9 +664,9 @@ class _GeneratorsTabState extends State<_GeneratorsTab> {
                         for (final s in _GenSort.values)
                           ChoiceChip(
                             label: Text(switch (s) {
-                              _GenSort.status => 'Status',
-                              _GenSort.kva => 'KVA ↓',
-                              _GenSort.price => 'Price ↑',
+                              _GenSort.status => l.sortStatus,
+                              _GenSort.kva => l.sortKvaDesc,
+                              _GenSort.price => l.sortPriceAsc,
                             }),
                             selected: _sort == s,
                             visualDensity: VisualDensity.compact,
