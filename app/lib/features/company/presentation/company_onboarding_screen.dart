@@ -42,6 +42,7 @@ class CompanyOnboardingScreen extends ConsumerStatefulWidget {
 class _CompanyOnboardingScreenState
     extends ConsumerState<CompanyOnboardingScreen> {
   // Step 1 — company info
+  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -73,6 +74,7 @@ class _CompanyOnboardingScreenState
   // ── Step 1: create company ─────────────────────────────────────────────────
 
   Future<void> _submitCompany() async {
+    if (!_formKey.currentState!.validate()) return;
     final l = AppLocalizations.of(context)!;
     final name = _nameController.text.trim();
     final phone = _phoneController.text.trim();
@@ -228,6 +230,7 @@ class _CompanyOnboardingScreenState
         child: _step == 1
             ? _StepOne(
                 key: const ValueKey(1),
+                formKey: _formKey,
                 nameController: _nameController,
                 phoneController: _phoneController,
                 descriptionController: _descriptionController,
@@ -253,6 +256,7 @@ class _CompanyOnboardingScreenState
 class _StepOne extends StatelessWidget {
   const _StepOne({
     super.key,
+    required this.formKey,
     required this.nameController,
     required this.phoneController,
     required this.descriptionController,
@@ -262,6 +266,7 @@ class _StepOne extends StatelessWidget {
     required this.onSubmit,
   });
 
+  final GlobalKey<FormState> formKey;
   final TextEditingController nameController;
   final TextEditingController phoneController;
   final TextEditingController descriptionController;
@@ -277,7 +282,9 @@ class _StepOne extends StatelessWidget {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
-      child: Column(
+      child: Form(
+        key: formKey,
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Header
@@ -317,28 +324,35 @@ class _StepOne extends StatelessWidget {
           const SizedBox(height: 24),
 
           _Label(l.companyName),
-          TextField(
+          TextFormField(
             controller: nameController,
             decoration: InputDecoration(
               hintText: l.companyNameHint,
               prefixIcon: const Icon(Icons.business),
             ),
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) return 'Required';
+              if (v.trim().length < 3) return 'At least 3 characters';
+              return null;
+            },
           ),
           const SizedBox(height: 16),
 
           _Label(l.contactPhone),
-          TextField(
+          TextFormField(
             controller: phoneController,
             keyboardType: TextInputType.phone,
             decoration: InputDecoration(
               hintText: l.phoneHintNumber,
               prefixIcon: const Icon(Icons.phone_outlined),
             ),
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Required' : null,
           ),
           const SizedBox(height: 16),
 
           _Label(l.descriptionOptionalLabel),
-          TextField(
+          TextFormField(
             controller: descriptionController,
             maxLines: 3,
             maxLength: 250,
@@ -369,6 +383,8 @@ class _StepOne extends StatelessWidget {
                 .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                 .toList(),
             onChanged: onCityChanged,
+            validator: (v) =>
+                v == null ? l.selectGovernorateError : null,
           ),
           const SizedBox(height: 28),
 
@@ -503,6 +519,7 @@ class _StepOne extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }

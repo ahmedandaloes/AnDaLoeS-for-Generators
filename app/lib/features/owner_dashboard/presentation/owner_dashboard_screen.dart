@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/routing/app_routes.dart';
+import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_error_state.dart';
 import '../../../l10n/app_localizations.dart';
 import 'providers/owner_providers.dart';
@@ -87,7 +88,7 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
         error: (e, _) => const AppErrorState(),
         data: (company) {
           if (company == null) {
-            return _NoCompanyState(cs: cs);
+            return const _NoCompanyState();
           }
           final status =
               company['verification_status']?.toString() ?? 'pending';
@@ -103,44 +104,18 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
 }
 
 class _NoCompanyState extends StatelessWidget {
-  const _NoCompanyState({required this.cs});
-  final ColorScheme cs;
+  const _NoCompanyState();
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                  color: cs.primaryContainer, shape: BoxShape.circle),
-              child: Icon(Icons.business_outlined,
-                  size: 36, color: cs.primary),
-            ),
-            const SizedBox(height: 20),
-            Text(l.listYourGenerators,
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            Text(
-              'Register your company to start listing generators and receiving rental requests.',
-              style: TextStyle(color: cs.onSurfaceVariant),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: () => context.push(AppRoutes.companyOnboard),
-              child: Text(l.registerYourCompany),
-            ),
-          ],
-        ),
-      ),
+    return AppEmptyState(
+      icon: Icons.business_center_rounded,
+      title: l.listYourGenerators,
+      subtitle:
+          'Create a company profile to start listing your generators.',
+      action: () => context.go(AppRoutes.companyOnboard),
+      actionLabel: l.registerYourCompany,
     );
   }
 }
