@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -14,16 +15,16 @@ import '../../features/auth/presentation/onboarding_screen.dart';
 import '../../features/reports/presentation/report_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/company/presentation/company_onboarding_screen.dart';
-import '../../features/generators/presentation/generator_detail_screen.dart';
-import '../../features/generators/presentation/home_screen.dart';
-import '../../features/generators/presentation/map_screen.dart';
+import '../../features/generators/presentation/screens/generator_detail_screen.dart';
+import '../../features/generators/presentation/screens/home_screen.dart';
+import '../../features/generators/presentation/screens/map_screen.dart';
 import '../../features/company/presentation/company_profile_screen.dart';
 import '../../features/owner_dashboard/presentation/add_generator_screen.dart';
 import '../../features/owner_dashboard/presentation/edit_generator_screen.dart';
 import '../../features/owner_dashboard/presentation/owner_dashboard_screen.dart';
 import '../../features/owner_dashboard/presentation/owner_earnings_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
-import '../../features/notifications/presentation/notifications_screen.dart';
+import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/ratings/presentation/rate_rental_screen.dart';
 import '../../features/rental_request/presentation/my_rentals_screen.dart';
 import '../../features/rental_request/presentation/rental_receipt_screen.dart';
@@ -32,12 +33,42 @@ import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/rental_request/presentation/rental_offer_screen.dart';
 import '../../features/rental_request/presentation/invoice_screen.dart';
 
-GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
+/// Cached role for the signed-in user (defense-in-depth route gating on top of
+/// RLS). Refreshed on every auth state change; null while unknown/loading — in
+/// which case routes are allowed and RLS + in-screen gates remain the real guard.
+final ValueNotifier<String?> _roleCache = ValueNotifier<String?>(null);
+
+Future<void> _refreshRole() async {
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) {
+    _roleCache.value = null;
+    return;
+  }
+  try {
+    final data = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', uid)
+        .maybeSingle();
+    _roleCache.value = data?['role']?.toString();
+  } catch (_) {
+    _roleCache.value = null;
+  }
+}
+
+GoRouter buildAppRouter([String initialLocation = '/']) {
+  // Keep the cached role in sync with auth changes (and load it once now).
+  _refreshRole();
+  supabase.auth.onAuthStateChange.listen((_) => _refreshRole());
+
+  return GoRouter(
   initialLocation: initialLocation,
-  refreshListenable: _GoRouterRefreshStream(supabase.auth.onAuthStateChange),
+  refreshListenable: Listenable.merge(
+      [_GoRouterRefreshStream(supabase.auth.onAuthStateChange), _roleCache]),
   redirect: (context, state) {
     final loggedIn = supabase.auth.currentSession != null;
     final loc = state.matchedLocation;
+    final role = _roleCache.value;
 
     const protected = {
       AppRoutes.profile,
@@ -65,6 +96,14 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
             loc == AppRoutes.devLogin)) {
       return AppRoutes.home;
     }
+    // Role gating (defense-in-depth; only when role is known). Admin can access
+    // everything. /owner-dashboard stays open (entry to becoming an owner).
+    if (loggedIn && role != null) {
+      if (loc == AppRoutes.admin && role != 'admin') return AppRoutes.home;
+      if (loc.startsWith('/owner/') && role != 'owner' && role != 'admin') {
+        return AppRoutes.home;
+      }
+    }
     return null;
   },
   routes: [
@@ -73,14 +112,22 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
     GoRoute(path: AppRoutes.onboarding, builder: (_, __) => const OnboardingScreen()),
     GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginScreen()),
     GoRoute(path: AppRoutes.emailAuth, builder: (_, __) => const EmailAuthScreen()),
-    GoRoute(path: AppRoutes.devLogin, builder: (_, __) => const EmailLoginScreen()),
+    GoRoute(
+      path: AppRoutes.devLogin,
+      redirect: (_, __) => kDebugMode ? null : '/',
+      builder: (_, __) => const EmailLoginScreen(),
+    ),
     GoRoute(path: AppRoutes.profile, builder: (_, __) => const ProfileScreen()),
     GoRoute(path: AppRoutes.notifications, builder: (_, __) => const NotificationsScreen()),
     GoRoute(path: AppRoutes.myRentals, builder: (_, __) => const MyRentalsScreen()),
     GoRoute(path: AppRoutes.admin, builder: (_, __) => const AdminScreen()),
     GoRoute(path: AppRoutes.ownerDashboard, builder: (_, __) => const OwnerDashboardScreen()),
     GoRoute(path: AppRoutes.companyOnboard, builder: (_, __) => const CompanyOnboardingScreen()),
-    GoRoute(path: AppRoutes.pageHub, builder: (_, __) => const PageHubScreen()),
+    GoRoute(
+      path: AppRoutes.pageHub,
+      redirect: (_, __) => kDebugMode ? null : '/',
+      builder: (_, __) => const PageHubScreen(),
+    ),
     GoRoute(
       path: AppRoutes.ownerEarningsPath,
       builder: (_, state) => OwnerEarningsScreen(
@@ -106,6 +153,7 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
       path: AppRoutes.addGeneratorPath,
       builder: (_, state) => AddGeneratorScreen(
         companyId: state.uri.queryParameters['company'] ?? '',
+        prefill: state.extra as Map<String, dynamic>?,
       ),
     ),
     GoRoute(
@@ -166,6 +214,7 @@ GoRouter buildAppRouter([String initialLocation = '/']) => GoRouter(
     ),
   ],
 );
+}
 
 class _GoRouterRefreshStream extends ChangeNotifier {
   _GoRouterRefreshStream(Stream<AuthState> stream) {

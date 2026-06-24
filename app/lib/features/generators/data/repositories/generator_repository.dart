@@ -1,0 +1,391 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/config/supabase.dart';
+import '../../domain/entities/generator.dart';
+import '../../domain/repositories/i_generator_repository.dart';
+
+final generatorRepositoryProvider =
+    Provider<GeneratorRepository>((_) => GeneratorRepository());
+
+class GeneratorRepository implements IGeneratorRepository {
+  static const _listSelect =
+      'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, use_cases, hire_type, fuel_policy, accessories, created_at, companies(name, verification_status)';
+
+  @override
+  Future<List<Generator>> fetchAll() async {
+    final data = await supabase
+        .from('generators')
+        .select(_listSelect)
+        .eq('status', 'available')
+        .order('created_at', ascending: false);
+    return (data as List)
+        .cast<Map<String, dynamic>>()
+        .map(Generator.fromMap)
+        .toList();
+  }
+
+  /// Raw map version for screens that still use nested [companies] key.
+  Future<List<Map<String, dynamic>>> fetchAllRaw() async {
+    final data = await supabase
+        .from('generators')
+        .select(_listSelect)
+        .eq('status', 'available')
+        .order('created_at', ascending: false);
+    return (data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchFeaturedRaw() async {
+    final data = await supabase
+        .from('generators')
+        .select(_listSelect)
+        .eq('status', 'available')
+        .gte('avg_score', 4.0)
+        .order('avg_score', ascending: false)
+        .limit(8);
+    return (data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchNewArrivalsRaw() async {
+    final since = DateTime.now().subtract(const Duration(days: 7));
+    final data = await supabase
+        .from('generators')
+        .select(
+            'id, title, capacity_kva, price_per_day, city, photos, avg_score, fuel_type, created_at')
+        .eq('status', 'available')
+        .gte('created_at', since.toIso8601String())
+        .order('created_at', ascending: false)
+        .limit(10);
+    return (data as List).cast<Map<String, dynamic>>();
+  }
+
+  /// Count of available generators per governorate (supply-liquidity view).
+  @override
+  Future<Map<String, int>> countAvailableByGovernorate() async {
+    final data = await supabase
+        .from('generators')
+        .select('governorate')
+        .eq('status', 'available');
+    final list = (data as List).cast<Map<String, dynamic>>();
+    final counts = <String, int>{};
+    for (final g in list) {
+      final gov = g['governorate']?.toString();
+      final key = (gov == null || gov.isEmpty) ? 'Unknown' : gov;
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  @override
+  Future<List<Generator>> fetchFeatured() async {
+    final data = await supabase
+        .from('generators')
+        .select(_listSelect)
+        .eq('status', 'available')
+        .gte('avg_score', 4.0)
+        .order('avg_score', ascending: false)
+        .limit(8);
+    return (data as List)
+        .cast<Map<String, dynamic>>()
+        .map(Generator.fromMap)
+        .toList();
+  }
+
+  @override
+  Future<List<Generator>> fetchNewArrivals() async {
+    final since = DateTime.now().subtract(const Duration(days: 7));
+    final data = await supabase
+        .from('generators')
+        .select(
+            'id, title, capacity_kva, price_per_day, city, photos, avg_score, fuel_type, use_cases, hire_type, fuel_policy, accessories, created_at, companies(name, verification_status)')
+        .eq('status', 'available')
+        .gte('created_at', since.toIso8601String())
+        .order('created_at', ascending: false)
+        .limit(10);
+    return (data as List)
+        .cast<Map<String, dynamic>>()
+        .map((m) => Generator.fromMap({...m, 'governorate': m['governorate'] ?? '', 'rating_count': m['rating_count'] ?? 0}))
+        .toList();
+  }
+
+  @override
+  Future<Map<String, dynamic>> fetchById(String id) async {
+    return await supabase
+        .from('generators')
+        .select('*, companies(name, city, verification_status, contact_phone)')
+        .eq('id', id)
+        .single();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchBooked(String generatorId) async {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final data = await supabase
+        .from('rental_requests')
+        .select('start_date, end_date, status')
+        .eq('generator_id', generatorId)
+        .inFilter('status', ['accepted', 'active'])
+        .gte('end_date', today)
+        .order('start_date');
+    return (data as List).cast<Map<String, dynamic>>();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchReviews(String generatorId) async {
+    final rrData = await supabase
+        .from('rental_requests')
+        .select('id')
+        .eq('generator_id', generatorId);
+    final ids = (rrData as List).map((r) => r['id'].toString()).toList();
+    if (ids.isEmpty) return [];
+    final data = await supabase
+        .from('ratings')
+        .select('score, comment, created_at')
+        .filter('rental_request_id', 'in', '(${ids.join(',')})')
+        .not('comment', 'is', null)
+        .order('created_at', ascending: false)
+        .limit(10);
+    return (data as List).cast<Map<String, dynamic>>();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchSimilar(
+      Map<String, dynamic> gen) async {
+    final gov = gen['governorate']?.toString();
+    final kva = (gen['capacity_kva'] as num?)?.toDouble() ?? 0;
+    final id = gen['id']?.toString();
+    final companyId = gen['company_id']?.toString();
+    if (gov == null || id == null) return [];
+    if (companyId != null) {
+      final d1 = await supabase
+          .from('generators')
+          .select(
+              'id, title, capacity_kva, price_per_day, photos, avg_score, city, companies(name)')
+          .eq('governorate', gov)
+          .eq('status', 'available')
+          .neq('id', id)
+          .neq('company_id', companyId)
+          .gte('capacity_kva', (kva * 0.5).floor())
+          .lte('capacity_kva', kva * 2)
+          .order('avg_score', ascending: false)
+          .limit(6);
+      final list = (d1 as List).cast<Map<String, dynamic>>();
+      if (list.isNotEmpty) return list;
+    }
+    final data = await supabase
+        .from('generators')
+        .select(
+            'id, title, capacity_kva, price_per_day, photos, avg_score, city, companies(name)')
+        .eq('governorate', gov)
+        .eq('status', 'available')
+        .neq('id', id)
+        .gte('capacity_kva', (kva * 0.5).floor())
+        .lte('capacity_kva', kva * 2)
+        .order('avg_score', ascending: false)
+        .limit(6);
+    return (data as List).cast<Map<String, dynamic>>();
+  }
+
+  @override
+  Future<Set<String>> fetchFavorites(String uid) async {
+    final data = await supabase
+        .from('user_favorites')
+        .select('generator_id')
+        .eq('user_id', uid);
+    return {for (final r in (data as List)) r['generator_id'].toString()};
+  }
+
+  @override
+  Future<bool> fetchIsFav(String uid, String generatorId) async {
+    final data = await supabase
+        .from('user_favorites')
+        .select('generator_id')
+        .eq('user_id', uid)
+        .eq('generator_id', generatorId)
+        .maybeSingle();
+    return data != null;
+  }
+
+  @override
+  Future<void> toggleFavorite(
+      String uid, String generatorId, bool isFav) async {
+    if (isFav) {
+      await supabase
+          .from('user_favorites')
+          .delete()
+          .eq('user_id', uid)
+          .eq('generator_id', generatorId);
+    } else {
+      await supabase.from('user_favorites').upsert({
+        'user_id': uid,
+        'generator_id': generatorId,
+      });
+    }
+  }
+
+  @override
+  Future<List<String>> searchAutocomplete(String query) async {
+    if (query.length < 2) return [];
+    final data = await supabase
+        .from('generators')
+        .select('title, city, governorate')
+        .or('title.ilike.%$query%,city.ilike.%$query%')
+        .eq('status', 'available')
+        .limit(8);
+    final suggestions = <String>{};
+    for (final g in (data as List)) {
+      final title = g['title']?.toString() ?? '';
+      final city = g['city']?.toString() ?? '';
+      if (title.toLowerCase().contains(query.toLowerCase())) {
+        suggestions.add(title);
+      }
+      if (city.toLowerCase().contains(query.toLowerCase())) {
+        suggestions.add(city);
+      }
+    }
+    return suggestions.take(6).toList();
+  }
+
+  Future<int?> fetchOwnerAcceptanceRate(String companyId) async {
+    if (companyId.isEmpty) return null;
+    final data = await supabase
+        .from('rental_requests')
+        .select('status')
+        .eq('company_id', companyId)
+        .inFilter('status', ['accepted', 'rejected']).limit(100);
+    final list = (data as List).cast<Map<String, dynamic>>();
+    if (list.isEmpty) return null;
+    final accepted = list.where((r) => r['status'] == 'accepted').length;
+    return ((accepted / list.length) * 100).round();
+  }
+
+  Future<({double avg, int total})> fetchCompanyAvgRating(
+      String companyId) async {
+    if (companyId.isEmpty) return (avg: 0.0, total: 0);
+    final data = await supabase
+        .from('generators')
+        .select('avg_score, rating_count')
+        .eq('company_id', companyId);
+    final gens = (data as List).cast<Map<String, dynamic>>();
+    double sum = 0;
+    int total = 0;
+    for (final g in gens) {
+      final cnt = (g['rating_count'] as num?)?.toInt() ?? 0;
+      final sc = (g['avg_score'] as num?)?.toDouble() ?? 0;
+      sum += sc * cnt;
+      total += cnt;
+    }
+    if (total == 0) return (avg: 0.0, total: 0);
+    return (avg: sum / total, total: total);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchFlashDeals() async {
+    final data = await supabase
+        .from('generators')
+        .select(
+            'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, use_cases, created_at, companies(name)')
+        .eq('status', 'available')
+        .order('price_per_day', ascending: true)
+        .limit(80);
+    return (data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<({String? governorate, List<Map<String, dynamic>> generators})>
+      fetchNearMe(String uid) async {
+    final recent = await supabase
+        .from('rental_requests')
+        .select('generators(governorate)')
+        .eq('customer_id', uid)
+        .order('created_at', ascending: false)
+        .limit(1);
+    final gov = (recent as List).isNotEmpty
+        ? ((recent.first['generators'] as Map?)?['governorate']?.toString())
+        : null;
+    if (gov == null) {
+      return (governorate: null, generators: <Map<String, dynamic>>[]);
+    }
+    final data = await supabase
+        .from('generators')
+        .select(
+            'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, use_cases, created_at, companies(name)')
+        .eq('status', 'available')
+        .eq('governorate', gov)
+        .order('avg_score', ascending: false)
+        .limit(6);
+    return (
+      governorate: gov,
+      generators: (data as List).cast<Map<String, dynamic>>()
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchTopRatedOwners() async {
+    final data = await supabase
+        .from('companies')
+        .select(
+            'id, name, city, verification_status, generators(avg_score, rating_count)')
+        .eq('verification_status', 'approved')
+        .limit(30);
+    return (data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>?> fetchCurrentUserProfile(String uid) async {
+    return await supabase
+        .from('profiles')
+        .select('full_name, role, avatar_url')
+        .eq('id', uid)
+        .maybeSingle();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchForMap() async {
+    final data = await supabase
+        .from('generators')
+        .select(
+            'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, status')
+        .eq('status', 'available')
+        .order('avg_score', ascending: false)
+        .limit(200);
+    return (data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchSavedSearches(String uid) async {
+    final data = await supabase
+        .from('saved_searches')
+        .select('*')
+        .eq('user_id', uid)
+        .order('created_at', ascending: false)
+        .limit(10);
+    return (data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<void> saveSearch(String uid, Map<String, dynamic> searchData) async {
+    await supabase.from('saved_searches').insert({
+      'user_id': uid,
+      ...searchData,
+    });
+  }
+
+  Future<void> deleteSavedSearch(String id) async {
+    await supabase.from('saved_searches').delete().eq('id', id);
+  }
+
+  @override
+  Future<int?> fetchAvgResponseTime(String companyId) async {
+    if (companyId.isEmpty) return null;
+    final data = await supabase
+        .from('rental_requests')
+        .select('created_at, updated_at, status')
+        .eq('company_id', companyId)
+        .inFilter('status', ['accepted', 'rejected'])
+        .limit(50);
+    final list = (data as List).cast<Map<String, dynamic>>();
+    if (list.isEmpty) return null;
+    int totalMinutes = 0;
+    for (final r in list) {
+      try {
+        final created = DateTime.parse(r['created_at'].toString());
+        final updated = DateTime.parse(r['updated_at'].toString());
+        totalMinutes += updated.difference(created).inMinutes;
+      } catch (_) {}
+    }
+    return (totalMinutes / list.length).round();
+  }
+}

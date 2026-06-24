@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/status_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/config/supabase.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/commission.dart';
 import '../../../../core/utils/db_error.dart';
 import '../../../../core/widgets/press_scale.dart';
-import '../../../chat/providers/chat_providers.dart';
+import '../../../chat/presentation/providers/chat_providers.dart';
 import '../../../ratings/presentation/rate_rental_screen.dart';
-import '../../../rental_request/data/rental_repository.dart';
-import '../../providers/owner_providers.dart'
-    show ownerRequestsProvider, commissionConfigProvider;
+import '../../../rental_request/data/repositories/rental_repository.dart'
+    show rentalRepositoryProvider, rentalTimelineProvider, rentalHandoversProvider;
+import '../providers/owner_providers.dart'
+    show ownerRequestsProvider, commissionConfigProvider, ownerRepositoryProvider;
 
 class OwnerRequestCard extends StatelessWidget {
   const OwnerRequestCard({
@@ -28,6 +29,7 @@ class OwnerRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     final gen = request['generators'] as Map<String, dynamic>?;
     final customer = request['profiles'] as Map<String, dynamic>?;
     final status = request['status']?.toString() ?? 'pending';
@@ -54,10 +56,10 @@ class OwnerRequestCard extends StatelessWidget {
                           ? Colors.orange.shade800
                           : Colors.red.shade700;
                   final label = mins < 60
-                      ? '${mins}m ago'
+                      ? l.minsAgo(mins)
                       : mins < 240
-                          ? '${mins ~/ 60}h ago'
-                          : '${mins ~/ 60}h ago · respond soon';
+                          ? l.hrsAgo(mins ~/ 60)
+                          : l.hrsAgoRespond(mins ~/ 60);
                   return Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 3),
@@ -96,7 +98,7 @@ class OwnerRequestCard extends StatelessWidget {
                         Icon(Icons.account_balance_wallet_outlined,
                             size: 13, color: Colors.green.shade700),
                         const SizedBox(width: 4),
-                        Text('You receive EGP ${p.net.toStringAsFixed(0)}',
+                        Text(l.youReceiveEgp(p.net.toStringAsFixed(0)),
                             style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w700,
@@ -125,7 +127,7 @@ class OwnerRequestCard extends StatelessWidget {
               Text(
                 customer?['full_name'] ??
                     customer?['phone'] ??
-                    'Customer',
+                    l.customer,
                 style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
               ),
             ]),
@@ -139,6 +141,17 @@ class OwnerRequestCard extends StatelessWidget {
                 style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
               ),
             ]),
+            // Fulfillment timeline — shows for accepted/active/completed
+            if (status == 'accepted' ||
+                status == 'active' ||
+                status == 'completed') ...[
+              const SizedBox(height: 12),
+              _OwnerTimeline(
+                rentalId: request['id'].toString(),
+                status: status,
+                cs: cs,
+              ),
+            ],
             // Delivery details (where/when the customer wants the generator)
             if ((request['delivery_address']?.toString().isNotEmpty ?? false) ||
                 (request['delivery_time']?.toString().isNotEmpty ?? false)) ...[
@@ -165,6 +178,43 @@ class OwnerRequestCard extends StatelessWidget {
                 ),
               ]),
             ],
+            // Deposit collection reminder for active/accepted rentals
+            Builder(builder: (_) {
+              final deposit =
+                  (request['deposit_amount'] as num?)?.toDouble() ?? 0;
+              if (deposit <= 0 ||
+                  !['accepted', 'active'].contains(status)) {
+                return const SizedBox.shrink();
+              }
+              final amt = deposit.toStringAsFixed(0);
+              return Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: Colors.amber.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(children: [
+                    Icon(Icons.payments_outlined,
+                        size: 14, color: Colors.amber.shade800),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        l.collectDepositOnDelivery(amt),
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.amber.shade900),
+                      ),
+                    ),
+                  ]),
+                ),
+              );
+            }),
             if (request['note'] != null &&
                 request['note'].toString().isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -201,7 +251,7 @@ class OwnerRequestCard extends StatelessWidget {
                     ),
                     onPressed: () =>
                         _rejectWithNote(context, request['id'].toString()),
-                    child: const Text('Reject'),
+                    child: Text(l.reject),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -214,7 +264,7 @@ class OwnerRequestCard extends StatelessWidget {
                           minimumSize: const Size.fromHeight(40)),
                       onPressed: () =>
                           _acceptWithNote(context, request['id'].toString()),
-                      child: const Text('Accept'),
+                      child: Text(l.accept),
                     ),
                   ),
                 ),
@@ -230,7 +280,7 @@ class OwnerRequestCard extends StatelessWidget {
                 onPressed: () =>
                     context.push(AppRoutes.offer(request['id'].toString())),
                 icon: const Icon(Icons.description_outlined, size: 15),
-                label: const Text('View Offer',
+                label: Text(l.viewOffer,
                     style: TextStyle(fontSize: 13)),
               ),
               const SizedBox(height: 4),
@@ -248,7 +298,7 @@ class OwnerRequestCard extends StatelessWidget {
                 onPressed: () =>
                     context.push(AppRoutes.invoice(request['id'].toString())),
                 icon: const Icon(Icons.receipt_long_outlined, size: 15),
-                label: const Text('View Invoice',
+                label: Text(l.viewInvoice,
                     style: TextStyle(fontSize: 13)),
               ),
             ],
@@ -260,14 +310,14 @@ class OwnerRequestCard extends StatelessWidget {
                       minimumSize: const Size.fromHeight(48)),
                   onPressed: () => _markOutForDelivery(context),
                   icon: const Icon(Icons.local_shipping_outlined, size: 18),
-                  label: const Text('Out for delivery'),
+                  label: Text(l.outForDelivery),
                 )
               else ...[
                 Row(children: [
                   Icon(Icons.local_shipping_outlined,
                       size: 14, color: cs.primary),
                   const SizedBox(width: 6),
-                  Text('Out for delivery',
+                  Text(l.outForDelivery,
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -277,9 +327,8 @@ class OwnerRequestCard extends StatelessWidget {
                 FilledButton(
                   style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(48)),
-                  onPressed: () => _updateStatus(
-                      context, request['id'].toString(), 'active'),
-                  child: const Text('Confirm delivered · start rental'),
+                  onPressed: () => _confirmDelivered(context),
+                  child: Text(l.confirmDeliveredStart),
                 ),
               ],
             ],
@@ -288,9 +337,8 @@ class OwnerRequestCard extends StatelessWidget {
               FilledButton(
                 style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(48)),
-                onPressed: () => _updateStatus(
-                    context, request['id'].toString(), 'completed'),
-                child: const Text('Mark as completed'),
+                onPressed: () => _confirmCompleted(context),
+                child: Text(l.markAsCompleted),
               ),
             ],
           ],
@@ -301,16 +349,17 @@ class OwnerRequestCard extends StatelessWidget {
 
   Future<void> _acceptWithNote(
       BuildContext context, String requestId) async {
+    final l = AppLocalizations.of(context)!;
     final noteController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Accept request'),
+        title: Text(l.acceptRequest),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Add an optional message to the customer:',
+            Text(l.optionalMessageToCustomer,
                 style: TextStyle(fontSize: 13)),
             const SizedBox(height: 12),
             TextField(
@@ -327,15 +376,16 @@ class OwnerRequestCard extends StatelessWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+              child: Text(l.cancel)),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Accept')),
+              child: Text(l.accept)),
         ],
       ),
     );
     if (confirmed == true) {
       final note = noteController.text.trim();
+      if (!context.mounted) return;
       await _updateStatus(context, requestId, 'accepted',
           ownerNote: note.isNotEmpty ? note : null);
     }
@@ -343,16 +393,17 @@ class OwnerRequestCard extends StatelessWidget {
 
   Future<void> _rejectWithNote(
       BuildContext context, String requestId) async {
+    final l = AppLocalizations.of(context)!;
     final noteController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Reject request'),
+        title: Text(l.rejectRequest),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Let the customer know why (optional):',
+            Text(l.letCustomerKnowWhy,
                 style: TextStyle(fontSize: 13)),
             const SizedBox(height: 12),
             TextField(
@@ -370,18 +421,19 @@ class OwnerRequestCard extends StatelessWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+              child: Text(l.cancel)),
           FilledButton(
             style: FilledButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.error),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reject'),
+            child: Text(l.reject),
           ),
         ],
       ),
     );
     if (confirmed == true) {
       final note = noteController.text.trim();
+      if (!context.mounted) return;
       await _updateStatus(context, requestId, 'rejected',
           ownerNote: note.isNotEmpty ? note : null);
     }
@@ -401,16 +453,153 @@ class OwnerRequestCard extends StatelessWidget {
     }
   }
 
+  Future<void> _confirmDelivered(BuildContext context) async {
+    final l = AppLocalizations.of(context)!;
+    final rentalId = request['id'].toString();
+    await _showHandoverDialog(context, 'delivery', l.deliveryHandover,
+        l.deliveryHandoverBody);
+    if (!context.mounted) return;
+    await _updateStatus(context, rentalId, 'active');
+  }
+
+  Future<void> _confirmCompleted(BuildContext context) async {
+    final l = AppLocalizations.of(context)!;
+    final rentalId = request['id'].toString();
+    await _showHandoverDialog(context, 'return', l.returnHandover,
+        l.returnHandoverBody);
+    if (!context.mounted) return;
+    await _updateStatus(context, rentalId, 'completed');
+  }
+
+  Future<void> _showHandoverDialog(
+      BuildContext context, String type, String title, String body) async {
+    final l = AppLocalizations.of(context)!;
+    final rentalId = request['id'].toString();
+    String? selectedFuel;
+    final meterCtrl = TextEditingController();
+    final noteCtrl = TextEditingController();
+
+    final fuels = [
+      ('full', l.fuelFull),
+      ('three_quarters', l.fuelThreeQuarters),
+      ('half', l.fuelHalf),
+      ('quarter', l.fuelQuarter),
+      ('empty', l.fuelEmpty),
+    ];
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: Text(title),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(body,
+                    style: TextStyle(
+                        fontSize: 13,
+                        color:
+                            Theme.of(ctx).colorScheme.onSurfaceVariant)),
+                const SizedBox(height: 16),
+                Text(l.fuelLevelLabel,
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  children: fuels.map((f) {
+                    final isSelected = selectedFuel == f.$1;
+                    return ChoiceChip(
+                      label: Text(f.$2),
+                      selected: isSelected,
+                      onSelected: (_) =>
+                          setState(() => selectedFuel = f.$1),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: meterCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true),
+                  decoration: InputDecoration(
+                    labelText: l.meterReadingLabel,
+                    hintText: l.meterReadingHint,
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: noteCtrl,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    hintText: l.handoverNoteHint,
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l.skipHandover),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await _recordHandover(
+                  context,
+                  rentalId: rentalId,
+                  type: type,
+                  fuelLevel: selectedFuel,
+                  meterReading: double.tryParse(meterCtrl.text.trim()),
+                  note: noteCtrl.text.trim().isEmpty
+                      ? null
+                      : noteCtrl.text.trim(),
+                );
+              },
+              child: Text(l.confirm),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _recordHandover(BuildContext context,
+      {required String rentalId,
+      required String type,
+      String? fuelLevel,
+      double? meterReading,
+      String? note}) async {
+    try {
+      final repo = ref.read(ownerRepositoryProvider);
+      await repo.recordHandover(
+        rentalId: rentalId,
+        type: type,
+        recordedBy: repo.currentUserId ?? '',
+        fuelLevel: fuelLevel,
+        meterReading: meterReading,
+        note: note,
+      );
+      ref.invalidate(rentalHandoversProvider(rentalId));
+    } catch (_) {
+      // Non-critical: handover recording failure should not block status update.
+    }
+  }
+
   Future<void> _updateStatus(
       BuildContext context, String requestId, String newStatus,
       {String? ownerNote}) async {
     try {
-      final update = <String, dynamic>{'status': newStatus};
-      if (ownerNote != null) update['owner_note'] = ownerNote;
-      await supabase
-          .from('rental_requests')
-          .update(update)
-          .eq('id', requestId);
+      await ref
+          .read(ownerRepositoryProvider)
+          .updateRequestStatus(requestId, newStatus, ownerNote: ownerNote);
       ref.invalidate(ownerRequestsProvider(companyId));
       if (newStatus == 'completed' && context.mounted) {
         final customerId = request['customer_id']?.toString() ?? '';
@@ -446,6 +635,107 @@ class OwnerRequestCard extends StatelessWidget {
   }
 }
 
+// ── Owner fulfillment timeline (compact stepper) ──────────────────────────────
+class _OwnerTimeline extends ConsumerWidget {
+  const _OwnerTimeline(
+      {required this.rentalId, required this.status, required this.cs});
+  final String rentalId;
+  final String status;
+  final ColorScheme cs;
+
+  static const _steps = ['accepted', 'active', 'completed'];
+  static const _icons = [
+    Icons.check_circle_outline,
+    Icons.bolt,
+    Icons.verified_outlined,
+  ];
+  static const _labels = ['Accepted', 'Active', 'Done'];
+
+  int get _currentIndex => _steps.indexOf(status);
+
+  String _tsFor(String step, List<Map<String, dynamic>> events) {
+    final match = events.lastWhere(
+      (e) => e['event'] == step,
+      orElse: () => {},
+    );
+    final raw = match['created_at']?.toString();
+    if (raw == null) return '';
+    try {
+      final dt = DateTime.parse(raw).toLocal();
+      return '${dt.day}/${dt.month} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final events =
+        ref.watch(rentalTimelineProvider(rentalId)).valueOrNull ?? const [];
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: List.generate(_steps.length * 2 - 1, (i) {
+        if (i.isOdd) {
+          final stepIndex = (i - 1) ~/ 2;
+          final done = _currentIndex > stepIndex;
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 13),
+              child: Container(
+                  height: 2,
+                  color: done ? cs.primary : cs.outlineVariant),
+            ),
+          );
+        }
+        final stepIndex = i ~/ 2;
+        final done = _currentIndex > stepIndex;
+        final active = _currentIndex == stepIndex;
+        final color = done || active ? cs.primary : cs.outlineVariant;
+        final ts = _tsFor(_steps[stepIndex], events);
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: active ? 28 : 22,
+              height: active ? 28 : 22,
+              decoration: BoxDecoration(
+                color: done || active
+                    ? cs.primary
+                    : cs.surfaceContainerHighest,
+                shape: BoxShape.circle,
+                border: active
+                    ? Border.all(
+                        color: cs.primary.withValues(alpha: 0.35), width: 3)
+                    : null,
+              ),
+              child: Icon(_icons[stepIndex],
+                  size: active ? 14 : 11,
+                  color:
+                      done || active ? cs.onPrimary : cs.outlineVariant),
+            ),
+            const SizedBox(height: 3),
+            Text(_labels[stepIndex],
+                style: TextStyle(
+                    fontSize: 9,
+                    fontWeight:
+                        active ? FontWeight.w700 : FontWeight.w400,
+                    color: active ? cs.primary : color)),
+            if (ts.isNotEmpty) ...[
+              const SizedBox(height: 1),
+              Text(ts,
+                  style: TextStyle(
+                      fontSize: 8, color: cs.onSurfaceVariant)),
+            ],
+          ],
+        );
+      }),
+    );
+  }
+}
+
 class _OwnerChatButton extends ConsumerWidget {
   const _OwnerChatButton({required this.request, required this.ref});
   final Map<String, dynamic> request;
@@ -453,6 +743,7 @@ class _OwnerChatButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef wRef) {
+    final l = AppLocalizations.of(context)!;
     final rentalId = request['id'].toString();
     final unread =
         wRef.watch(unreadMessagesProvider(rentalId)).valueOrNull ?? 0;
@@ -468,7 +759,7 @@ class _OwnerChatButton extends ConsumerWidget {
         onPressed: () => context.push(
             '/chat/$rentalId?name=${Uri.encodeComponent(name)}'),
         icon: const Icon(Icons.chat_outlined, size: 16),
-        label: const Text('Chat with customer'),
+        label: Text(l.chatWithCustomer),
       ),
     );
   }
@@ -481,14 +772,15 @@ class _RequestStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final color = rentalStatusColor(status, cs);
     final label = switch (status) {
-      'pending' => 'Pending',
-      'accepted' => 'Accepted',
-      'active' => 'Active',
-      'completed' => 'Completed',
-      'rejected' => 'Rejected',
-      'cancelled' => 'Cancelled',
+      'pending' => l.statusPending,
+      'accepted' => l.statusAccepted,
+      'active' => l.statusActive,
+      'completed' => l.statusCompleted,
+      'rejected' => l.statusRejected,
+      'cancelled' => l.statusCancelled,
       _ => status,
     };
     return Container(

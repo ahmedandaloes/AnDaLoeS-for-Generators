@@ -5,7 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 const _kLocaleKey = 'app_locale';
 
 class LocaleNotifier extends StateNotifier<Locale?> {
-  LocaleNotifier() : super(null);
+  // Arabic-first: the app defaults to Arabic (+ RTL) on first launch. A saved
+  // user choice (e.g. English, picked in Profile → Language) overrides it.
+  LocaleNotifier() : super(const Locale('ar'));
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();

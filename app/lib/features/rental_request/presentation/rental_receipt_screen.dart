@@ -3,24 +3,18 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import '../../../core/widgets/app_error_state.dart';
+import '../../../l10n/app_localizations.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../../core/config/supabase.dart';
+import 'providers/rental_providers.dart' show rentalRepositoryProvider;
 
 final _receiptProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
         (ref, rentalId) async {
-  final data = await supabase
-      .from('rental_requests')
-      .select(
-          '*, generators(title, capacity_kva, city, governorate), '
-          'profiles!customer_id(full_name, phone)')
-      .eq('id', rentalId)
-      .single();
-  return data;
+  return ref.read(rentalRepositoryProvider).fetchReceiptById(rentalId);
 });
 
 class RentalReceiptScreen extends ConsumerStatefulWidget {
@@ -62,14 +56,15 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
   Widget build(BuildContext context) {
     final receiptAsync = ref.watch(_receiptProvider(widget.rentalId));
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Rental Receipt'),
+        title: Text(l.rentalReceipt),
         actions: [
           IconButton(
             icon: const Icon(Icons.copy_outlined),
-            tooltip: 'Copy receipt',
+            tooltip: l.copyReceipt,
             onPressed: () => receiptAsync.whenData(
                 (r) => _copyReceipt(context, r)),
           ),
@@ -82,7 +77,7 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
                   )
                 : IconButton(
                     icon: const Icon(Icons.share_outlined),
-                    tooltip: 'Share as image',
+                    tooltip: l.shareAsImage,
                     onPressed: () => _shareAsImage(context),
                   ),
             orElse: () => const SizedBox.shrink(),
@@ -93,6 +88,28 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => const AppErrorState(),
         data: (r) {
+          // A paid receipt only exists for a completed rental.
+          if (r['status']?.toString() != 'completed') {
+            final cs = Theme.of(context).colorScheme;
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.receipt_long_outlined,
+                        size: 48, color: cs.onSurfaceVariant),
+                    const SizedBox(height: 14),
+                    Text(
+                      l.receiptAvailableWhenCompleted,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: cs.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
           final gen = r['generators'] as Map<String, dynamic>?;
           final customer = r['profiles'] as Map<String, dynamic>?;
           final total = r['price_total'];
@@ -110,8 +127,8 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                       colors: [
                         cs.primaryContainer.withValues(alpha: 0.7),
                         cs.secondaryContainer.withValues(alpha: 0.4),
@@ -132,14 +149,15 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
                             color: cs.onPrimary, size: 30),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        'Rental Completed',
+                      Text(
+                        l.rentalCompletedTitle,
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Receipt #${widget.rentalId.substring(0, 8).toUpperCase()}',
+                        l.receiptNumber(
+                            widget.rentalId.substring(0, 8).toUpperCase()),
                         style: TextStyle(
                             fontSize: 12, color: cs.onSurfaceVariant),
                       ),
@@ -150,28 +168,27 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
 
                 // Details card
                 _ReceiptCard(children: [
-                  _Row('Generator',
+                  _Row(l.generatorLabel,
                       gen?['title']?.toString() ?? '-'),
-                  _Row('Capacity',
+                  _Row(l.capacity,
                       '${gen?['capacity_kva']} KVA'),
-                  _Row('Location', [
+                  _Row(l.location, [
                     gen?['city'],
                     gen?['governorate']
                   ].where((v) => v != null).join(', ')),
                   const Divider(height: 24),
-                  _Row('Customer',
+                  _Row(l.customer,
                       customer?['full_name']?.toString() ??
                           customer?['phone']?.toString() ??
                           '-'),
-                  _Row('Start date',
+                  _Row(l.startDate,
                       r['start_date']?.toString() ?? '-'),
-                  _Row('End date',
+                  _Row(l.endDate,
                       r['end_date']?.toString() ?? '-'),
-                  _Row('Duration',
-                      '$days day${days == 1 ? '' : 's'}'),
-                  _Row('Rate basis',
+                  _Row(l.durationLabel, l.daysCount(days)),
+                  _Row(l.rateBasis,
                       r['rate_basis']?.toString() ?? '-'),
-                  _Row('Payment method', 'Cash on delivery'),
+                  _Row(l.paymentMethod, l.cashOnDelivery),
                 ]),
                 const SizedBox(height: 16),
 
@@ -187,9 +204,9 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Total paid',
-                        style: TextStyle(
+                      Text(
+                        l.totalPaid,
+                        style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w700),
                       ),
                       Text(
@@ -209,7 +226,7 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
                 if (r['note'] != null &&
                     r['note'].toString().isNotEmpty) ...[
                   _ReceiptCard(children: [
-                    _Row('Note to owner', r['note'].toString()),
+                    _Row(l.noteToOwnerShort, r['note'].toString()),
                   ]),
                   const SizedBox(height: 16),
                 ],
@@ -228,7 +245,7 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
                   onPressed: () =>
                       receiptAsync.whenData((r) => _copyReceipt(context, r)),
                   icon: const Icon(Icons.copy_outlined, size: 16),
-                  label: const Text('Copy receipt as text'),
+                  label: Text(l.copyReceiptText),
                 ),
               ],
             ),
@@ -241,6 +258,7 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
 
   void _copyReceipt(
       BuildContext context, Map<String, dynamic> r) {
+    final l = AppLocalizations.of(context)!;
     final gen = r['generators'] as Map<String, dynamic>?;
     final buffer = StringBuffer()
       ..writeln('AnDaLoeS for Generators — Rental Receipt')
@@ -258,10 +276,10 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
 
     Clipboard.setData(ClipboardData(text: buffer.toString()));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Receipt copied to clipboard'),
+      SnackBar(
+        content: Text(l.receiptCopied),
         behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 2),
+        duration: const Duration(seconds: 2),
       ),
     );
   }

@@ -2,12 +2,14 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
-import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/utils/db_error.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../auth/data/repositories/auth_repository.dart';
+import '../data/repositories/company_data_repository.dart';
 
 const _governorates = [
   'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',
@@ -23,16 +25,24 @@ const _docSlots = [
   ('national_id', 'National ID', Icons.badge_outlined),
 ];
 
-class CompanyOnboardingScreen extends StatefulWidget {
+String _docLabel(String key, AppLocalizations l) => switch (key) {
+      'commercial_register' => l.docCommercialRegister,
+      'tax_card' => l.docTaxCard,
+      _ => l.docNationalId,
+    };
+
+class CompanyOnboardingScreen extends ConsumerStatefulWidget {
   const CompanyOnboardingScreen({super.key});
 
   @override
-  State<CompanyOnboardingScreen> createState() =>
+  ConsumerState<CompanyOnboardingScreen> createState() =>
       _CompanyOnboardingScreenState();
 }
 
-class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
+class _CompanyOnboardingScreenState
+    extends ConsumerState<CompanyOnboardingScreen> {
   // Step 1 — company info
+  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -64,33 +74,29 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
   // ── Step 1: create company ─────────────────────────────────────────────────
 
   Future<void> _submitCompany() async {
+    if (!_formKey.currentState!.validate()) return;
+    final l = AppLocalizations.of(context)!;
     final name = _nameController.text.trim();
     final phone = _phoneController.text.trim();
-    if (name.isEmpty) { _snack('Enter your company name'); return; }
-    if (_city == null) { _snack('Select your city / governorate'); return; }
+    if (name.isEmpty) { _snack(l.enterCompanyName); return; }
+    if (_city == null) { _snack(l.selectCityGovernorate); return; }
 
     setState(() => _submitting = true);
     try {
+      final uid = ref.read(authRepositoryProvider).currentUserId;
+      if (uid == null) { _snack(l.createAnAccountFirst); return; }
       final desc = _descriptionController.text.trim();
-      final data = await supabase.from('companies').insert({
-        'owner_user_id': supabase.auth.currentUser!.id,
-        'name': name,
-        'contact_phone': phone.isNotEmpty ? phone : null,
-        'description': desc.isNotEmpty ? desc : null,
-        // The picker is a governorate selector; store it as governorate (and
-        // city for back-compat) so company location + filtering work.
-        'city': _city,
-        'governorate': _city,
-        'verification_status': 'pending',
-      }).select('id').single();
+      final repo = ref.read(companyDataRepositoryProvider);
+      final data = await repo.createCompany(
+        ownerUserId: uid,
+        name: name,
+        contactPhone: phone.isNotEmpty ? phone : null,
+        description: desc.isNotEmpty ? desc : null,
+        city: _city!,
+      );
 
       // Promote user to owner role on first company creation
-      final uid = supabase.auth.currentUser!.id;
-      await supabase
-          .from('profiles')
-          .update({'role': 'owner'})
-          .eq('id', uid)
-          .eq('role', 'customer'); // only if still customer (don't demote admin)
+      await repo.promoteToOwner(uid);
 
       if (mounted) {
         setState(() {
@@ -100,7 +106,7 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
       }
     } catch (e) {
       _snack(friendlyDbError(e,
-          fallback: 'Could not create your company. Please try again.'));
+          fallback: l.couldNotCreateCompany));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -109,7 +115,9 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
   // ── Step 2: upload documents ───────────────────────────────────────────────
 
   Future<void> _pickAndUpload(String docType) async {
-    final uid = supabase.auth.currentUser!.id;
+    final l = AppLocalizations.of(context)!;
+    final uid = ref.read(authRepositoryProvider).currentUserId;
+    if (uid == null) { _snack(l.createAnAccountFirst); return; }
     final cid = _companyId!;
 
     FilePickerResult? result;
@@ -119,43 +127,33 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
         allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
       );
     } catch (e) {
-      _snack('Could not open file picker: $e');
+      _snack(l.filePickerError);
       return;
     }
 
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
-    if (file.path == null) { _snack('Cannot read file path'); return; }
+    if (file.path == null) { _snack(l.cannotReadFile); return; }
 
     final ext = file.extension ?? 'pdf';
-    final remotePath = '$uid/$cid/${docType}_${DateTime.now().millisecondsSinceEpoch}.$ext';
+    final remotePath =
+        '$uid/$cid/${docType}_${DateTime.now().millisecondsSinceEpoch}.$ext';
 
     setState(() => _uploading[docType] = true);
     try {
-      await supabase.storage.from('company-docs').upload(
-        remotePath,
-        File(file.path!),
-        fileOptions: const FileOptions(upsert: true),
+      final bytes = await File(file.path!).readAsBytes();
+      final repo = ref.read(companyDataRepositoryProvider);
+      await repo.uploadCompanyDocument(
+        uid: uid,
+        companyId: cid,
+        remotePath: remotePath,
+        bytes: bytes,
+        contentType: 'application/$ext',
       );
-
-      // Save path into companies.document_urls (append)
-      final existing = await supabase
-          .from('companies')
-          .select('document_urls')
-          .eq('id', cid)
-          .single();
-      final urls = List<String>.from(
-          existing['document_urls'] as List? ?? []);
-      // Replace or append this slot's entry
-      urls.removeWhere((u) => u.contains('/$docType'));
-      urls.add(remotePath);
-      await supabase
-          .from('companies')
-          .update({'document_urls': urls}).eq('id', cid);
-
+      await repo.appendDocumentUrl(cid, remotePath, docType);
       if (mounted) setState(() => _uploadedPaths[docType] = remotePath);
     } catch (e) {
-      _snack('Upload failed: $e');
+      _snack(l.uploadFailed);
     } finally {
       if (mounted) setState(() => _uploading[docType] = false);
     }
@@ -178,9 +176,46 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    // Owners must have a real (non-anonymous) account before listing.
+    final authRepo = ref.read(authRepositoryProvider);
+    final uid = authRepo.currentUserId;
+    if (uid == null || authRepo.isCurrentUserAnonymous) {
+      final cs = Theme.of(context).colorScheme;
+      return Scaffold(
+        appBar: AppBar(title: Text(l.registerCompany)),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.account_circle_outlined,
+                    size: 56, color: cs.primary),
+                const SizedBox(height: 16),
+                Text(l.createAnAccountFirst,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                Text(
+                  l.accountRequiredBody,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: cs.onSurfaceVariant),
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () => context.push(AppRoutes.emailAuth),
+                  child: Text(l.createAccount),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
-        title: Text(_step == 1 ? 'Register Company' : 'Upload Documents'),
+        title: Text(_step == 1 ? l.registerCompany : l.uploadDocuments),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
           child: LinearProgressIndicator(
@@ -195,6 +230,7 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
         child: _step == 1
             ? _StepOne(
                 key: const ValueKey(1),
+                formKey: _formKey,
                 nameController: _nameController,
                 phoneController: _phoneController,
                 descriptionController: _descriptionController,
@@ -220,6 +256,7 @@ class _CompanyOnboardingScreenState extends State<CompanyOnboardingScreen> {
 class _StepOne extends StatelessWidget {
   const _StepOne({
     super.key,
+    required this.formKey,
     required this.nameController,
     required this.phoneController,
     required this.descriptionController,
@@ -229,6 +266,7 @@ class _StepOne extends StatelessWidget {
     required this.onSubmit,
   });
 
+  final GlobalKey<FormState> formKey;
   final TextEditingController nameController;
   final TextEditingController phoneController;
   final TextEditingController descriptionController;
@@ -240,10 +278,13 @@ class _StepOne extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
-      child: Column(
+      child: Form(
+        key: formKey,
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Header
@@ -269,7 +310,7 @@ class _StepOne extends StatelessWidget {
                       Icon(Icons.business_outlined, color: cs.onPrimary, size: 22),
                 ),
                 const SizedBox(height: 12),
-                const Text('Step 1 of 2 — Company info',
+                Text(l.step1Of2,
                     style:
                         TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
@@ -282,36 +323,42 @@ class _StepOne extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          _Label('Company name'),
-          TextField(
+          _Label(l.companyName),
+          TextFormField(
             controller: nameController,
-            decoration: const InputDecoration(
-              hintText: 'e.g. AnDaLoeS for Generators',
-              prefixIcon: Icon(Icons.business),
+            decoration: InputDecoration(
+              hintText: l.companyNameHint,
+              prefixIcon: const Icon(Icons.business),
             ),
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) return 'Required';
+              if (v.trim().length < 3) return 'At least 3 characters';
+              return null;
+            },
           ),
           const SizedBox(height: 16),
 
-          _Label('Contact phone'),
-          TextField(
+          _Label(l.contactPhone),
+          TextFormField(
             controller: phoneController,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              hintText: '01XXXXXXXXX',
-              prefixIcon: Icon(Icons.phone_outlined),
+            decoration: InputDecoration(
+              hintText: l.phoneHintNumber,
+              prefixIcon: const Icon(Icons.phone_outlined),
             ),
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Required' : null,
           ),
           const SizedBox(height: 16),
 
-          _Label('Description (optional)'),
-          TextField(
+          _Label(l.descriptionOptionalLabel),
+          TextFormField(
             controller: descriptionController,
             maxLines: 3,
             maxLength: 250,
-            decoration: const InputDecoration(
-              hintText:
-                  'Tell customers about your company, experience, coverage area…',
-              prefixIcon: Padding(
+            decoration: InputDecoration(
+              hintText: l.companyDescHint,
+              prefixIcon: const Padding(
                 padding: EdgeInsets.only(bottom: 42),
                 child: Icon(Icons.description_outlined),
               ),
@@ -319,7 +366,7 @@ class _StepOne extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          _Label('City / Governorate'),
+          _Label(l.cityGovernorate),
           DropdownButtonFormField<String>(
             value: city,
             decoration: InputDecoration(
@@ -331,11 +378,13 @@ class _StepOne extends StatelessWidget {
               ),
               prefixIcon: const Icon(Icons.location_on_outlined),
             ),
-            hint: const Text('Select governorate'),
+            hint: Text(l.selectGovernorate),
             items: _governorates
                 .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                 .toList(),
             onChanged: onCityChanged,
+            validator: (v) =>
+                v == null ? l.selectGovernorateError : null,
           ),
           const SizedBox(height: 28),
 
@@ -348,7 +397,7 @@ class _StepOne extends StatelessWidget {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: cs.onPrimary),
                   )
-                : const Text('Continue to documents →'),
+                : Text(l.continueToDocuments),
           ),
           const SizedBox(height: 24),
 
@@ -367,7 +416,7 @@ class _StepOne extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      Text('Preview',
+                      Text(l.previewLabel,
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -380,7 +429,7 @@ class _StepOne extends StatelessWidget {
                           color: cs.primaryContainer,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text('LIVE',
+                        child: Text(l.liveLabel,
                             style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w800,
@@ -429,7 +478,7 @@ class _StepOne extends StatelessWidget {
                                   Text(
                                     name.isNotEmpty
                                         ? name
-                                        : 'Company name',
+                                        : l.companyName,
                                     style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w700),
@@ -470,6 +519,7 @@ class _StepOne extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -494,6 +544,7 @@ class _StepTwo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     final anyUploaded = uploadedPaths.values.any((v) => v != null);
 
     return SingleChildScrollView(
@@ -517,7 +568,7 @@ class _StepTwo extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Step 2 of 2 — Verification documents',
+                      Text(l.step2Of2,
                           style: TextStyle(
                               fontSize: 15, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 4),
@@ -536,13 +587,13 @@ class _StepTwo extends StatelessWidget {
 
           // Upload slots
           ..._docSlots.map((slot) {
-            final (key, label, icon) = slot;
+            final (key, _, icon) = slot;
             final uploaded = uploadedPaths[key] != null;
             final busy = uploading[key] == true;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: _DocTile(
-                label: label,
+                label: _docLabel(key, l),
                 icon: icon,
                 uploaded: uploaded,
                 busy: busy,
@@ -569,13 +620,13 @@ class _StepTwo extends StatelessWidget {
           FilledButton(
             onPressed: onFinish,
             child: Text(anyUploaded
-                ? 'Submit application'
-                : 'Skip for now — go to dashboard'),
+                ? l.submitApplication
+                : l.skipForNow),
           ),
           if (!anyUploaded) ...[
             const SizedBox(height: 8),
             Text(
-              'You can upload documents later from the Owner Dashboard.',
+              l.uploadLaterNote,
               textAlign: TextAlign.center,
               style:
                   TextStyle(fontSize: 12, color: cs.onSurfaceVariant),

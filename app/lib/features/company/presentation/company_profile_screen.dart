@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
-import '../data/company_repository.dart';
+import '../data/repositories/company_repository.dart';
+import '../data/repositories/company_data_repository.dart';
 
 final _companyProfileProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>?, String>(
         (ref, companyId) async {
-  final data = await supabase
-      .from('companies')
-      .select('id, name, city, governorate, contact_phone, verification_status')
-      .eq('id', companyId)
-      .maybeSingle();
-  return data;
+  return ref
+      .read(companyDataRepositoryProvider)
+      .fetchCompanyProfile(companyId);
 });
 
 // Company acceptance / response / on-time stats come from the shared
@@ -25,14 +24,9 @@ final _companyProfileProvider =
 final _companyGeneratorsProvider =
     FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
         (ref, companyId) async {
-  final data = await supabase
-      .from('generators')
-      .select(
-          'id, title, capacity_kva, price_per_day, city, photos, avg_score, rating_count')
-      .eq('company_id', companyId)
-      .eq('status', 'available')
-      .order('avg_score', ascending: false);
-  return (data as List).cast<Map<String, dynamic>>();
+  return ref
+      .read(companyDataRepositoryProvider)
+      .fetchCompanyGenerators(companyId);
 });
 
 class CompanyProfileScreen extends ConsumerWidget {
@@ -43,6 +37,7 @@ class CompanyProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final companyAsync = ref.watch(_companyProfileProvider(companyId));
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: companyAsync.when(
@@ -50,7 +45,7 @@ class CompanyProfileScreen extends ConsumerWidget {
         error: (e, _) => const AppErrorState(),
         data: (company) {
           if (company == null) {
-            return const Center(child: Text('Company not found'));
+            return Center(child: Text(l.companyNotFound));
           }
           return _CompanyBody(
               company: company, companyId: companyId, cs: cs, ref: ref);
@@ -74,6 +69,7 @@ class _CompanyBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final name = company['name']?.toString() ?? 'Company';
     final city = company['city']?.toString() ?? '';
     final governorate = company['governorate']?.toString() ?? '';
@@ -96,8 +92,8 @@ class _CompanyBody extends StatelessWidget {
             background: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                   colors: [
                     cs.primaryContainer.withValues(alpha: 0.9),
                     cs.secondaryContainer.withValues(alpha: 0.6),
@@ -376,7 +372,7 @@ class _CompanyBody extends StatelessWidget {
                         Icon(Icons.bolt_outlined,
                             size: 48, color: cs.onSurfaceVariant),
                         const SizedBox(height: 16),
-                        Text('No available generators',
+                        Text(l.noAvailableGenerators,
                             style: TextStyle(color: cs.onSurfaceVariant)),
                       ],
                     ),
@@ -427,12 +423,12 @@ class _CompanyGeneratorTile extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: firstPhoto != null
-                    ? Image.network(
+                    ? CachedNetworkImage(imageUrl: 
                         firstPhoto,
                         width: 56,
                         height: 56,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        errorWidget: (_, __, ___) => Container(
                           width: 56,
                           height: 56,
                           color: cs.primaryContainer,
@@ -531,6 +527,7 @@ class _ContactButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     if (phone == null || phone!.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -538,7 +535,7 @@ class _ContactButtons extends StatelessWidget {
         Expanded(
           child: OutlinedButton.icon(
             icon: const Icon(Icons.phone_outlined, size: 16),
-            label: const Text('Call'),
+            label: Text(l.callLabel),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.green.shade700,
               side: BorderSide(color: Colors.green.withValues(alpha: 0.4)),

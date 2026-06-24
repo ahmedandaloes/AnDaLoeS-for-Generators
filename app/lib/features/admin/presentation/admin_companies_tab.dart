@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../core/utils/db_error.dart';
 import '../../../core/widgets/app_error_state.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/config/supabase.dart';
+import '../data/repositories/admin_repository.dart';
+import '../../auth/data/repositories/auth_repository.dart';
 
 final pendingCompaniesProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final data = await supabase
-      .from('companies')
-      .select('*, profiles!owner_user_id(full_name, phone)')
-      .inFilter('verification_status', ['pending', 'under_review']).order(
-          'created_at');
-  return (data as List).cast<Map<String, dynamic>>();
+  return ref.read(adminRepositoryProvider).fetchPendingCompaniesAdmin();
 });
 
 class AdminCompaniesTab extends StatelessWidget {
@@ -23,6 +22,7 @@ class AdminCompaniesTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final companiesAsync = ref.watch(pendingCompaniesProvider);
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return companiesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -36,7 +36,7 @@ class AdminCompaniesTab extends StatelessWidget {
                 Icon(Icons.check_circle_outline,
                     size: 48, color: Colors.green),
                 const SizedBox(height: 16),
-                const Text('No pending companies'),
+                Text(l.noPendingCompanies),
               ],
             ),
           );
@@ -79,14 +79,15 @@ class _CompanyCardState extends State<_CompanyCard> {
   }
 
   Future<void> _approve() async {
+    final l = AppLocalizations.of(context)!;
     setState(() => _loading = true);
     final companyName = widget.company['name']?.toString() ?? 'Company';
     try {
-      await supabase.from('companies').update({
-        'verification_status': 'approved',
-        'reviewed_by': supabase.auth.currentUser!.id,
-        'reviewed_at': DateTime.now().toIso8601String(),
-      }).eq('id', widget.company['id'].toString());
+      final uid = widget.ref.read(authRepositoryProvider).currentUserId ?? '';
+      await widget.ref.read(adminRepositoryProvider).approveCompany(
+            widget.company['id'].toString(),
+            uid,
+          );
       widget.ref.invalidate(pendingCompaniesProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -95,7 +96,7 @@ class _CompanyCardState extends State<_CompanyCard> {
                 color: Colors.white, size: 18),
             const SizedBox(width: 8),
             Expanded(
-              child: Text('"$companyName" approved',
+              child: Text(l.companyApproved(companyName),
                   style: const TextStyle(fontWeight: FontWeight.w600)),
             ),
           ]),
@@ -108,8 +109,7 @@ class _CompanyCardState extends State<_CompanyCard> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        AppSnackBar.error(context, friendlyDbError(e));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -117,11 +117,12 @@ class _CompanyCardState extends State<_CompanyCard> {
   }
 
   Future<void> _reject() async {
+    final l = AppLocalizations.of(context)!;
     final reason = _reasonController.text.trim();
     final companyName = widget.company['name']?.toString() ?? 'Company';
     if (reason.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Enter a rejection reason'),
+        content: Text(l.enterRejectionReason),
         behavior: SnackBarBehavior.floating,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -130,12 +131,12 @@ class _CompanyCardState extends State<_CompanyCard> {
     }
     setState(() => _loading = true);
     try {
-      await supabase.from('companies').update({
-        'verification_status': 'rejected',
-        'rejection_reason': reason,
-        'reviewed_by': supabase.auth.currentUser!.id,
-        'reviewed_at': DateTime.now().toIso8601String(),
-      }).eq('id', widget.company['id'].toString());
+      final uid = widget.ref.read(authRepositoryProvider).currentUserId ?? '';
+      await widget.ref.read(adminRepositoryProvider).rejectCompany(
+            widget.company['id'].toString(),
+            uid,
+            reason,
+          );
       widget.ref.invalidate(pendingCompaniesProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -143,7 +144,7 @@ class _CompanyCardState extends State<_CompanyCard> {
             const Icon(Icons.cancel_outlined, color: Colors.white, size: 18),
             const SizedBox(width: 8),
             Expanded(
-              child: Text('"$companyName" rejected',
+              child: Text(l.companyRejected(companyName),
                   style: const TextStyle(fontWeight: FontWeight.w600)),
             ),
           ]),
@@ -155,8 +156,7 @@ class _CompanyCardState extends State<_CompanyCard> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        AppSnackBar.error(context, friendlyDbError(e));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -166,6 +166,7 @@ class _CompanyCardState extends State<_CompanyCard> {
   @override
   Widget build(BuildContext context) {
     final cs = widget.cs;
+    final l = AppLocalizations.of(context)!;
     final company = widget.company;
     final owner = company['profiles'] as Map<String, dynamic>?;
     final status = company['verification_status']?.toString() ?? 'pending';
@@ -238,57 +239,132 @@ class _CompanyCardState extends State<_CompanyCard> {
               ]),
             ],
             Builder(builder: (_) {
-              final docs = (company['document_urls'] as List? ?? [])
-                  .cast<String>();
-              if (docs.isEmpty) return const SizedBox.shrink();
+              // Prefer structured company_documents rows (KYC v1).
+              // Fall back to legacy document_urls array for backwards compat.
+              final kycDocs = (company['company_documents'] as List? ?? [])
+                  .cast<Map<String, dynamic>>();
+              final legacyPaths = kycDocs.isEmpty
+                  ? (company['document_urls'] as List? ?? []).cast<String>()
+                  : <String>[];
+
+              if (kycDocs.isEmpty && legacyPaths.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: docs.map((path) {
-                      final filename = path.split('/').last;
-                      final docType = filename.split('_').first;
-                      final label = const {
-                            'commercial': 'Comm. Register',
-                            'tax': 'Tax Card',
-                            'national': 'National ID',
-                          }[docType] ??
-                          filename;
-                      return ActionChip(
-                        avatar: const Icon(Icons.description_outlined,
-                            size: 14),
-                        label: Text(label,
-                            style: const TextStyle(fontSize: 11)),
-                        onPressed: () async {
-                          try {
-                            final res = await supabase.storage
-                                .from('company-docs')
-                                .createSignedUrl(path, 300);
-                            await Clipboard.setData(
-                                ClipboardData(text: res));
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content:
-                                      Text('$label URL copied to clipboard'),
-                                  behavior: SnackBarBehavior.floating,
-                                  duration: const Duration(seconds: 3),
-                                ),
-                              );
+                  // KYC structured rows with verified status
+                  if (kycDocs.isNotEmpty)
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: kycDocs.map((doc) {
+                        final docId = doc['id']?.toString() ?? '';
+                        final docType = doc['doc_type']?.toString() ?? '';
+                        final path = doc['file_url']?.toString() ?? '';
+                        final verified = doc['verified'] == true;
+                        final label = const {
+                              'commercial_register': 'Comm. Register',
+                              'tax_card': 'Tax Card',
+                              'national_id': 'National ID',
+                            }[docType] ??
+                            docType;
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ActionChip(
+                              avatar: Icon(
+                                verified
+                                    ? Icons.verified_rounded
+                                    : Icons.description_outlined,
+                                size: 14,
+                                color: verified ? Colors.green : null,
+                              ),
+                              label: Text(label,
+                                  style: const TextStyle(fontSize: 11)),
+                              onPressed: () async {
+                                if (path.isEmpty) return;
+                                try {
+                                  final res = await widget.ref
+                                      .read(adminRepositoryProvider)
+                                      .getCompanyDocSignedUrl(path);
+                                  await Clipboard.setData(
+                                      ClipboardData(text: res));
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(SnackBar(
+                                      content: Text(l.urlCopied(label)),
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: const Duration(seconds: 3),
+                                    ));
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    AppSnackBar.error(
+                                        context, friendlyDbError(e));
+                                  }
+                                }
+                              },
+                            ),
+                            if (!verified) ...[
+                              const SizedBox(width: 4),
+                              _VerifyDocButton(
+                                docId: docId,
+                                label: label,
+                                adminRef: widget.ref,
+                              ),
+                            ],
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  // Legacy array fallback
+                  if (legacyPaths.isNotEmpty)
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: legacyPaths.map((path) {
+                        final filename = path.split('/').last;
+                        final docType = filename.split('_').first;
+                        final label = const {
+                              'commercial': 'Comm. Register',
+                              'tax': 'Tax Card',
+                              'national': 'National ID',
+                            }[docType] ??
+                            filename;
+                        return ActionChip(
+                          avatar: const Icon(Icons.description_outlined,
+                              size: 14),
+                          label: Text(label,
+                              style: const TextStyle(fontSize: 11)),
+                          onPressed: () async {
+                            try {
+                              final res = await widget.ref
+                                  .read(adminRepositoryProvider)
+                                  .getCompanyDocSignedUrl(path);
+                              await Clipboard.setData(
+                                  ClipboardData(text: res));
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(l.urlCopied(label)),
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: const Duration(seconds: 3),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('$e')));
+                              }
                             }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('$e')));
-                            }
-                          }
-                        },
-                      );
-                    }).toList(),
-                  ),
+                          },
+                        );
+                      }).toList(),
+                    ),
                 ],
               );
             }),
@@ -297,9 +373,9 @@ class _CompanyCardState extends State<_CompanyCard> {
               TextField(
                 controller: _reasonController,
                 maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Rejection reason',
-                  hintText: 'Tell the owner why they were rejected…',
+                decoration: InputDecoration(
+                  labelText: l.rejectionReason,
+                  hintText: l.rejectionReasonHint,
                 ),
               ),
             ],
@@ -318,7 +394,7 @@ class _CompanyCardState extends State<_CompanyCard> {
                       onPressed: _loading
                           ? null
                           : () => setState(() => _showReject = true),
-                      child: const Text('Reject'),
+                      child: Text(l.reject),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -333,7 +409,7 @@ class _CompanyCardState extends State<_CompanyCard> {
                               width: 18,
                               child: CircularProgressIndicator(
                                   strokeWidth: 2))
-                          : const Text('Approve'),
+                          : Text(l.approve),
                     ),
                   ),
                 ],
@@ -344,7 +420,7 @@ class _CompanyCardState extends State<_CompanyCard> {
                   Expanded(
                     child: TextButton(
                       onPressed: () => setState(() => _showReject = false),
-                      child: const Text('Cancel'),
+                      child: Text(l.cancel),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -360,7 +436,7 @@ class _CompanyCardState extends State<_CompanyCard> {
                               width: 18,
                               child: CircularProgressIndicator(
                                   strokeWidth: 2, color: Colors.white))
-                          : const Text('Confirm reject'),
+                          : Text(l.confirmReject),
                     ),
                   ),
                 ],
@@ -379,5 +455,66 @@ class _CompanyCardState extends State<_CompanyCard> {
     } catch (_) {
       return d;
     }
+  }
+}
+
+/// Small button an admin taps to mark one company_document as verified.
+class _VerifyDocButton extends StatefulWidget {
+  const _VerifyDocButton({
+    required this.docId,
+    required this.label,
+    required this.adminRef,
+  });
+  final String docId;
+  final String label;
+  final WidgetRef adminRef;
+
+  @override
+  State<_VerifyDocButton> createState() => _VerifyDocButtonState();
+}
+
+class _VerifyDocButtonState extends State<_VerifyDocButton> {
+  bool _busy = false;
+
+  Future<void> _verify() async {
+    if (widget.docId.isEmpty) return;
+    setState(() => _busy = true);
+    try {
+      await widget.adminRef
+          .read(adminRepositoryProvider)
+          .verifyCompanyDocument(widget.docId);
+      widget.adminRef.invalidate(pendingCompaniesProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('${widget.label} verified'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.green.shade700,
+          duration: const Duration(seconds: 2),
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_busy) {
+      return const SizedBox(
+          width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2));
+    }
+    return GestureDetector(
+      onTap: _verify,
+      child: Tooltip(
+        message: 'Mark as verified',
+        child: Icon(Icons.check_circle_outline_rounded,
+            size: 18, color: Colors.green.shade600),
+      ),
+    );
   }
 }

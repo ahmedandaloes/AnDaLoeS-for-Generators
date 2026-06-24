@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:andaloes/core/utils/commission.dart';
 import 'package:andaloes/core/utils/pricing.dart';
+import 'package:andaloes/core/utils/tax.dart';
 import 'package:andaloes/core/utils/db_error.dart';
 import 'package:andaloes/core/utils/ics.dart';
 import 'package:andaloes/core/constants/generator_sizes.dart';
@@ -61,6 +62,27 @@ void main() {
       final back = GeneratorFilter.fromJson(const GeneratorFilter().toJson());
       expect(back.hasActiveFilters, false);
       expect(back.sort, GeneratorSortBy.newest);
+    });
+  });
+
+  group('vatBreakdown (VAT-inclusive)', () {
+    test('14% VAT extracted from an inclusive total', () {
+      final b = vatBreakdown(114, 0.14);
+      expect(b.subtotal, closeTo(100, 0.001));
+      expect(b.vat, closeTo(14, 0.001));
+    });
+    test('subtotal + vat == total', () {
+      final b = vatBreakdown(1500, 0.14);
+      expect(b.subtotal + b.vat, closeTo(1500, 0.001));
+    });
+    test('zero rate → all subtotal, no vat', () {
+      final b = vatBreakdown(500, 0);
+      expect(b.subtotal, 500);
+      expect(b.vat, 0);
+    });
+    test('vatShownAtBooking only for always', () {
+      expect(vatShownAtBooking('always'), true);
+      expect(vatShownAtBooking('on_invoice_request'), false);
     });
   });
 

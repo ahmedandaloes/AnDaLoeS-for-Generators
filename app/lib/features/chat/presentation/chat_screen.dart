@@ -1,22 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show RealtimeChannel;
 
-import '../../../core/config/supabase.dart';
+import '../../../core/widgets/app_error_state.dart';
+import '../../../l10n/app_localizations.dart';
+import '../data/repositories/message_repository.dart';
 
 final _messagesProvider =
     StreamProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
         (ref, rentalRequestId) {
-  return supabase
-      .from('messages')
-      .stream(primaryKey: ['id'])
-      .eq('rental_request_id', rentalRequestId)
-      .order('created_at')
-      .map((rows) => rows.cast<Map<String, dynamic>>());
+  return ref
+      .read(messageRepositoryProvider)
+      .messagesStream(rentalRequestId);
 });
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -41,21 +39,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   int _lastMessageCount = 0;
   Timer? _typingClearTimer;
   RealtimeChannel? _typingChannel;
-  final _uid = supabase.auth.currentUser?.id ?? '';
+  late final String _uid;
 
   @override
   void initState() {
     super.initState();
+    _uid = ref.read(messageRepositoryProvider).currentUserId ?? '';
     _controller.addListener(_onTextChanged);
     _subscribeTyping();
   }
 
   void _subscribeTyping() {
-    _typingChannel = supabase
-        .channel('typing-${widget.rentalRequestId}')
-        .onBroadcast(
-          event: 'typing',
-          callback: (payload) {
+    final repo = ref.read(messageRepositoryProvider);
+    _typingChannel = repo
+        .typingChannel(
+          widget.rentalRequestId,
+          onTyping: (payload) {
             final sender = payload['uid']?.toString();
             if (sender == null || sender == _uid) return;
             if (mounted) {
@@ -109,18 +108,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     setState(() => _sending = true);
     _controller.clear();
     try {
-      await supabase.from('messages').insert({
-        'rental_request_id': widget.rentalRequestId,
-        'sender_id': _uid,
-        'body': body,
-      });
+      await ref.read(messageRepositoryProvider).insertMessage(
+            rentalRequestId: widget.rentalRequestId,
+            senderId: _uid,
+            body: body,
+          );
       HapticFeedback.lightImpact();
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Failed to send: $e'),
+              content: Text(AppLocalizations.of(context)!.failedToSend),
               behavior: SnackBarBehavior.floating),
         );
         _controller.text = body;
@@ -133,6 +132,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     final messagesAsync =
         ref.watch(_messagesProvider(widget.rentalRequestId));
 
@@ -148,7 +148,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               duration: const Duration(milliseconds: 200),
               child: _otherTyping
                   ? Text(
-                      'typing…',
+                      l.typing,
                       key: const ValueKey('typing'),
                       style: TextStyle(
                           fontSize: 11,
@@ -156,7 +156,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           fontStyle: FontStyle.italic),
                     )
                   : Text(
-                      'Chat',
+                      l.chatLabel,
                       key: const ValueKey('chat'),
                       style: TextStyle(
                           fontSize: 12, color: cs.onSurfaceVariant),
@@ -184,7 +184,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 cs.onSurfaceVariant.withValues(alpha: 0.4)),
                         const SizedBox(height: 12),
                         Text(
-                          'No messages yet.\nSay hello to ${widget.otherPartyName}!',
+                          l.noMessagesYet(widget.otherPartyName),
                           textAlign: TextAlign.center,
                           style: TextStyle(color: cs.onSurfaceVariant),
                         ),
@@ -225,7 +225,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             padding:
                                 const EdgeInsets.symmetric(vertical: 8),
                             child: Text(
-                              _formatDay(msg['created_at']),
+                              _formatDay(msg['created_at'], l),
                               style: TextStyle(
                                   fontSize: 11,
                                   color: cs.onSurfaceVariant,
@@ -273,7 +273,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => _send(),
                     decoration: InputDecoration(
-                      hintText: 'Type a message…',
+                      hintText: l.typeMessage,
                       filled: true,
                       fillColor: cs.surfaceContainerLow,
                       border: OutlineInputBorder(
@@ -324,17 +324,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  static String _formatDay(dynamic ts) {
+  static String _formatDay(dynamic ts, AppLocalizations l) {
+    // uses l.today/l.yesterday
     if (ts == null) return '';
     try {
       final dt = DateTime.parse(ts.toString()).toLocal();
       final now = DateTime.now();
       if (dt.year == now.year &&
           dt.month == now.month &&
-          dt.day == now.day) return 'Today';
+          dt.day == now.day) return l.today;
       final y = now.subtract(const Duration(days: 1));
       if (dt.year == y.year && dt.month == y.month && dt.day == y.day) {
-        return 'Yesterday';
+        return l.yesterday;
       }
       return '${dt.day}/${dt.month}/${dt.year}';
     } catch (_) {
@@ -373,7 +374,7 @@ class _TypingBubbleState extends State<_TypingBubble>
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -436,7 +437,8 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final timeStr = _fmt(time);
     return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      alignment:
+          isMe ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 3),
         constraints: BoxConstraints(
@@ -444,13 +446,13 @@ class _MessageBubble extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isMe ? cs.primary : cs.surfaceContainerHigh,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(18),
-            topRight: const Radius.circular(18),
-            bottomLeft: isMe
+          borderRadius: BorderRadiusDirectional.only(
+            topStart: const Radius.circular(18),
+            topEnd: const Radius.circular(18),
+            bottomStart: isMe
                 ? const Radius.circular(18)
                 : const Radius.circular(4),
-            bottomRight: isMe
+            bottomEnd: isMe
                 ? const Radius.circular(4)
                 : const Radius.circular(18),
           ),

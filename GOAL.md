@@ -98,6 +98,81 @@ MEDIUM (polish):
 
 ---
 
+## 🗓️ NEXT 10 SPRINTS (roadmap, 2026-06-24)
+Operative forward plan after the Arabic-first rollout. Each sprint = a coherent
+theme the loop works one verified item at a time (analyze 0 / tests green /
+conventional commit / push / tick here). Priority order: launch-readiness &
+trust → conversion → growth → monetization/compliance. **🔒 = blocked on an
+owner/external decision** (loop skips until unblocked); everything else is
+buildable in-app now. Definition of done (DoD) per sprint listed.
+
+### Sprint 1 — Trust signals (verification + reliability surfacing) ✅
+- [x] Verified-owner badge on generator cards + detail (from `companies.verification_status`; wire the approval state through the generator query/repository)
+- [x] Detail: hoist ONE compact "verified + on-time % + acceptance" trust row above the fold; unify the 3 inconsistent badge styles
+- [x] Owner request card: "collect EGP X deposit on delivery" reminder
+- [x] Adopt shared `qualityColor`/status tokens on remaining screens — `generatorStatusColor()` added; inline switch dupes removed from owner_dashboard_screen + admin_generators_tab
+- DoD: trust state visible end-to-end; new strings localized en+ar; no duplicate color maps. ✅
+
+### Sprint 2 — Booking integrity & lifecycle correctness ✅
+- [x] DB status state-machine guard — block invalid transitions (rejected→active, completed→pending, …) via `mcp apply_migration`
+- [x] Standardize priced-days (inclusive end date) off-by-one — +1 fix in rental_request_screen
+- [x] "Mark as received" button removed; RLS restricts customers to cancel only
+- DoD: invalid transitions impossible at DB level; day math consistent; no RLS-rejected client writes.
+
+### Sprint 3 — Conversion: frictionless request ✅
+- [x] Detail: guests can now navigate to date-picker; auth required only at "Send request" (PaymentConfirmationScreen._confirm)
+- [x] Detail: sticky Rent Now FAB always visible (no scroll-hide); share/copy/report moved to AppBar actions
+- DoD: browse→request drop-off reduced; auth check at final submit step.
+
+### Sprint 4 — Accessibility & UX polish ✅
+- [x] ≥48dp tap-target pass — filter pills container 38→48, all my_rentals buttons 36/38/40→48
+- [x] My Rentals: completed state buttons (Invoice/Receipt/Report) collapsed into 3-column row
+- [x] Accessibility audit: tooltip on all icon-only buttons (profile, back, password toggle, close, clear search, map close, gallery close); showPassword/hidePassword en+ar
+- [x] Document screens (invoice/receipt/offer): dark-mode theming — hardcoded white/grey/black replaced with colorScheme tokens in rental_offer_screen, invoice_screen, rental_receipt_screen (committed)
+- DoD: a11y scan clean; no <48dp targets; documents readable in dark mode.
+
+### Sprint 5 — Growth: shareable & discoverable (partial)
+- [x] Share URL fixed (/generator → /generators) + bilingual CTA + first photo URL
+- [x] Deep linking to listings (iOS universal links: Runner.entitlements + CODE_SIGN_ENTITLEMENTS + AASA in docs/)
+- [x] Saved searches — DB 0039, savedSearchesProvider, home screen bookmark icon + save chip + bottom sheet with apply/delete ✅ (new-match server alerts deferred to Sprint 10 edge fn)
+- DoD: a shared link opens the right listing; saved search fires a notification on match.
+
+### Sprint 6 — Public web listing pages (SEO/organic) 🔒(web support fix)
+- [ ] Fix web build (passkeys SDK error) enough to serve read-only pages
+- [ ] No-auth public generator/company pages, Arabic-first URLs, SEO/OpenGraph meta
+- DoD: a generator is viewable + indexable without the app. (Blocked portion: web SDK fix.)
+
+### Sprint 7 — Fulfillment timeline & disputes
+- [x] Fulfillment status timeline on the ticket (DB 0036 rental_timeline_events + auto-trigger; _StatusTimeline in My Rentals + _OwnerTimeline in OwnerRequestCard)
+- [x] Digital handover: DB 0037 rental_handovers (fuel_level, meter_reading, note, UNIQUE delivery+return per rental); owner dialogs on "Confirm Delivered" + "Mark Completed"; customer sees handover summary on active/completed card
+- [x] Two-sided dispute/claim flow — DB 0038 resolution_note/resolved_by/resolved_at + triggers; admin reports tab upgraded (under_review badge, resolve/dismiss dialogs with resolution notes); reporter notified on outcome
+- DoD: every active rental has an auditable timeline; disputes have an admin adjudication path. ✅
+
+### Sprint 8 — Owner tooling & supply growth
+- [ ] Owner quick-add / bulk listing flow (low-friction OLX/Facebook migration)
+- [x] Add Generator: clone listing — copy_all_outlined button in owner generator tile passes full data (all 17 fields) as GoRouter extra → AddGeneratorScreen prefill
+- [x] Listing fields: operated vs dry-hire, fuel policy, accessories — DB 0037, AddGeneratorScreen + EditGeneratorScreen + GeneratorDetailScreen all ship these fields
+- [x] Supply-thin owner nudges — thin_supply_nudge widget in owner dashboard, thinSupplyNudge ARB keys ✅
+- [x] Owner quick-add: "Add another generator?" dialog + _resetForm() for back-to-back listings ✅
+- DoD: an owner can list 5 generators in minutes; new spec fields captured + filterable. ✅
+
+### Sprint 9 — Monetization (collectable without a gateway) 🔒(owner: revenue model)
+- 🔒 [ ] Revenue-collection model decision (A subscription / B Fawry-escrow / C ledger / D hybrid) — owner picks (docs/MONETIZATION.md §1b)
+- [ ] Owner subscription + featured-listing fees (needs a digital charge endpoint)
+- [ ] Unpaid-balance listing-suspension rule (anti-churn for the cash ledger)
+- [ ] Owner payout statements (income reporting; WHT if required)
+- DoD: a collectable revenue mechanism live once the model is chosen; ledger drives suspensions.
+
+### Sprint 10 — Notifications, payments & compliance 🔒(external)
+- 🔒 [ ] FCM push + flutter_local_notifications (needs android/ios native config + FCM project)
+- 🔒 [ ] Phone OTP (needs SMS provider — Twilio/Vonage)
+- 🔒 [ ] Digital escrow (Paymob/Kashier) / Fawry pay-against-code (needs merchant acct + CBE review)
+- 🔒 [ ] Tax: confirm VAT treatment + customer % with accountant; ETA e-invoicing onboarding
+- [x] Auto-expire stale pending requests — DB fn expire_stale_pending_requests() (migration 0040) + admin "Run Expiry Now" button in Ops tab
+- DoD: real-time push + collected payments + compliant invoicing (gated on the owner/external items).
+
+---
+
 ## FOCUS: Validated Business Thesis (market research 2026-06-23)
 Full strategy in `docs/BUSINESS_STRATEGY.md` + money model in `docs/MONETIZATION.md`.
 
@@ -182,8 +257,8 @@ in (). Build NOW items in-app; SOON/LATER need integrations/decisions/advice.
 - [ ] [NOW] Public web listing pages (no-auth, SEO/Arabic URLs) per generator/company — organic discovery
 - [ ] [NOW] WhatsApp deep-link sharing with rich preview (photo+kVA+rate+city), app/web fallback
 - [x] [NOW] Supply-by-governorate tracker in Admin Stats (available generators per area, "thin" flag <3) — via GeneratorRepository.countAvailableByGovernorate (repository, no inline dup)
-- [ ] [SOON] Owner quick-add / bulk listing flow (migrate OLX/Facebook owners with low friction)
-- [ ] [SOON] Saved searches + "new match" alerts (reuse notifications + use_cases)
+- [x] [SOON] Owner quick-add: add-another dialog + _resetForm() + thin-supply nudge chips in owner dashboard ✅
+- [x] [SOON] Saved searches: DB + UI (save/browse/apply/delete); new-match alerts deferred to edge fn ✅
 - [ ] [SOON] Two-sided referral invites with deep links (attribution; credit value = monetization)
 - [ ] [SOON] First-booking nudge sequence (browse→request drop-off, segment-aware copy)
 - [ ] [LATER] Seasonal summer-demand campaign hooks; repeat/re-book loop for telecom/agri; listing-quality score
@@ -244,12 +319,12 @@ Per-page review of the live code. Implement NOW items in the auto-loop on `devel
 ---
 
 ## Loop State (updated each iteration)
-**Last iteration:** 2026-06-23
+**Last iteration:** 2026-06-24 — Arabic-first rollout COMPLETE (default `ar`+RTL, both QA agents addressed). Now executing the **Next 10 Sprints** roadmap (see section above).
 **Working branch:** `development` (main is integration/release)
 **Mode:** continuous loop (owner directive — no timer waits; finish item → start next).
-**Last commit:** `fix: company onboarding governorate + dedupe location`
+**Last commit:** `fix: Sprint 4 dark-mode — invoice screen colorScheme tokens`
 **iOS local constraint:** ios/ is gitignored. After fresh checkout: set IPHONEOS_DEPLOYMENT_TARGET=16.0 in Podfile + xcodeproj, run pod install
-**Next action:** money-model shift — switch commission_config to ~10% percentage + show fee/payout breakdown at request time (rental-workflow + supabase-db). See docs/BUSINESS_STRATEGY.md + docs/MONETIZATION.md.
+**Next action:** Sprint 7 — Digital handover: delivery + return photos captured by owner, fuel/meter readings, stored in rental_timeline_events or new handover table.
 **Strategy:** repositioned to B2B/SMB trust marketplace per market research 2026-06-23 (docs/BUSINESS_STRATEGY.md).
 
 ---
@@ -304,6 +379,52 @@ listing approval, pricing guardrails, liability). Sequence proposed in GAP_ANALY
 Decision: Arabic default + full RTL. State: RTL infra present (gen-l10n Global delegates, `ar` supported, toggle); only ~14 strings externalized, ~345 hardcoded English Text() across ~28 screens.
 Plan (loop, screen-by-screen): (1) grow app_en.arb + app_ar.arb (real Arabic) with each screen's strings; (2) replace hardcoded Text() with AppLocalizations; (3) RTL audit — EdgeInsets.only(left/right) → start/end, Align/Row directionality; (4) flip locale default to Arabic once the bulk is translated (avoid half-Arabic UI). Shared/common strings first (highest leverage), then high-traffic screens (home, detail, rental request, my rentals, owner dashboard), then the rest.
 - [x] Foundation: common strings (actions/errors) in en+ar; AppErrorState localized (app-wide).
-- [ ] Localize: bottom nav + profile + home → detail → rental request/payment → my rentals → owner dashboard → admin → rest.
+- [~] Localized: Profile + Home + Generator Detail (call/share/copy/save/report/Rent Now, acceptance+on-time stats via placeholders, price estimate) with real Arabic; RTL paddings→Directional. Next: owner request_card + earnings → admin tabs → rest. (Owner dashboard main strings done; a few secondary dialog/verification bodies pending.) Search hint + sort labels + section titles + documents pending. Search hint + sort labels + section titles pending. Search hint + sort labels + section titles pending.
 - [ ] RTL padding/Align audit per screen as localized.
 - [ ] Flip default locale to Arabic when ≥ ~80% strings translated.
+
+## 🧪 Arabic/RTL QA findings (arabic-qa-expert, 2026-06-24) — action list
+Key parity PASS (310 keys, all translated; en/ar count diff is just @-metadata). Translation quality strong + glossary-consistent. To fix:
+- [ ] HIGH: fully-English screens (invisible in Arabic) — rental_offer, invoice, rental_receipt, add_generator, edit_generator.
+- [ ] MEDIUM: partially-localized screens using LITERALS where ARB keys already exist — profile leftover dialogs (signOutQuestion/displayName/createAccount…), email_login_screen, rate_rental, generator_filter, map_screen, report_screen, search_autocomplete, admin leftovers, chat date labels (Today/Yesterday hardcoded at chat_screen ~336/339 despite today/yesterday keys).
+- [ ] MEDIUM: ICU plurals only have =1/other — add Arabic dual(=2)/few/many for rentalDaysLine + completedRentalsCount; verify 1/2/3/11/100.
+- [ ] MEDIUM: wrap LTR runs (EGP amounts, INV-/offer numbers, phone, dates) in Directionality.ltr to avoid RTL scrambling; or use ج.م suffix + Arabic digits.
+- [ ] RTL hazards remain in 9 files (EdgeInsets.only(left/right), Alignment.centerLeft/Right) — switch to EdgeInsetsDirectional / AlignmentDirectional (verify chat bubbles which mirror by isMe intentionally).
+- [ ] LOW: wording — stay "البقاء"→"ابقَ", skip "تخطٍّ"→"تخطّي"; localize 'Error: $e' snackbars; AR @-metadata absent (OK).
+- [ ] CRITICAL-per-spec (do in FINAL cycle): default locale not Arabic yet (locale_provider state null → device locale). Flip to const Locale('ar') once screens above are localized.
+
+## 🔒 Functional QA findings (qa-expert, 2026-06-24) — security + bugs
+FIXED this cycle:
+- [x] CRITICAL: self-escalation to role='admin' via PostgREST — DB 0032 trigger lock_profile_role (only admin can change role).
+- [x] CRITICAL: owner self-approving own company (verification_status) — DB 0032 trigger lock_company_verification (admin only).
+- [x] CRITICAL/MED: customer could cancel accepted/active via API — DB 0032 tightened rental_requests_update_customer USING to status='pending'.
+- [x] HIGH: HomeScreen price/capacity sort crashed on null fields — null-safe numeric sort.
+TODO (next cycles):
+- [x] HIGH: "Mark as received" removed — completion is owner-driven via delivery handshake; customer RLS now blocks status=completed writes.
+- [x] HIGH: router role-gating — cached role provider (refreshed on auth change); GoRouter redirect sends non-admins away from /admin and non-owners/non-admins away from /owner/* (defense-in-depth on RLS). /owner-dashboard stays open (onboarding entry).
+- [x] HIGH: guest/anonymous gating — detail Rent Now/report/favorite require a real (non-anonymous) account (push login); company onboarding shows "create an account first" for anonymous users.
+- [x] VAT consistency: shared vatBreakdown helper used by invoice; payment confirmation now shows a VAT line (subtotal + label+%) when tax_config.applies_when=='always' (total payable unchanged — price_total is VAT-inclusive). NOTE: VAT treatment (inclusive vs added-on) + applies_when policy need owner/accountant confirmation.
+- [x] MED: completion trigger now clamps commission to [0, price_total] (DB 0033) — owner net never negative.
+- [ ] MED: priced days (exclusive) vs blocked days (inclusive daterange) off-by-one; standardize.
+- [x] MED: rate + receipt screens now gate on completed status when reached by route (friendly state otherwise).
+
+## 🌐 DEFAULT LANGUAGE: ARABIC (shipped)
+The app now launches in **Arabic with full RTL** by default (Arabic-first).
+- Every screen is localized with real, natural Arabic; DB values stay English.
+- Arabic plurals use proper categories (zero/one/two/few/many/other).
+- **To switch to English:** Profile → Language → English. The choice persists across launches and overrides the Arabic default.
+
+## ✅ Post-rollout QA (both agents) — addressed
+Functional/regression QA: 0 CRITICAL/HIGH (wiring, ICU args, l-scope/null-safety, DB-value separation all verified correct).
+Arabic/RTL QA: Arabic quality high; fixed — directional arrow glyph removed (continueToDocuments), chat bubbles/typing indicator now AlignmentDirectional + BorderRadiusDirectional, ≤→حتى, forNDays/daysCount converted to proper Arabic plurals, طلبًا. Localized leftover English: invoice section labels (Services Rendered/Rental Details/Generator rental), offer Note-from-Owner, my-rentals Offer, profile Account, add/edit-generator labels (Fuel type/Best for/Governorate), owner status chips (request_card + dashboard), and the customer search hint. ~16 new ARB keys.
+Remaining LOW (optional): owner sort chips, raw 'Error: $e' snackbars, dev/admin minor labels, EGP-vs-ج.م currency token consistency.
+
+## 🏁 ARABIC-FIRST ROLLOUT — COMPLETE
+- ~31 screens fully localized (en + real natural ar); default locale = Arabic + RTL; English switchable in Profile → Language (persists).
+- DB values stay English/codes (fuel/status/reason/doc-type/governorate) — queries + RLS unaffected.
+- Arabic plural grammar (zero/one/two/few/many/other) for day & rental counts.
+- RTL-safe: directional insets/alignment/border-radius; chat bubbles mirror correctly.
+- Both QA agents run; all CRITICAL/HIGH/MED findings fixed; owner sort chips localized.
+- **Currency token decision:** raw numeric amounts keep Latin "EGP" (LTR-stable in document tables); Arabic "ج.م" used in Arabic UI labels (pricing/earnings/filters). Intentional — left as-is.
+- Remaining LOW (optional, deferred): raw 'Error: $e' diagnostic snackbars, dev/admin-only minor labels.
+- All work on `development`; every step analyze-clean (0 errors/warnings) + 22 tests green.

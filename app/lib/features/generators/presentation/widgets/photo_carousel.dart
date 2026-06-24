@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PhotoCarousel extends StatefulWidget {
   const PhotoCarousel({super.key, required this.photos});
@@ -33,10 +34,10 @@ class _PhotoCarouselState extends State<PhotoCarousel> {
           onPageChanged: (i) => setState(() => _current = i),
           itemBuilder: (ctx, i) => GestureDetector(
             onTap: () => _openGallery(ctx, i),
-            child: Image.network(
+            child: CachedNetworkImage(imageUrl: 
               widget.photos[i],
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorWidget: (_, __, ___) => Container(
                 color:
                     Theme.of(context).colorScheme.surfaceContainerHighest,
                 child: const Icon(Icons.bolt, size: 64),
@@ -193,10 +194,10 @@ class _FullScreenGalleryState extends State<FullScreenGallery>
                     minScale: 0.5,
                     maxScale: 4,
                     child: Center(
-                      child: Image.network(
+                      child: CachedNetworkImage(imageUrl: 
                         widget.photos[i],
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorWidget: (_, __, ___) => const Icon(
                             Icons.broken_image,
                             size: 64,
                             color: Colors.white54),
@@ -218,6 +219,7 @@ class _FullScreenGalleryState extends State<FullScreenGallery>
                   child: Row(children: [
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.white),
+                      tooltip: 'Close',
                       style: IconButton.styleFrom(
                           backgroundColor: Colors.black38),
                       onPressed: () => Navigator.pop(context),
@@ -291,7 +293,7 @@ class _FullScreenGalleryState extends State<FullScreenGallery>
                               borderRadius: BorderRadius.circular(4),
                               child: Opacity(
                                 opacity: isSelected ? 1.0 : 0.5,
-                                child: Image.network(
+                                child: CachedNetworkImage(imageUrl: 
                                   widget.photos[i],
                                   fit: BoxFit.cover,
                                 ),

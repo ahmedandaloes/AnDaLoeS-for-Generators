@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-import '../../../core/config/supabase.dart';
+import '../../../core/theme/status_colors.dart';
+import '../data/repositories/admin_repository.dart';
 
 final adminGeneratorsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final data = await supabase
-      .from('generators')
-      .select(
-          'id, title, capacity_kva, price_per_day, city, governorate, photos, status, created_at, companies(name)')
-      .inFilter('status', ['pending', 'available', 'unavailable', 'rejected'])
-      .order('created_at', ascending: false)
-      .limit(80);
-  return (data as List).cast<Map<String, dynamic>>();
+  return ref.read(adminRepositoryProvider).fetchAllGeneratorsAdmin();
 });
 
 class AdminGeneratorsTab extends StatefulWidget {
@@ -30,9 +26,9 @@ class _AdminGeneratorsTabState extends State<AdminGeneratorsTab> {
   Future<void> _setStatus(String genId, String status) async {
     setState(() => _loading[genId] = true);
     try {
-      await supabase
-          .from('generators')
-          .update({'status': status}).eq('id', genId);
+      await widget.ref
+          .read(adminRepositoryProvider)
+          .setGeneratorStatus(genId, status);
       widget.ref.invalidate(adminGeneratorsProvider);
     } finally {
       if (mounted) setState(() => _loading.remove(genId));
@@ -41,6 +37,7 @@ class _AdminGeneratorsTabState extends State<AdminGeneratorsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final async = widget.ref.watch(adminGeneratorsProvider);
 
@@ -56,7 +53,7 @@ class _AdminGeneratorsTabState extends State<AdminGeneratorsTab> {
                 Icon(Icons.bolt_outlined,
                     size: 48, color: cs.onSurfaceVariant),
                 const SizedBox(height: 8),
-                Text('No generators yet',
+                Text(l.emptyGeneratorsTitle,
                     style: TextStyle(color: cs.onSurfaceVariant)),
               ],
             ),
@@ -96,6 +93,7 @@ class _GenCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final genId = g['id']?.toString() ?? '';
     final status = g['status']?.toString() ?? '';
@@ -128,17 +126,17 @@ class _GenCard extends StatelessWidget {
                 bottomLeft: Radius.circular(13),
               ),
               child: photo != null
-                  ? Image.network(photo,
+                  ? CachedNetworkImage(imageUrl: photo,
                       width: 80,
                       height: 80,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _placeholder(cs))
+                      errorWidget: (_, __, ___) => _placeholder(cs))
                   : _placeholder(cs),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsetsDirectional.only(end: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -200,7 +198,7 @@ class _GenCard extends StatelessWidget {
                         ? null
                         : () => onStatus(genId, 'available'),
                     icon: const Icon(Icons.check_rounded, size: 16),
-                    label: const Text('Approve'),
+                    label: Text(l.approve),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.green.shade700,
                       side: BorderSide(color: Colors.green.shade400),
@@ -214,7 +212,7 @@ class _GenCard extends StatelessWidget {
                         ? null
                         : () => onStatus(genId, 'rejected'),
                     icon: const Icon(Icons.close_rounded, size: 16),
-                    label: const Text('Reject'),
+                    label: Text(l.reject),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: cs.error,
                       side:
@@ -236,7 +234,7 @@ class _GenCard extends StatelessWidget {
                           ? null
                           : () => onStatus(genId, 'unavailable'),
                       icon: const Icon(Icons.pause_circle_outline, size: 14),
-                      label: const Text('Set unavailable'),
+                      label: Text(l.setUnavailable),
                       style: TextButton.styleFrom(
                           foregroundColor: cs.onSurfaceVariant,
                           textStyle: const TextStyle(fontSize: 12)),
@@ -247,7 +245,7 @@ class _GenCard extends StatelessWidget {
                           ? null
                           : () => onStatus(genId, 'available'),
                       icon: const Icon(Icons.play_circle_outline, size: 14),
-                      label: const Text('Re-activate'),
+                      label: Text(l.reactivate),
                       style: TextButton.styleFrom(
                           foregroundColor: Colors.green.shade700,
                           textStyle: const TextStyle(fontSize: 12)),
@@ -275,25 +273,14 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color color;
-    String label;
-    switch (status) {
-      case 'available':
-        color = Colors.green;
-        label = 'Live';
-      case 'pending':
-        color = Colors.orange;
-        label = 'Pending';
-      case 'unavailable':
-        color = Colors.grey;
-        label = 'Off';
-      case 'rejected':
-        color = cs.error;
-        label = 'Rejected';
-      default:
-        color = Colors.grey;
-        label = status;
-    }
+    final color = generatorStatusColor(status, cs);
+    final label = switch (status) {
+      'available' => 'Live',
+      'pending' => 'Pending',
+      'unavailable' => 'Off',
+      'rejected' => 'Rejected',
+      _ => status,
+    };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(

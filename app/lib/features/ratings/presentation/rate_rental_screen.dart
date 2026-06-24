@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../../core/utils/db_error.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../auth/data/repositories/auth_repository.dart';
+import '../data/repositories/ratings_repository.dart';
 
-class RateRentalScreen extends StatefulWidget {
+class RateRentalScreen extends ConsumerStatefulWidget {
   const RateRentalScreen({
     super.key,
     required this.rentalRequestId,
@@ -19,13 +22,44 @@ class RateRentalScreen extends StatefulWidget {
   final bool isOwnerRating;
 
   @override
-  State<RateRentalScreen> createState() => _RateRentalScreenState();
+  ConsumerState<RateRentalScreen> createState() => _RateRentalScreenState();
 }
 
-class _RateRentalScreenState extends State<RateRentalScreen> {
+class _RateRentalScreenState extends ConsumerState<RateRentalScreen> {
   int _score = 0;
   final _commentController = TextEditingController();
   bool _submitting = false;
+  bool? _eligible; // null = checking
+  bool _alreadyRated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkEligibility();
+  }
+
+  // Guard against deep-link/back-stack misuse: only rate a COMPLETED rental,
+  // and only once. (RLS 0030 + the unique index are the hard guard; this is UX.)
+  Future<void> _checkEligibility() async {
+    try {
+      final uid = ref.read(authRepositoryProvider).currentUserId;
+      final result = await ref
+          .read(ratingsRepositoryProvider)
+          .checkEligibility(
+            rentalRequestId: widget.rentalRequestId,
+            raterId: uid,
+          );
+      if (mounted) {
+        setState(() {
+          _eligible = result.eligible;
+          _alreadyRated = result.alreadyRated;
+        });
+      }
+    } catch (_) {
+      // Fail open to the form — RLS + unique index still enforce the rules.
+      if (mounted) setState(() => _eligible = true);
+    }
+  }
 
   @override
   void dispose() {
@@ -34,29 +68,36 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
   }
 
   Future<void> _submit() async {
+    final l = AppLocalizations.of(context)!;
     if (_score == 0) {
-      _snack('Select a star rating');
+      _snack(l.selectStarRating);
       return;
     }
     setState(() => _submitting = true);
     try {
-      await supabase.from('ratings').insert({
-        'rental_request_id': widget.rentalRequestId,
-        'rater_id': supabase.auth.currentUser!.id,
-        'ratee_id': widget.rateeId,
-        'score': _score,
-        if (_commentController.text.trim().isNotEmpty)
-          'comment': _commentController.text.trim(),
-      });
+      final uid = ref.read(authRepositoryProvider).currentUserId;
+      if (uid == null) {
+        _snack(l.createAnAccountFirst);
+        return;
+      }
+      await ref.read(ratingsRepositoryProvider).submitRating(
+            rentalRequestId: widget.rentalRequestId,
+            raterId: uid,
+            rateeId: widget.rateeId,
+            score: _score,
+            comment: _commentController.text.trim().isNotEmpty
+                ? _commentController.text.trim()
+                : null,
+          );
       if (mounted) {
-        _snack('Thank you for your review!');
+        _snack(l.thankYouReview);
         context.pop();
         // The calling screen will invalidate its own providers via
         // Riverpod ref.invalidate — the rating badge updates on next build.
       }
     } catch (e) {
       _snack(friendlyDbError(e,
-          fallback: 'Could not submit your rating. Please try again.'));
+          fallback: l.couldNotSubmitRating));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -77,9 +118,41 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
+
+    if (_eligible == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_eligible == false) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l.leaveAReview)),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.reviews_outlined,
+                    size: 48, color: cs.onSurfaceVariant),
+                const SizedBox(height: 14),
+                Text(_alreadyRated ? l.alreadyReviewed : l.reviewWhenCompleted,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: cs.onSurfaceVariant)),
+                const SizedBox(height: 16),
+                FilledButton(
+                    onPressed: () => context.pop(),
+                    child: Text(l.back)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Leave a Review')),
+      appBar: AppBar(title: Text(l.leaveAReview)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -111,8 +184,8 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
                   const SizedBox(height: 12),
                   Text(
                     widget.isOwnerRating
-                        ? 'Rate the customer'
-                        : 'Rate your experience',
+                        ? l.rateTheCustomer
+                        : l.rateYourExperience,
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.w700),
                   ),
@@ -152,7 +225,7 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
             const SizedBox(height: 8),
             Center(
               child: Text(
-                _scoreLabel(_score),
+                _scoreLabel(_score, l),
                 style: TextStyle(
                   fontSize: 14,
                   color: _score > 0 ? cs.primary : cs.onSurfaceVariant,
@@ -192,10 +265,9 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
             TextField(
               controller: _commentController,
               maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Comment (optional)',
-                hintText:
-                    'Share details about your experience…',
+              decoration: InputDecoration(
+                labelText: l.commentOptional,
+                hintText: l.commentHint,
                 alignLabelWithHint: true,
               ),
             ),
@@ -210,12 +282,12 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: cs.onPrimary),
                     )
-                  : const Text('Submit review'),
+                  : Text(l.submitReview),
             ),
             const SizedBox(height: 12),
             TextButton(
               onPressed: () => context.pop(),
-              child: const Text('Skip'),
+              child: Text(l.skip),
             ),
           ],
         ),
@@ -250,14 +322,14 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
           ],
       };
 
-  String _scoreLabel(int score) {
+  String _scoreLabel(int score, AppLocalizations l) {
     return switch (score) {
-      1 => 'Poor',
-      2 => 'Fair',
-      3 => 'Good',
-      4 => 'Very good',
-      5 => 'Excellent!',
-      _ => 'Tap to rate',
+      1 => l.scorePoor,
+      2 => l.scoreFair,
+      3 => l.scoreGood,
+      4 => l.scoreVeryGood,
+      5 => l.scoreExcellent,
+      _ => l.tapToRate,
     };
   }
 }

@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
-import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../l10n/app_localizations.dart';
+import 'providers/auth_providers.dart' show authRepositoryProvider;
 
 /// Production email front door: sign in, or create an account (with email
 /// confirmation when enabled on the Supabase project). Phone OTP lives on the
 /// LoginScreen; this is the path that works without an SMS provider.
-class EmailAuthScreen extends StatefulWidget {
+class EmailAuthScreen extends ConsumerStatefulWidget {
   const EmailAuthScreen({super.key});
 
   @override
-  State<EmailAuthScreen> createState() => _EmailAuthScreenState();
+  ConsumerState<EmailAuthScreen> createState() => _EmailAuthScreenState();
 }
 
-class _EmailAuthScreenState extends State<EmailAuthScreen> {
+class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _signUpMode = false;
@@ -53,31 +55,32 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
   }
 
   Future<void> _submit() async {
+    final l = AppLocalizations.of(context)!;
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || !email.contains('@')) {
-      _snack('Enter a valid email address.');
+      _snack(l.invalidEmail);
       return;
     }
     if (password.length < 6) {
-      _snack('Password must be at least 6 characters.');
+      _snack(l.passwordMinLength);
       return;
     }
     setState(() => _loading = true);
+    final repo = ref.read(authRepositoryProvider);
     try {
       if (_signUpMode) {
-        final res =
-            await supabase.auth.signUp(email: email, password: password);
+        final sessionCreated =
+            await repo.signUpAndCheckSession(email, password);
         // If the project requires email confirmation, no session is returned.
-        if (res.session == null) {
+        if (!sessionCreated) {
           _snack('Account created! Check your email to confirm, then sign in.');
           setState(() => _signUpMode = false);
         } else if (mounted) {
           context.go(AppRoutes.home);
         }
       } else {
-        await supabase.auth
-            .signInWithPassword(email: email, password: password);
+        await repo.signInWithEmailPassword(email, password);
         if (mounted) context.go(AppRoutes.home);
       }
     } catch (e) {
@@ -90,7 +93,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
   Future<void> _guest() async {
     setState(() => _loading = true);
     try {
-      await supabase.auth.signInAnonymously();
+      await ref.read(authRepositoryProvider).signInAnonymously();
       if (mounted) context.go(AppRoutes.home);
     } catch (e) {
       _snack(_friendlyAuthError(e));
@@ -102,8 +105,9 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: Text(_signUpMode ? 'Create account' : 'Sign in')),
+      appBar: AppBar(title: Text(_signUpMode ? l.createAccount : l.loginTitle)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
@@ -111,14 +115,14 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
             Icon(Icons.bolt_rounded, size: 48, color: cs.primary),
             const SizedBox(height: 12),
             Text(
-              _signUpMode ? 'Create your account' : 'Welcome back',
+              _signUpMode ? l.createYourAccount : l.welcomeBack,
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 4),
             Text(
               _signUpMode
-                  ? 'Sign up with your email to rent or list generators.'
-                  : 'Sign in to continue.',
+                  ? l.signUpEmailDesc
+                  : l.signInToContinue,
               style: TextStyle(color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 24),
@@ -126,9 +130,9 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               autocorrect: false,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                prefixIcon: Icon(Icons.email_outlined),
+              decoration: InputDecoration(
+                labelText: l.emailLabel,
+                prefixIcon: const Icon(Icons.email_outlined),
               ),
             ),
             const SizedBox(height: 12),
@@ -136,11 +140,12 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
               controller: _passwordController,
               obscureText: _obscure,
               decoration: InputDecoration(
-                labelText: 'Password',
+                labelText: l.passwordLabel,
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   icon: Icon(
                       _obscure ? Icons.visibility_off : Icons.visibility),
+                  tooltip: _obscure ? l.showPassword : l.hidePassword,
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),
@@ -153,7 +158,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(_signUpMode ? 'Create account' : 'Sign in'),
+                  : Text(_signUpMode ? l.createAccount : l.loginTitle),
             ),
             const SizedBox(height: 8),
             TextButton(
@@ -171,7 +176,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
                       color: cs.outlineVariant.withValues(alpha: 0.5))),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text('or',
+                child: Text(l.orLabel,
                     style:
                         TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
               ),
@@ -183,7 +188,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
             OutlinedButton.icon(
               onPressed: _loading ? null : _guest,
               icon: const Icon(Icons.explore_outlined, size: 18),
-              label: const Text('Browse as guest'),
+              label: Text(l.browseAsGuest),
             ),
           ],
         ),

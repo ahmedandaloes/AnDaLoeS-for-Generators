@@ -2,13 +2,17 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
-import '../../../core/config/supabase.dart';
 import '../../../core/constants/generator_sizes.dart';
 import '../../../core/constants/generator_use_cases.dart';
+import '../../../core/utils/db_error.dart';
+import '../../../core/widgets/app_snack_bar.dart';
+import 'providers/owner_providers.dart' show ownerRepositoryProvider;
 
 const _governorates = [
   'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',
@@ -18,15 +22,21 @@ const _governorates = [
   'Luxor', 'Qena', 'North Sinai', 'Sohag',
 ];
 
-class AddGeneratorScreen extends StatefulWidget {
-  const AddGeneratorScreen({super.key, required this.companyId});
+class AddGeneratorScreen extends ConsumerStatefulWidget {
+  const AddGeneratorScreen({
+    super.key,
+    required this.companyId,
+    this.prefill,
+  });
   final String companyId;
+  final Map<String, dynamic>? prefill;
 
   @override
-  State<AddGeneratorScreen> createState() => _AddGeneratorScreenState();
+  ConsumerState<AddGeneratorScreen> createState() =>
+      _AddGeneratorScreenState();
 }
 
-class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
+class _AddGeneratorScreenState extends ConsumerState<AddGeneratorScreen> {
   final _titleController = TextEditingController();
   final _capacityController = TextEditingController();
   final _descController = TextEditingController();
@@ -37,12 +47,40 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
   final _cityController = TextEditingController();
   String? _governorate;
   String _fuelType = 'diesel';
+  String _hireType = 'dry_hire';
+  String _fuelPolicy = 'customer_provides';
+  final Set<String> _accessories = {};
   final Set<String> _useCases = {};
   bool _submitting = false;
 
   // Photos
   final List<File> _photos = [];
   static const _maxPhotos = 5;
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.prefill;
+    if (p != null) {
+      _titleController.text = p['title']?.toString() ?? '';
+      _capacityController.text = p['capacity_kva']?.toString() ?? '';
+      _descController.text = p['description']?.toString() ?? '';
+      _pricePerDayController.text = p['price_per_day']?.toString() ?? '';
+      _pricePerWeekController.text = p['price_per_week']?.toString() ?? '';
+      _pricePerMonthController.text = p['price_per_month']?.toString() ?? '';
+      final dep = (p['deposit_amount'] as num?)?.toDouble() ?? 0;
+      _depositController.text = dep > 0 ? dep.toStringAsFixed(0) : '';
+      _cityController.text = p['city']?.toString() ?? '';
+      _governorate = p['governorate']?.toString();
+      _fuelType = p['fuel_type']?.toString() ?? 'diesel';
+      _hireType = p['hire_type']?.toString() ?? 'dry_hire';
+      _fuelPolicy = p['fuel_policy']?.toString() ?? 'customer_provides';
+      _useCases.addAll(
+          (p['use_cases'] as List?)?.cast<String>() ?? const []);
+      _accessories.addAll(
+          (p['accessories'] as List?)?.cast<String>() ?? const []);
+    }
+  }
 
   @override
   void dispose() {
@@ -58,8 +96,9 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
   }
 
   Future<void> _pickPhoto() async {
+    final l = AppLocalizations.of(context)!;
     if (_photos.length >= _maxPhotos) {
-      _snack('Maximum $_maxPhotos photos allowed');
+      _snack(l.maxPhotosAllowed(_maxPhotos));
       return;
     }
     try {
@@ -72,28 +111,30 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
       if (path == null) return;
       setState(() => _photos.add(File(path)));
     } catch (e) {
-      _snack('Could not open photo picker: $e');
+      _snack(l.photoPickerError);
     }
   }
 
   Future<void> _submit() async {
+    final l = AppLocalizations.of(context)!;
     final title = _titleController.text.trim();
     final capacityStr = _capacityController.text.trim();
     final priceStr = _pricePerDayController.text.trim();
 
     if (title.isEmpty || capacityStr.isEmpty || priceStr.isEmpty) {
-      _snack('Title, capacity, and daily price are required');
+      _snack(l.requiredFieldsGenerator);
       return;
     }
     if (_governorate == null) {
-      _snack('Select a governorate');
+      _snack(l.selectGovernorateError);
       return;
     }
 
     setState(() => _submitting = true);
     try {
+      final repo = ref.read(ownerRepositoryProvider);
       // 1 — insert generator
-      final data = await supabase.from('generators').insert({
+      final data = await repo.insertGenerator({
         'company_id': widget.companyId,
         'title': title,
         'capacity_kva': double.parse(capacityStr),
@@ -110,9 +151,12 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
           'city': _cityController.text.trim(),
         'governorate': _governorate,
         'fuel_type': _fuelType,
+        'hire_type': _hireType,
+        'fuel_policy': _fuelPolicy,
+        'accessories': _accessories.toList(),
         'use_cases': _useCases.toList(),
         'status': 'available',
-      }).select('id').single();
+      });
 
       final generatorId = data['id'].toString();
 
@@ -125,53 +169,100 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
           final ext = file.path.split('.').last.toLowerCase();
           final remotePath =
               '${widget.companyId}/$generatorId/${ts}_$i.$ext';
-          await supabase.storage.from('generator-photos').upload(
-                remotePath,
-                file,
-                fileOptions: const FileOptions(upsert: true),
-              );
-          final url = supabase.storage
-              .from('generator-photos')
-              .getPublicUrl(remotePath);
+          final url = await repo.uploadGeneratorPhoto(
+            remotePath,
+            file,
+            const FileOptions(upsert: true),
+          );
           urls.add(url);
         }
-        await supabase.from('generators').update({'photos': urls}).eq(
-            'id', generatorId);
+        await repo.updateGeneratorPhotos(generatorId, urls);
       }
 
       if (mounted) {
-        _snack('Generator added!');
-        context.pop();
+        final addAnother = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(l.generatorAdded),
+            content: Text(l.addAnotherGeneratorQ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(l.done),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(l.addAnotherGenerator),
+              ),
+            ],
+          ),
+        );
+        if (!mounted) return;
+        if (addAnother == true) {
+          _resetForm();
+        } else {
+          context.pop();
+        }
       }
     } catch (e) {
-      _snack('Error: $e');
+      _snack(friendlyDbError(e));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
   }
 
+  void _resetForm() {
+    setState(() {
+      for (final c in [
+        _titleController, _capacityController, _descController,
+        _pricePerDayController, _pricePerWeekController,
+        _pricePerMonthController, _depositController, _cityController,
+      ]) {
+        c.clear();
+      }
+      _governorate = null;
+      _fuelType = 'diesel';
+      _hireType = 'dry_hire';
+      _fuelPolicy = 'customer_provides';
+      _accessories.clear();
+      _useCases.clear();
+      _photos.clear();
+    });
+    // Scroll to top so owner starts fresh from the title field.
+    Scrollable.maybeOf(context)?.position.jumpTo(0);
+  }
+
+  Widget _accessoryChip(String key, String label) => FilterChip(
+        label: Text(label),
+        selected: _accessories.contains(key),
+        onSelected: (on) => setState(() {
+          if (on) {
+            _accessories.add(key);
+          } else {
+            _accessories.remove(key);
+          }
+        }),
+      );
+
   void _snack(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    ));
+    AppSnackBar.show(context, msg);
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Generator')),
+      appBar: AppBar(title: Text(l.addGenerator)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── Photos ──────────────────────────────────────────────────
-            _Section('Photos (optional)'),
+            _Section(l.photosOptional),
             SizedBox(
               height: 110,
               child: ListView(
@@ -195,16 +286,16 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Up to $_maxPhotos photos — shown in the generator listing',
+              l.photosUpToNote(_maxPhotos),
               style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 20),
 
             // ── Basic info ──────────────────────────────────────────────
-            _Section('Basic info'),
-            _Field('Title *', 'e.g. Cummins 100 KVA Diesel', _titleController),
+            _Section(l.basicInfo),
+            _Field(l.titleRequired, l.titleHint, _titleController),
             const SizedBox(height: 12),
-            _Label('Capacity *'),
+            _Label(l.capacityRequired),
             DropdownButtonFormField<int>(
               value: int.tryParse(_capacityController.text),
               isExpanded: true,
@@ -217,7 +308,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                 ),
                 prefixIcon: const Icon(Icons.electric_bolt_outlined),
               ),
-              hint: const Text('Select size (kVA / kW)'),
+              hint: Text(l.selectSize),
               items: [
                 for (final kva in kGeneratorKvaSizes)
                   DropdownMenuItem(
@@ -227,7 +318,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                   () => _capacityController.text = v?.toString() ?? ''),
             ),
             const SizedBox(height: 12),
-            _Label('Fuel type *'),
+            _Label(l.fuelTypeRequired),
             DropdownButtonFormField<String>(
               value: _fuelType,
               decoration: InputDecoration(
@@ -239,18 +330,18 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                 ),
                 prefixIcon: const Icon(Icons.local_gas_station_outlined),
               ),
-              items: const [
-                DropdownMenuItem(value: 'diesel', child: Text('Diesel')),
-                DropdownMenuItem(value: 'petrol', child: Text('Petrol')),
-                DropdownMenuItem(value: 'gas', child: Text('Gas (LPG)')),
+              items: [
+                DropdownMenuItem(value: 'diesel', child: Text(l.fuelDiesel)),
+                DropdownMenuItem(value: 'petrol', child: Text(l.fuelPetrol)),
+                DropdownMenuItem(value: 'gas', child: Text(l.fuelGasLpg)),
                 DropdownMenuItem(
-                    value: 'natural_gas', child: Text('Natural Gas')),
-                DropdownMenuItem(value: 'solar', child: Text('Solar')),
+                    value: 'natural_gas', child: Text(l.fuelNaturalGas)),
+                DropdownMenuItem(value: 'solar', child: Text(l.fuelSolar)),
               ],
               onChanged: (v) => setState(() => _fuelType = v ?? 'diesel'),
             ),
             const SizedBox(height: 12),
-            _Label('Best for (use cases)'),
+            _Label(l.bestForUseCases),
             const SizedBox(height: 4),
             Wrap(
               spacing: 8,
@@ -271,16 +362,65 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
               }).toList(),
             ),
             const SizedBox(height: 12),
-            _Field('Description', 'Optional details about the generator',
+
+            // Hire type
+            _Label(l.hireTypeLabel),
+            SegmentedButton<String>(
+              segments: [
+                ButtonSegment(
+                    value: 'dry_hire', label: Text(l.hireTypeDryHire)),
+                ButtonSegment(
+                    value: 'operated', label: Text(l.hireTypeOperated)),
+              ],
+              selected: {_hireType},
+              onSelectionChanged: (s) =>
+                  setState(() => _hireType = s.first),
+            ),
+            const SizedBox(height: 12),
+
+            // Fuel policy
+            _Label(l.fuelPolicyLabel),
+            SegmentedButton<String>(
+              segments: [
+                ButtonSegment(
+                    value: 'customer_provides',
+                    label: Text(l.fuelPolicyCustomerProvides)),
+                ButtonSegment(
+                    value: 'included',
+                    label: Text(l.fuelPolicyIncluded)),
+              ],
+              selected: {_fuelPolicy},
+              onSelectionChanged: (s) =>
+                  setState(() => _fuelPolicy = s.first),
+            ),
+            const SizedBox(height: 12),
+
+            // Accessories
+            _Label(l.accessoriesLabel),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _accessoryChip('cables', l.accessoryCables),
+                _accessoryChip(
+                    'extension_board', l.accessoryExtensionBoard),
+                _accessoryChip('fuel_tank', l.accessoryFuelTank),
+                _accessoryChip(
+                    'transfer_switch', l.accessoryTransferSwitch),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            _Field(l.descriptionCol, l.descriptionHint,
                 _descController,
                 maxLines: 3),
             const SizedBox(height: 20),
 
             // ── Location ────────────────────────────────────────────────
-            _Section('Location'),
-            _Field('City', 'e.g. Nasr City', _cityController),
+            _Section(l.location),
+            _Field(l.cityLabel, l.cityHint, _cityController),
             const SizedBox(height: 12),
-            _Label('Governorate *'),
+            _Label(l.governorateRequired),
             DropdownButtonFormField<String>(
               value: _governorate,
               decoration: InputDecoration(
@@ -292,7 +432,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                 ),
                 prefixIcon: const Icon(Icons.location_on_outlined),
               ),
-              hint: const Text('Select governorate'),
+              hint: Text(l.selectGovernorate),
               items: _governorates
                   .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                   .toList(),
@@ -301,30 +441,30 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
             const SizedBox(height: 20),
 
             // ── Pricing ─────────────────────────────────────────────────
-            _Section('Pricing (EGP)'),
-            _NumField('Per day (8 hrs) *', '0', _pricePerDayController),
+            _Section(l.pricingEgp),
+            _NumField(l.perDay8hRequired, '0', _pricePerDayController),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                     child: _NumField(
-                        'Per week', 'optional', _pricePerWeekController)),
+                        l.perWeek, l.optionalField, _pricePerWeekController)),
                 const SizedBox(width: 12),
                 Expanded(
                     child: _NumField(
-                        'Per month', 'optional', _pricePerMonthController)),
+                        l.perMonth, l.optionalField, _pricePerMonthController)),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              '1 day = 8 operating hours. Lower week/month rates attract more bookings.',
+              l.pricingNote,
               style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
-            _NumField('Refundable deposit', 'optional', _depositController),
+            _NumField(l.refundableDeposit, l.optionalField, _depositController),
             const SizedBox(height: 4),
             Text(
-              'A refundable security deposit reassures you against damage. Shown to the customer at booking.',
+              l.depositNote,
               style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 28),
@@ -338,9 +478,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: cs.onPrimary),
                     )
-                  : Text(_photos.isEmpty
-                      ? 'Add generator'
-                      : 'Add generator + ${_photos.length} photo${_photos.length == 1 ? '' : 's'}'),
+                  : Text(l.addGeneratorWithPhotos(_photos.length)),
             ),
           ],
         ),
@@ -358,12 +496,13 @@ class _PhotoAddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 96,
         height: 96,
-        margin: const EdgeInsets.only(right: 10),
+        margin: const EdgeInsetsDirectional.only(end: 10),
         decoration: BoxDecoration(
           color: cs.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(12),
@@ -379,7 +518,7 @@ class _PhotoAddButton extends StatelessWidget {
             Icon(Icons.add_a_photo_outlined,
                 size: 28, color: cs.onSurfaceVariant),
             const SizedBox(height: 4),
-            Text('Add photo',
+            Text(l.addPhoto,
                 style:
                     TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
           ],
@@ -455,7 +594,7 @@ class _PhotoThumb extends StatelessWidget {
           child: Container(
             width: 96,
             height: 96,
-            margin: const EdgeInsets.only(right: 10),
+            margin: const EdgeInsetsDirectional.only(end: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               image: DecorationImage(

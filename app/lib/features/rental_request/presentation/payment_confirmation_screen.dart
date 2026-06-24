@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/config/supabase.dart';
+import '../../../core/config/tax_config_provider.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/utils/db_error.dart';
+import '../../../core/utils/tax.dart';
+import '../../../l10n/app_localizations.dart';
+import 'providers/rental_providers.dart' show rentalRepositoryProvider;
 
 class PaymentConfirmationScreen extends ConsumerStatefulWidget {
   const PaymentConfirmationScreen({
@@ -41,10 +44,17 @@ class _PaymentConfirmationScreenState
 
   Future<void> _confirm() async {
     HapticFeedback.mediumImpact();
+    // Guests who browsed the form without signing in are redirected here.
+    final repo = ref.read(rentalRepositoryProvider);
+    final uid = repo.currentUserId;
+    if (uid == null || repo.isCurrentUserAnonymous) {
+      if (mounted) context.push(AppRoutes.login);
+      return;
+    }
     setState(() => _submitting = true);
     try {
-      await supabase.from('rental_requests').insert({
-        'customer_id': supabase.auth.currentUser!.id,
+      await repo.insertRentalRequest({
+        'customer_id': uid,
         'generator_id': widget.generator['id'],
         'company_id': widget.generator['company_id'],
         'start_date': widget.startDate.toIso8601String().substring(0, 10),
@@ -85,6 +95,7 @@ class _PaymentConfirmationScreenState
       barrierDismissible: false,
       builder: (_) {
         final cs = Theme.of(context).colorScheme;
+        final l = AppLocalizations.of(context)!;
         return AlertDialog(
           icon: Container(
             width: 64,
@@ -96,14 +107,14 @@ class _PaymentConfirmationScreenState
             child:
                 Icon(Icons.check_circle_rounded, color: Colors.green.shade600, size: 40),
           ),
-          title: const Text('Request sent!',
+          title: Text(l.requestSent,
               textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.w700)),
+              style: const TextStyle(fontWeight: FontWeight.w700)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Your rental request has been sent to the owner. You\'ll be notified once they respond.',
+                l.requestSentBody,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: cs.onSurfaceVariant),
               ),
@@ -123,8 +134,8 @@ class _PaymentConfirmationScreenState
                     const SizedBox(width: 6),
                     Text(
                       _paymentMethod == 'cash'
-                          ? 'Cash on delivery'
-                          : 'Digital payment',
+                          ? l.cashOnDelivery
+                          : l.digitalPayment,
                       style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -141,7 +152,7 @@ class _PaymentConfirmationScreenState
                 Navigator.pop(context);
                 context.go(AppRoutes.myRentals);
               },
-              child: const Text('View my rentals'),
+              child: Text(l.viewMyRentals),
             ),
           ],
         );
@@ -152,17 +163,25 @@ class _PaymentConfirmationScreenState
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
+    final tax = ref.watch(taxConfigProvider).valueOrNull;
     final gen = widget.generator;
+    String dtLabel(String v) => switch (v) {
+          'Morning' => l.deliveryMorning,
+          'Afternoon' => l.deliveryAfternoon,
+          'Evening' => l.deliveryEvening,
+          _ => l.deliveryFlexible,
+        };
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Confirm Request')),
+      appBar: AppBar(title: Text(l.confirmRequest)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Generator summary
-            _SectionLabel('Generator'),
+            _SectionLabel(l.generatorLabel),
             Card(
               child: ListTile(
                 leading: Container(
@@ -184,7 +203,7 @@ class _PaymentConfirmationScreenState
             const SizedBox(height: 16),
 
             // Rental dates
-            _SectionLabel('Rental dates'),
+            _SectionLabel(l.rentalDates),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -217,7 +236,7 @@ class _PaymentConfirmationScreenState
             const SizedBox(height: 16),
 
             // Itemized payment summary (transparency = our differentiator)
-            _SectionLabel('Payment summary'),
+            _SectionLabel(l.paymentSummary),
             Builder(builder: (_) {
               final deposit =
                   (widget.generator['deposit_amount'] as num?)?.toDouble() ?? 0;
@@ -266,21 +285,32 @@ class _PaymentConfirmationScreenState
                   padding: const EdgeInsets.all(16),
                   child: Column(children: [
                     line(
-                        'Rental · ${widget.days} day${widget.days == 1 ? '' : 's'}',
+                        l.rentalDaysLine(widget.days),
                         'EGP ${rental.toStringAsFixed(0)}',
-                        sub: 'Best rate applied · 1 day = 8 operating hours'),
+                        sub: l.bestRateApplied),
+                    // VAT breakdown (transparency; total unchanged) — only when
+                    // tax applies at booking. price_total is VAT-inclusive.
+                    if (tax != null &&
+                        tax.rate > 0 &&
+                        vatShownAtBooking(tax.appliesWhen)) ...[
+                      line(l.subtotalExcl(tax.label),
+                          'EGP ${vatBreakdown(rental, tax.rate).subtotal.toStringAsFixed(0)}'),
+                      line(
+                          '${tax.label} (${(tax.rate * 100).toStringAsFixed(tax.rate * 100 % 1 == 0 ? 0 : 1)}%)',
+                          'EGP ${vatBreakdown(rental, tax.rate).vat.toStringAsFixed(0)}'),
+                    ],
                     if (deposit > 0)
-                      line('Refundable deposit',
+                      line(l.refundableDeposit,
                           'EGP ${deposit.toStringAsFixed(0)}',
                           sub:
-                              'Returned after the generator comes back in good condition'),
+                              l.depositReturnNote),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Divider(
                           height: 1,
                           color: cs.primary.withValues(alpha: 0.2)),
                     ),
-                    line('Total payable on delivery',
+                    line(l.totalPayableOnDelivery,
                         'EGP ${grand.toStringAsFixed(0)}',
                         bold: true, color: cs.primary),
                   ]),
@@ -293,7 +323,7 @@ class _PaymentConfirmationScreenState
             if (widget.deliveryAddress.isNotEmpty ||
                 (widget.deliveryTime.isNotEmpty &&
                     widget.deliveryTime != 'Flexible')) ...[
-              _SectionLabel('Delivery'),
+              _SectionLabel(l.deliveryLabel),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(14),
@@ -321,7 +351,7 @@ class _PaymentConfirmationScreenState
                           Icon(Icons.schedule,
                               size: 16, color: cs.onSurfaceVariant),
                           const SizedBox(width: 8),
-                          Text('Preferred: ${widget.deliveryTime}',
+                          Text(l.preferredTimeLabel(dtLabel(widget.deliveryTime)),
                               style: const TextStyle(fontSize: 14)),
                         ]),
                       ],
@@ -334,7 +364,7 @@ class _PaymentConfirmationScreenState
 
             // Note
             if (widget.note.isNotEmpty) ...[
-              _SectionLabel('Note to owner'),
+              _SectionLabel(l.noteToOwnerShort),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(14),
@@ -355,10 +385,10 @@ class _PaymentConfirmationScreenState
             ],
 
             // Payment method
-            _SectionLabel('Payment method'),
+            _SectionLabel(l.paymentMethod),
             _PaymentMethodTile(
-              label: 'Cash on delivery',
-              subtitle: 'Pay the owner in cash when the generator arrives.',
+              label: l.cashOnDelivery,
+              subtitle: l.codSubtitle,
               icon: Icons.payments_outlined,
               value: 'cash',
               groupValue: _paymentMethod,
@@ -366,8 +396,8 @@ class _PaymentConfirmationScreenState
             ),
             const SizedBox(height: 8),
             _PaymentMethodTile(
-              label: 'Digital payment',
-              subtitle: 'Vodafone Cash, InstaPay — coming soon.',
+              label: l.digitalPayment,
+              subtitle: l.digitalSubtitle,
               icon: Icons.phone_android_outlined,
               value: 'digital',
               groupValue: _paymentMethod,
@@ -393,7 +423,7 @@ class _PaymentConfirmationScreenState
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'You\'ll pay the owner directly in cash when the generator is delivered.',
+                      l.codBannerText,
                       style: TextStyle(
                           fontSize: 12, color: Colors.amber.shade900),
                     ),
@@ -410,8 +440,7 @@ class _PaymentConfirmationScreenState
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Free cancellation while your request is pending. After the '
-                    'owner accepts, please coordinate any cancellation with them.',
+                    l.cancellationPolicy,
                     style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                   ),
                 ),
@@ -430,13 +459,13 @@ class _PaymentConfirmationScreenState
                           color: cs.onPrimary),
                     )
                   : const Icon(Icons.send_rounded),
-              label: Text(_submitting ? 'Sending…' : 'Send rental request'),
+              label: Text(_submitting ? l.sending : l.sendRentalRequest),
               style:
                   FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
             ),
             const SizedBox(height: 12),
             Text(
-              'The owner will review and accept or reject your request.',
+              l.reviewNote,
               style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
@@ -477,6 +506,7 @@ class _PaymentMethodTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     final selected = value == groupValue && !comingSoon;
     return GestureDetector(
       onTap: comingSoon ? null : () => onChanged?.call(value),
@@ -542,7 +572,7 @@ class _PaymentMethodTile extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        'Soon',
+                        l.soon,
                         style: TextStyle(
                             fontSize: 10,
                             color: cs.onSurfaceVariant,

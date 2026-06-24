@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/routing/app_routes.dart';
@@ -64,6 +65,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final isLast = _page == _pages.length - 1;
+    final l = AppLocalizations.of(context)!;
+    final texts = [
+      (l.onboard1Title, l.onboard1Body),
+      (l.onboard2Title, l.onboard2Body),
+      (l.onboard3Title, l.onboard3Body),
+    ];
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -74,7 +81,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             controller: _controller,
             itemCount: _pages.length,
             onPageChanged: (i) => setState(() => _page = i),
-            itemBuilder: (context, i) => _OnboardingPage(data: _pages[i]),
+            itemBuilder: (context, i) => _OnboardingPage(
+                data: _pages[i], title: texts[i].$1, body: texts[i].$2),
           ),
 
           // Bottom controls
@@ -130,7 +138,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   curve: Curves.easeInOut,
                                 ),
                         child: Text(
-                          isLast ? 'Get started' : 'Next',
+                          isLast ? l.getStarted : l.next,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -145,7 +153,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       TextButton(
                         onPressed: _finish,
                         child: Text(
-                          'Skip',
+                          l.skip,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.6),
                             fontSize: 14,
@@ -178,16 +186,19 @@ class _PageData {
 }
 
 class _OnboardingPage extends StatelessWidget {
-  const _OnboardingPage({required this.data});
+  const _OnboardingPage(
+      {required this.data, required this.title, required this.body});
   final _PageData data;
+  final String title;
+  final String body;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: data.gradient,
         ),
       ),
@@ -211,7 +222,7 @@ class _OnboardingPage extends StatelessWidget {
 
               // Title
               Text(
-                data.title,
+                title,
                 style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
@@ -224,7 +235,7 @@ class _OnboardingPage extends StatelessWidget {
 
               // Body
               Text(
-                data.body,
+                body,
                 style: TextStyle(
                   fontSize: 17,
                   color: Colors.white.withValues(alpha: 0.8),

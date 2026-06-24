@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../../core/config/tax_config_provider.dart';
+import '../../../core/utils/db_error.dart';
+import '../data/repositories/admin_repository.dart';
 
 /// Egypt standard VAT rate, applied to the platform's commission (its service
 /// fee) for accounting/reporting. Confirm treatment with an accountant.
@@ -14,29 +16,13 @@ const double kVatRate = 0.14;
 /// Active platform commission rule (type + value).
 final commissionRateProvider =
     FutureProvider.autoDispose<({String type, double value})?>((ref) async {
-  final rows = await supabase
-      .from('commission_config')
-      .select('type, value')
-      .eq('active', true)
-      .isFilter('company_id', null)
-      .limit(1);
-  final list = (rows as List).cast<Map<String, dynamic>>();
-  if (list.isEmpty) return null;
-  return (
-    type: list.first['type']?.toString() ?? 'percentage',
-    value: (list.first['value'] as num?)?.toDouble() ?? 0,
-  );
+  return ref.read(adminRepositoryProvider).fetchActiveCommissionRate();
 });
 
 /// All commission rows (admin view) with company + generator context.
 final adminCommissionsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final rows = await supabase
-      .from('commissions')
-      .select(
-          'id, commission_amount, status, created_at, rental_requests(companies(name), generators(title))')
-      .order('created_at', ascending: false);
-  return (rows as List).cast<Map<String, dynamic>>();
+  return ref.read(adminRepositoryProvider).fetchActiveCommissions();
 });
 
 class AdminRevenueTab extends ConsumerWidget {
@@ -46,6 +32,7 @@ class AdminRevenueTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef wRef) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     final rateAsync = wRef.watch(commissionRateProvider);
     final commsAsync = wRef.watch(adminCommissionsProvider);
 
@@ -69,7 +56,7 @@ class AdminRevenueTab extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Platform commission',
+                        Text(l.platformCommission,
                             style: TextStyle(
                                 fontSize: 12, color: cs.onSurfaceVariant)),
                         const SizedBox(height: 2),
@@ -78,7 +65,7 @@ class AdminRevenueTab extends ConsumerWidget {
                           error: (_, __) => const Text('—'),
                           data: (r) => Text(
                             r == null
-                                ? 'Not set'
+                                ? l.notSet
                                 : r.type == 'percentage'
                                     ? '${(r.value * 100).toStringAsFixed(r.value * 100 % 1 == 0 ? 0 : 1)}% per completed rental'
                                     : 'EGP ${r.value.toStringAsFixed(0)} per rental',
@@ -92,7 +79,7 @@ class AdminRevenueTab extends ConsumerWidget {
                   TextButton(
                     onPressed: () => _editRate(context, wRef,
                         rateAsync.valueOrNull),
-                    child: const Text('Edit'),
+                    child: Text(l.edit),
                   ),
                 ],
               ),
@@ -112,7 +99,7 @@ class AdminRevenueTab extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Customer tax (on invoices)',
+                        Text(l.customerTaxOnInvoices,
                             style: TextStyle(
                                 fontSize: 12, color: cs.onSurfaceVariant)),
                         const SizedBox(height: 2),
@@ -133,7 +120,7 @@ class AdminRevenueTab extends ConsumerWidget {
                   TextButton(
                     onPressed: () => _editTax(
                         context, wRef, wRef.read(taxConfigProvider).valueOrNull),
-                    child: const Text('Edit'),
+                    child: Text(l.edit),
                   ),
                 ],
               ),
@@ -157,14 +144,14 @@ class AdminRevenueTab extends ConsumerWidget {
               return Row(children: [
                 Expanded(
                     child: _MoneyCard(
-                        label: 'Owed to you (accrued)',
+                        label: l.owedAccrued,
                         value: accrued,
                         color: Colors.orange.shade700,
                         cs: cs)),
                 const SizedBox(width: 12),
                 Expanded(
                     child: _MoneyCard(
-                        label: 'Collected (settled)',
+                        label: l.collectedSettled,
                         value: settled,
                         color: Colors.green.shade700,
                         cs: cs)),
@@ -175,7 +162,7 @@ class AdminRevenueTab extends ConsumerWidget {
           const SizedBox(height: 20),
 
           Row(children: [
-            Text('COMMISSIONS',
+            Text(l.commissionsHeader,
                 style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -188,7 +175,7 @@ class AdminRevenueTab extends ConsumerWidget {
                   : TextButton.icon(
                       onPressed: () => _exportCsv(context, rows),
                       icon: const Icon(Icons.download_outlined, size: 16),
-                      label: const Text('Export (VAT)'),
+                      label: Text(l.exportVat),
                     ),
               orElse: () => const SizedBox.shrink(),
             ),
@@ -199,7 +186,7 @@ class AdminRevenueTab extends ConsumerWidget {
                 const Center(child: Padding(
                     padding: EdgeInsets.all(24),
                     child: CircularProgressIndicator())),
-            error: (e, _) => Text('$e'),
+            error: (e, _) => Text(friendlyDbError(e)),
             data: (rows) {
               if (rows.isEmpty) {
                 return Padding(
@@ -209,10 +196,10 @@ class AdminRevenueTab extends ConsumerWidget {
                       Icon(Icons.payments_outlined,
                           size: 40, color: cs.onSurfaceVariant),
                       const SizedBox(height: 12),
-                      Text('No commissions yet',
+                      Text(l.noCommissionsYet,
                           style: TextStyle(color: cs.onSurfaceVariant)),
                       const SizedBox(height: 4),
-                      Text('They accrue when a rental is completed.',
+                      Text(l.commissionsAccrueNote,
                           style: TextStyle(
                               fontSize: 12, color: cs.onSurfaceVariant)),
                     ]),
@@ -233,9 +220,7 @@ class AdminRevenueTab extends ConsumerWidget {
   }
 
   Future<void> _settle(WidgetRef wRef, Map<String, dynamic> row) async {
-    await supabase
-        .from('commissions')
-        .update({'status': 'settled'}).eq('id', row['id']);
+    await wRef.read(adminRepositoryProvider).settleCommission(row['id'].toString());
     wRef.invalidate(adminCommissionsProvider);
   }
 
@@ -282,6 +267,7 @@ class AdminRevenueTab extends ConsumerWidget {
 
   Future<void> _editRate(
       BuildContext context, WidgetRef wRef, ({String type, double value})? current) async {
+    final l = AppLocalizations.of(context)!;
     final controller = TextEditingController(
         text: current != null && current.type == 'percentage'
             ? (current.value * 100).toStringAsFixed(0)
@@ -289,11 +275,11 @@ class AdminRevenueTab extends ConsumerWidget {
     final pct = await showDialog<double>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Set commission rate'),
+        title: Text(l.setCommissionRate),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Percentage of each completed rental charged to the owner.'),
+            Text(l.commissionRateDesc),
             const SizedBox(height: 12),
             TextField(
               controller: controller,
@@ -308,51 +294,41 @@ class AdminRevenueTab extends ConsumerWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: Text(l.cancel)),
           FilledButton(
             onPressed: () {
               final v = double.tryParse(controller.text.trim());
               if (v == null || v < 0 || v > 100) {
-                ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
-                    content: Text('Enter a percentage between 0 and 100.')));
+                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                    content: Text(l.enterPercentage)));
                 return;
               }
               Navigator.pop(ctx, v);
             },
-            child: const Text('Save'),
+            child: Text(l.save),
           ),
         ],
       ),
     );
     if (pct == null) return;
     try {
-      // Deactivate the old platform default, insert the new active rate.
-      await supabase
-          .from('commission_config')
-          .update({'active': false})
-          .eq('active', true)
-          .isFilter('company_id', null);
-      await supabase.from('commission_config').insert({
-        'company_id': null,
-        'type': 'percentage',
-        'value': pct / 100.0,
-        'active': true,
-      });
+      await wRef.read(adminRepositoryProvider).updateCommissionRate(pct);
       wRef.invalidate(commissionRateProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Commission set to ${pct.toStringAsFixed(0)}%.')));
+            content: Text(l.commissionSetTo(pct.toStringAsFixed(0)))));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Could not update the rate. Please try again.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(l.couldNotUpdateRate)));
       }
     }
   }
 
   Future<void> _editTax(
       BuildContext context, WidgetRef wRef, TaxConfig? current) async {
+    final l = AppLocalizations.of(context)!;
     final rateC = TextEditingController(
         text: current != null
             ? (current.rate * 100).toStringAsFixed(
@@ -364,7 +340,7 @@ class AdminRevenueTab extends ConsumerWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setD) => AlertDialog(
-          title: const Text('Customer tax'),
+          title: Text(l.customerTax),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -385,8 +361,8 @@ class AdminRevenueTab extends ConsumerWidget {
               const SizedBox(height: 4),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Only when customer requests an invoice',
-                    style: TextStyle(fontSize: 13)),
+                title: Text(l.onlyWhenInvoiceRequested,
+                    style: const TextStyle(fontSize: 13)),
                 value: onInvoiceOnly,
                 onChanged: (v) => setD(() => onInvoiceOnly = v),
               ),
@@ -395,18 +371,18 @@ class AdminRevenueTab extends ConsumerWidget {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel')),
+                child: Text(l.cancel)),
             FilledButton(
               onPressed: () {
                 final v = double.tryParse(rateC.text.trim());
                 if (v == null || v < 0 || v > 100) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
-                      content: Text('Enter a percentage between 0 and 100.')));
+                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                      content: Text(l.enterPercentage)));
                   return;
                 }
                 Navigator.pop(ctx, true);
               },
-              child: const Text('Save'),
+              child: Text(l.save),
             ),
           ],
         ),
@@ -414,24 +390,21 @@ class AdminRevenueTab extends ConsumerWidget {
     );
     if (saved != true) return;
     try {
-      await supabase
-          .from('tax_config')
-          .update({'active': false}).eq('active', true);
-      await supabase.from('tax_config').insert({
-        'rate': (double.tryParse(rateC.text.trim()) ?? 14) / 100.0,
-        'label': labelC.text.trim().isEmpty ? 'Tax' : labelC.text.trim(),
-        'applies_when': onInvoiceOnly ? 'on_invoice_request' : 'always',
-        'active': true,
-      });
+      await wRef.read(adminRepositoryProvider).updateTaxConfig(
+            rate: (double.tryParse(rateC.text.trim()) ?? 14) / 100.0,
+            label: labelC.text.trim().isEmpty ? 'Tax' : labelC.text.trim(),
+            appliesWhen:
+                onInvoiceOnly ? 'on_invoice_request' : 'always',
+          );
       wRef.invalidate(taxConfigProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Customer tax updated.')));
+            SnackBar(content: Text(l.customerTaxUpdated)));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Could not update tax. Please try again.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(l.couldNotUpdateTax)));
       }
     }
   }
@@ -478,6 +451,7 @@ class _CommissionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final rr = row['rental_requests'] as Map<String, dynamic>?;
     final company = (rr?['companies'] as Map?)?['name']?.toString() ?? 'Company';
     final gen = (rr?['generators'] as Map?)?['title']?.toString() ?? 'Generator';
@@ -513,7 +487,7 @@ class _CommissionRow extends StatelessWidget {
                     Icon(Icons.check_circle,
                         size: 14, color: Colors.green.shade600),
                     const SizedBox(width: 3),
-                    Text('Settled',
+                    Text(l.settled,
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -528,7 +502,7 @@ class _CommissionRow extends StatelessWidget {
                               const EdgeInsets.symmetric(horizontal: 12),
                           visualDensity: VisualDensity.compact),
                       onPressed: onSettle,
-                      child: const Text('Mark collected',
+                      child: Text(l.markCollected,
                           style: TextStyle(fontSize: 12)),
                     ),
                   ),
