@@ -4,16 +4,12 @@ import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/config/supabase.dart';
+import '../data/repositories/admin_repository.dart';
+import '../../auth/data/repositories/auth_repository.dart';
 
 final pendingCompaniesProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final data = await supabase
-      .from('companies')
-      .select('*, profiles!owner_user_id(full_name, phone)')
-      .inFilter('verification_status', ['pending', 'under_review']).order(
-          'created_at');
-  return (data as List).cast<Map<String, dynamic>>();
+  return ref.read(adminRepositoryProvider).fetchPendingCompaniesAdmin();
 });
 
 class AdminCompaniesTab extends StatelessWidget {
@@ -85,11 +81,11 @@ class _CompanyCardState extends State<_CompanyCard> {
     setState(() => _loading = true);
     final companyName = widget.company['name']?.toString() ?? 'Company';
     try {
-      await supabase.from('companies').update({
-        'verification_status': 'approved',
-        'reviewed_by': supabase.auth.currentUser!.id,
-        'reviewed_at': DateTime.now().toIso8601String(),
-      }).eq('id', widget.company['id'].toString());
+      final uid = widget.ref.read(authRepositoryProvider).currentUserId ?? '';
+      await widget.ref.read(adminRepositoryProvider).approveCompany(
+            widget.company['id'].toString(),
+            uid,
+          );
       widget.ref.invalidate(pendingCompaniesProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -134,12 +130,12 @@ class _CompanyCardState extends State<_CompanyCard> {
     }
     setState(() => _loading = true);
     try {
-      await supabase.from('companies').update({
-        'verification_status': 'rejected',
-        'rejection_reason': reason,
-        'reviewed_by': supabase.auth.currentUser!.id,
-        'reviewed_at': DateTime.now().toIso8601String(),
-      }).eq('id', widget.company['id'].toString());
+      final uid = widget.ref.read(authRepositoryProvider).currentUserId ?? '';
+      await widget.ref.read(adminRepositoryProvider).rejectCompany(
+            widget.company['id'].toString(),
+            uid,
+            reason,
+          );
       widget.ref.invalidate(pendingCompaniesProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -269,9 +265,9 @@ class _CompanyCardState extends State<_CompanyCard> {
                             style: const TextStyle(fontSize: 11)),
                         onPressed: () async {
                           try {
-                            final res = await supabase.storage
-                                .from('company-docs')
-                                .createSignedUrl(path, 300);
+                            final res = await widget.ref
+                                .read(adminRepositoryProvider)
+                                .getCompanyDocSignedUrl(path);
                             await Clipboard.setData(
                                 ClipboardData(text: res));
                             if (context.mounted) {

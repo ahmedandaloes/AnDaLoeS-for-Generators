@@ -6,8 +6,8 @@ import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../../core/config/supabase.dart';
-import '../../generators/data/generator_repository.dart';
+import '../data/repositories/admin_repository.dart';
+import '../../generators/data/repositories/generator_repository.dart';
 
 /// Supply liquidity: available generators per governorate (cold-start tracker).
 final supplyByGovernorateProvider =
@@ -16,35 +16,7 @@ final supplyByGovernorateProvider =
 
 final platformStatsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final users = await supabase.from('profiles').select('id');
-  final generators = await supabase.from('generators').select('id');
-  final rentals = await supabase.from('rental_requests').select('id, status');
-  final commissions =
-      await supabase.from('commissions').select('commission_amount, status');
-
-  final rentalList = (rentals as List).cast<Map<String, dynamic>>();
-  final commissionList = (commissions as List).cast<Map<String, dynamic>>();
-
-  final completed = rentalList.where((r) => r['status'] == 'completed').length;
-  final pending = rentalList.where((r) => r['status'] == 'pending').length;
-  final accepted = rentalList.where((r) => r['status'] == 'accepted').length;
-  final active = rentalList.where((r) => r['status'] == 'active').length;
-  final totalCommissions = commissionList.fold<double>(
-      0,
-      (s, c) =>
-          s +
-          (double.tryParse(c['commission_amount']?.toString() ?? '0') ?? 0));
-
-  return {
-    'users': (users as List).length,
-    'generators': (generators as List).length,
-    'total_rentals': rentalList.length,
-    'pending_rentals': pending,
-    'accepted_rentals': accepted,
-    'active_rentals': active,
-    'completed_rentals': completed,
-    'total_commission_earned': totalCommissions,
-  };
+  return ref.read(adminRepositoryProvider).fetchPlatformStats();
 });
 
 class AdminStatsTab extends StatelessWidget {

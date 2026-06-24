@@ -3,16 +3,11 @@ import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/config/supabase.dart';
+import '../data/repositories/admin_repository.dart';
 
 final adminUsersProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final data = await supabase
-      .from('profiles')
-      .select('id, full_name, phone, role')
-      .order('role', ascending: true)
-      .limit(200);
-  return (data as List).cast<Map<String, dynamic>>();
+  return ref.read(adminRepositoryProvider).fetchAllUsersAdmin();
 });
 
 class AdminUsersTab extends ConsumerWidget {
@@ -22,10 +17,7 @@ class AdminUsersTab extends ConsumerWidget {
   Future<void> _setRole(
       BuildContext context, String uid, String newRole) async {
     try {
-      await supabase
-          .from('profiles')
-          .update({'role': newRole})
-          .eq('id', uid);
+      await ref.read(adminRepositoryProvider).setUserRole(uid, newRole);
       ref.invalidate(adminUsersProvider);
       if (context.mounted) {
         final l = AppLocalizations.of(context)!;

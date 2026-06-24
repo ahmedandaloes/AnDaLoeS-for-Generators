@@ -4,19 +4,12 @@ import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../../core/theme/status_colors.dart';
+import '../data/repositories/admin_repository.dart';
 
 final adminGeneratorsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final data = await supabase
-      .from('generators')
-      .select(
-          'id, title, capacity_kva, price_per_day, city, governorate, photos, status, created_at, companies(name)')
-      .inFilter('status', ['pending', 'available', 'unavailable', 'rejected'])
-      .order('created_at', ascending: false)
-      .limit(80);
-  return (data as List).cast<Map<String, dynamic>>();
+  return ref.read(adminRepositoryProvider).fetchAllGeneratorsAdmin();
 });
 
 class AdminGeneratorsTab extends StatefulWidget {
@@ -33,9 +26,9 @@ class _AdminGeneratorsTabState extends State<AdminGeneratorsTab> {
   Future<void> _setStatus(String genId, String status) async {
     setState(() => _loading[genId] = true);
     try {
-      await supabase
-          .from('generators')
-          .update({'status': status}).eq('id', genId);
+      await widget.ref
+          .read(adminRepositoryProvider)
+          .setGeneratorStatus(genId, status);
       widget.ref.invalidate(adminGeneratorsProvider);
     } finally {
       if (mounted) setState(() => _loading.remove(genId));

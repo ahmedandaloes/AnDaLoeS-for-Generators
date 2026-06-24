@@ -88,6 +88,13 @@ class AuthRepository implements IAuthRepository {
 
   String? get currentUserId => supabase.auth.currentUser?.id;
 
+  bool get isCurrentUserAnonymous =>
+      supabase.auth.currentUser?.isAnonymous ?? true;
+
+  String? get currentUserCreatedAt => supabase.auth.currentUser?.createdAt;
+  String? get currentUserLastSignInAt =>
+      supabase.auth.currentUser?.lastSignInAt;
+
   Future<String?> fetchCurrentUserRole(String uid) async {
     final data = await supabase
         .from('profiles')

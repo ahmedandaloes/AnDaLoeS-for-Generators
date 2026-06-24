@@ -4,15 +4,11 @@ import '../../../core/widgets/app_error_state.dart';
 import '../../../core/utils/db_error.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/config/supabase.dart';
+import '../data/repositories/admin_repository.dart';
 
 final openReportsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final data = await supabase
-      .from('reports')
-      .select('*')
-      .inFilter('status', ['open', 'under_review']).order('created_at');
-  return (data as List).cast<Map<String, dynamic>>();
+  return ref.read(adminRepositoryProvider).fetchOpenReportsAdmin();
 });
 
 class AdminReportsTab extends StatelessWidget {
@@ -201,9 +197,7 @@ class AdminReportsTab extends StatelessWidget {
 
   Future<void> _markUnderReview(String id) async {
     try {
-      await supabase
-          .from('reports')
-          .update({'status': 'under_review'}).eq('id', id);
+      await ref.read(adminRepositoryProvider).setReportStatus(id, 'under_review');
       ref.invalidate(openReportsProvider);
     } catch (_) {}
   }
@@ -262,7 +256,7 @@ class AdminReportsTab extends StatelessWidget {
         if (noteCtrl.text.trim().isNotEmpty)
           'resolution_note': noteCtrl.text.trim(),
       };
-      await supabase.from('reports').update(update).eq('id', id);
+      await ref.read(adminRepositoryProvider).resolveReportAdmin(id, update);
       ref.invalidate(openReportsProvider);
     } catch (e) {
       if (context.mounted) {

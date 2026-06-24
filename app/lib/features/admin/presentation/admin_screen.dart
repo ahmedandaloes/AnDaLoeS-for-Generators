@@ -3,7 +3,8 @@ import '../../../core/widgets/app_error_state.dart';
 import '../../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/config/supabase.dart';
+import '../data/repositories/admin_repository.dart';
+import '../../auth/data/repositories/auth_repository.dart';
 import 'admin_companies_tab.dart';
 import 'admin_generators_tab.dart';
 import 'admin_ops_tab.dart';
@@ -14,14 +15,9 @@ import 'admin_stats_tab.dart';
 import 'admin_users_tab.dart';
 
 final _isAdminProvider = FutureProvider.autoDispose<bool>((ref) async {
-  final uid = supabase.auth.currentUser?.id;
+  final uid = ref.read(authRepositoryProvider).currentUserId;
   if (uid == null) return false;
-  final data = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', uid)
-      .single();
-  return data['role'] == 'admin';
+  return ref.read(adminRepositoryProvider).isAdmin(uid);
 });
 
 enum _AdminSection { customers, owners, platform }

@@ -5,8 +5,8 @@ import '../../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../../core/config/tax_config_provider.dart';
+import '../data/repositories/admin_repository.dart';
 
 /// Egypt standard VAT rate, applied to the platform's commission (its service
 /// fee) for accounting/reporting. Confirm treatment with an accountant.
@@ -15,29 +15,13 @@ const double kVatRate = 0.14;
 /// Active platform commission rule (type + value).
 final commissionRateProvider =
     FutureProvider.autoDispose<({String type, double value})?>((ref) async {
-  final rows = await supabase
-      .from('commission_config')
-      .select('type, value')
-      .eq('active', true)
-      .isFilter('company_id', null)
-      .limit(1);
-  final list = (rows as List).cast<Map<String, dynamic>>();
-  if (list.isEmpty) return null;
-  return (
-    type: list.first['type']?.toString() ?? 'percentage',
-    value: (list.first['value'] as num?)?.toDouble() ?? 0,
-  );
+  return ref.read(adminRepositoryProvider).fetchActiveCommissionRate();
 });
 
 /// All commission rows (admin view) with company + generator context.
 final adminCommissionsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final rows = await supabase
-      .from('commissions')
-      .select(
-          'id, commission_amount, status, created_at, rental_requests(companies(name), generators(title))')
-      .order('created_at', ascending: false);
-  return (rows as List).cast<Map<String, dynamic>>();
+  return ref.read(adminRepositoryProvider).fetchActiveCommissions();
 });
 
 class AdminRevenueTab extends ConsumerWidget {
@@ -235,9 +219,7 @@ class AdminRevenueTab extends ConsumerWidget {
   }
 
   Future<void> _settle(WidgetRef wRef, Map<String, dynamic> row) async {
-    await supabase
-        .from('commissions')
-        .update({'status': 'settled'}).eq('id', row['id']);
+    await wRef.read(adminRepositoryProvider).settleCommission(row['id'].toString());
     wRef.invalidate(adminCommissionsProvider);
   }
 
@@ -329,18 +311,7 @@ class AdminRevenueTab extends ConsumerWidget {
     );
     if (pct == null) return;
     try {
-      // Deactivate the old platform default, insert the new active rate.
-      await supabase
-          .from('commission_config')
-          .update({'active': false})
-          .eq('active', true)
-          .isFilter('company_id', null);
-      await supabase.from('commission_config').insert({
-        'company_id': null,
-        'type': 'percentage',
-        'value': pct / 100.0,
-        'active': true,
-      });
+      await wRef.read(adminRepositoryProvider).updateCommissionRate(pct);
       wRef.invalidate(commissionRateProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -418,15 +389,12 @@ class AdminRevenueTab extends ConsumerWidget {
     );
     if (saved != true) return;
     try {
-      await supabase
-          .from('tax_config')
-          .update({'active': false}).eq('active', true);
-      await supabase.from('tax_config').insert({
-        'rate': (double.tryParse(rateC.text.trim()) ?? 14) / 100.0,
-        'label': labelC.text.trim().isEmpty ? 'Tax' : labelC.text.trim(),
-        'applies_when': onInvoiceOnly ? 'on_invoice_request' : 'always',
-        'active': true,
-      });
+      await wRef.read(adminRepositoryProvider).updateTaxConfig(
+            rate: (double.tryParse(rateC.text.trim()) ?? 14) / 100.0,
+            label: labelC.text.trim().isEmpty ? 'Tax' : labelC.text.trim(),
+            appliesWhen:
+                onInvoiceOnly ? 'on_invoice_request' : 'always',
+          );
       wRef.invalidate(taxConfigProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

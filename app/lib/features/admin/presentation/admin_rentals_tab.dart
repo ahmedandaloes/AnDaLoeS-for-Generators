@@ -1,22 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../../core/theme/status_colors.dart';
 import '../../../l10n/app_localizations.dart';
+import '../data/repositories/admin_repository.dart';
 
 final adminRentalsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final data = await supabase
-      .from('rental_requests')
-      .select(
-          'id, status, start_date, end_date, total_days, price_total, created_at, '
-          'profiles(full_name, phone), '
-          'generators(title, capacity_kva), '
-          'companies(name)')
-      .order('created_at', ascending: false)
-      .limit(100);
-  return (data as List).cast<Map<String, dynamic>>();
+  return ref.read(adminRepositoryProvider).fetchAllRentalsAdmin();
 });
 
 final _adminRentalQueryProvider = StateProvider<String>((ref) => '');

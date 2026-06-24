@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../rental_request/data/rental_repository.dart';
+import '../data/repositories/admin_repository.dart';
 
 final _overdueActiveProvider = FutureProvider.autoDispose(
     (ref) => ref.read(rentalRepositoryProvider).overdueActive());
@@ -65,9 +65,9 @@ class AdminOpsTab extends ConsumerWidget {
               side: BorderSide(color: cs.error.withValues(alpha: 0.5)),
             ),
             onPressed: () async {
-              final result = await supabase
-                  .rpc('expire_stale_pending_requests');
-              final count = (result as int?) ?? 0;
+              final count = await wRef
+                  .read(adminRepositoryProvider)
+                  .expireStaleRequests();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                   content: Text(l.expiryResult(count)),
