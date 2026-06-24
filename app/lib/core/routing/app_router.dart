@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -111,14 +112,22 @@ GoRouter buildAppRouter([String initialLocation = '/']) {
     GoRoute(path: AppRoutes.onboarding, builder: (_, __) => const OnboardingScreen()),
     GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginScreen()),
     GoRoute(path: AppRoutes.emailAuth, builder: (_, __) => const EmailAuthScreen()),
-    GoRoute(path: AppRoutes.devLogin, builder: (_, __) => const EmailLoginScreen()),
+    GoRoute(
+      path: AppRoutes.devLogin,
+      redirect: (_, __) => kDebugMode ? null : '/',
+      builder: (_, __) => const EmailLoginScreen(),
+    ),
     GoRoute(path: AppRoutes.profile, builder: (_, __) => const ProfileScreen()),
     GoRoute(path: AppRoutes.notifications, builder: (_, __) => const NotificationsScreen()),
     GoRoute(path: AppRoutes.myRentals, builder: (_, __) => const MyRentalsScreen()),
     GoRoute(path: AppRoutes.admin, builder: (_, __) => const AdminScreen()),
     GoRoute(path: AppRoutes.ownerDashboard, builder: (_, __) => const OwnerDashboardScreen()),
     GoRoute(path: AppRoutes.companyOnboard, builder: (_, __) => const CompanyOnboardingScreen()),
-    GoRoute(path: AppRoutes.pageHub, builder: (_, __) => const PageHubScreen()),
+    GoRoute(
+      path: AppRoutes.pageHub,
+      redirect: (_, __) => kDebugMode ? null : '/',
+      builder: (_, __) => const PageHubScreen(),
+    ),
     GoRoute(
       path: AppRoutes.ownerEarningsPath,
       builder: (_, state) => OwnerEarningsScreen(
