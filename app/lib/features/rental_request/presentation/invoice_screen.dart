@@ -6,25 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/config/company_info.dart';
-import '../../../core/config/supabase.dart';
 import '../../../core/config/tax_config_provider.dart';
+import '../providers/rental_providers.dart' show rentalRepositoryProvider;
 import 'doc_widgets.dart';
 
 final _invoiceDataProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
         (ref, rentalId) async {
-  return await supabase
-      .from('rental_requests')
-      .select('''
-        id, start_date, end_date, total_days, price_total, note,
-        owner_note, status, created_at, invoice_no,
-        generators(title, capacity_kva, city, governorate, fuel_type,
-                   price_per_day),
-        companies(name, phone),
-        profiles!rental_requests_customer_id_fkey(full_name, phone)
-      ''')
-      .eq('id', rentalId)
-      .single();
+  return ref.read(rentalRepositoryProvider).fetchInvoiceById(rentalId);
 });
 
 class InvoiceScreen extends ConsumerWidget {

@@ -9,19 +9,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../../core/config/supabase.dart';
+import '../providers/rental_providers.dart' show rentalRepositoryProvider;
 
 final _receiptProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
         (ref, rentalId) async {
-  final data = await supabase
-      .from('rental_requests')
-      .select(
-          '*, generators(title, capacity_kva, city, governorate), '
-          'profiles!customer_id(full_name, phone)')
-      .eq('id', rentalId)
-      .single();
-  return data;
+  return ref.read(rentalRepositoryProvider).fetchReceiptById(rentalId);
 });
 
 class RentalReceiptScreen extends ConsumerStatefulWidget {

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/config/supabase.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/status_colors.dart';
 import '../../../../core/utils/ics.dart';
@@ -12,21 +11,17 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../chat/providers/chat_providers.dart';
 import '../../data/rental_repository.dart'
     show rentalTimelineProvider, rentalHandoversProvider;
-import '../providers/rental_providers.dart' show myRentalsProvider;
+import '../providers/rental_providers.dart'
+    show myRentalsProvider, rentalRepositoryProvider;
 
 // ── Rental card ───────────────────────────────────────────────────────────────
 // Private provider for rated rental IDs — lives with the widget that owns it.
 final myRatedRentalIdsProvider =
     FutureProvider.autoDispose<Set<String>>((ref) async {
-  final uid = supabase.auth.currentUser?.id;
+  final repo = ref.read(rentalRepositoryProvider);
+  final uid = repo.currentUserId;
   if (uid == null) return {};
-  final data = await supabase
-      .from('ratings')
-      .select('rental_request_id')
-      .eq('rater_id', uid);
-  return {
-    for (final r in (data as List)) r['rental_request_id'].toString()
-  };
+  return repo.fetchRatedRentalIds(uid);
 });
 
 class RentalCard extends ConsumerWidget {
@@ -715,10 +710,10 @@ class RentalCard extends ConsumerWidget {
     );
     if (confirmed != true || !context.mounted) return;
     try {
-      await supabase.from('rental_requests').update({
-        'status': 'cancelled',
-        if (selectedReason != null) 'note': 'Cancelled: $selectedReason',
-      }).eq('id', id);
+      await ref.read(rentalRepositoryProvider).cancelRentalRequest(
+            id,
+            note: selectedReason != null ? 'Cancelled: $selectedReason' : null,
+          );
       ref.invalidate(myRentalsProvider);
     } catch (e) {
       if (context.mounted) {
@@ -746,11 +741,7 @@ class RentalCard extends ConsumerWidget {
     );
     if (confirmed != true || !context.mounted) return;
     try {
-      await supabase
-          .from('rental_requests')
-          .update({'status': 'active'})
-          .eq('id', rentalId)
-          .eq('status', 'accepted');
+      await ref.read(rentalRepositoryProvider).confirmRentalReceipt(rentalId);
       ref.invalidate(myRentalsProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

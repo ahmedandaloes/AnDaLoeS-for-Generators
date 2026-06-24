@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show RealtimeChannel;
 
-import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/widgets/app_error_state.dart';
 import '../../../l10n/app_localizations.dart';
-import 'providers/rental_providers.dart';
+import 'providers/rental_providers.dart'
+    show myRentalsProvider, rentalRepositoryProvider;
 import 'widgets/my_rentals_widgets.dart';
 
 String? _statusMessage(String status, AppLocalizations l) => switch (status) {
@@ -32,36 +32,25 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
   @override
   void initState() {
     super.initState();
-    final uid = supabase.auth.currentUser?.id;
+    final repo = ref.read(rentalRepositoryProvider);
+    final uid = repo.currentUserId;
     if (uid == null) return;
-    _channel = supabase
-        .channel('my-rentals-$uid')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.update,
-          schema: 'public',
-          table: 'rental_requests',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'customer_id',
-            value: uid,
-          ),
-          callback: (payload) {
-            ref.invalidate(myRentalsProvider);
-            final newStatus =
-                (payload.newRecord['status'] as String?) ?? '';
-            if (!mounted) return;
-            final label = _statusMessage(
-                newStatus, AppLocalizations.of(context)!);
-            if (label != null) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(label),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ));
-            }
-          },
-        )
+    _channel = repo
+        .myRentalsChannel(uid, (newRecord) {
+          ref.invalidate(myRentalsProvider);
+          final newStatus = (newRecord['status'] as String?) ?? '';
+          if (!mounted) return;
+          final label =
+              _statusMessage(newStatus, AppLocalizations.of(context)!);
+          if (label != null) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(label),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ));
+          }
+        })
         .subscribe();
   }
 
@@ -428,10 +417,9 @@ class _MyRentalsScreenState extends ConsumerState<MyRentalsScreen> {
                               ),
                             );
                             if (confirm == true && ctx.mounted) {
-                              await supabase
-                                  .from('rental_requests')
-                                  .update({'status': 'cancelled'}).eq(
-                                      'id', rentalId);
+                              await ref
+                                  .read(rentalRepositoryProvider)
+                                  .cancelRentalRequest(rentalId);
                               ref.invalidate(myRentalsProvider);
                             }
                             return false;

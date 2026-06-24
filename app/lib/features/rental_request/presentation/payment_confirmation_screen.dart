@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../../core/config/tax_config_provider.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/utils/db_error.dart';
 import '../../../core/utils/tax.dart';
 import '../../../l10n/app_localizations.dart';
+import 'providers/rental_providers.dart' show rentalRepositoryProvider;
 
 class PaymentConfirmationScreen extends ConsumerStatefulWidget {
   const PaymentConfirmationScreen({
@@ -45,15 +45,16 @@ class _PaymentConfirmationScreenState
   Future<void> _confirm() async {
     HapticFeedback.mediumImpact();
     // Guests who browsed the form without signing in are redirected here.
-    final user = supabase.auth.currentUser;
-    if (user == null || user.isAnonymous) {
+    final repo = ref.read(rentalRepositoryProvider);
+    final uid = repo.currentUserId;
+    if (uid == null || repo.isCurrentUserAnonymous) {
       if (mounted) context.push(AppRoutes.login);
       return;
     }
     setState(() => _submitting = true);
     try {
-      await supabase.from('rental_requests').insert({
-        'customer_id': user.id,
+      await repo.insertRentalRequest({
+        'customer_id': uid,
         'generator_id': widget.generator['id'],
         'company_id': widget.generator['company_id'],
         'start_date': widget.startDate.toIso8601String().substring(0, 10),
