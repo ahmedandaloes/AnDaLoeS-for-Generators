@@ -41,11 +41,11 @@ Cross-cutting (stays in `lib/core/`):
 | rental_request | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | owner_dashboard | ❌ | ❌ | ❌ | ❌ | partial | needs split |
 | admin | ❌ | ❌ | ❌ | ❌ | ❌ | needs split |
-| auth | ❌ | ❌ | ❌ | ❌ | ❌ | needs split |
-| company | ❌ | ❌ | ❌ | partial | ❌ | needs split |
-| notifications | ❌ | ❌ | ❌ | partial | partial | needs split |
+| auth | ❌ | ✅ | ✅ | ✅ | ✅ | ok (screens in presentation/) |
+| company | ✅ | ✅ | ✅ | ✅ | ✅ | ok (screens in presentation/) |
+| notifications | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | chat | ❌ | ❌ | ❌ | ❌ | partial | ok |
-| profile | ❌ | ❌ | ❌ | ❌ | ❌ | needs split |
+| profile | ❌ | ✅ | ✅ | ✅ | ✅ | ok (screen in presentation/) |
 | ratings | ❌ | ❌ | ❌ | ❌ | ❌ | ok |
 | reports | ❌ | ❌ | ❌ | ❌ | ❌ | ok |
 
