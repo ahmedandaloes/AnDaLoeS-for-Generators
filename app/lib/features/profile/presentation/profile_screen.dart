@@ -2,12 +2,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'
-    show FileOptions, UserAttributes;
 
-import '../../../core/config/supabase.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/data/repositories/auth_repository.dart';
+import '../../auth/presentation/providers/auth_providers.dart';
+import '../../profile/data/repositories/profile_repository.dart';
 import 'providers/profile_screen_providers.dart';
 import 'widgets/profile_body_sliver.dart';
 import 'widgets/profile_header_sliver.dart';
@@ -19,13 +19,16 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = supabase.auth.currentUser;
+    final authRepo = ref.read(authRepositoryProvider);
     final cs = Theme.of(context).colorScheme;
     final profileAsync = ref.watch(profileDataProvider);
 
-    final email = user?.email;
-    final phone = user?.phone;
-    final isAnon = user?.isAnonymous ?? false;
+    // Auth state for display purposes only (no DB access)
+    final currentUserAsync = ref.watch(currentUserProvider);
+    final appUser = currentUserAsync.valueOrNull;
+    final email = appUser?.email;
+    final phone = profileAsync.valueOrNull?['phone']?.toString();
+    final isAnon = authRepo.isCurrentUserAnonymous;
     final fullName = profileAsync.valueOrNull?['full_name']?.toString();
     final avatarUrl = profileAsync.valueOrNull?['avatar_url']?.toString();
     final displayName = fullName?.isNotEmpty == true
@@ -59,7 +62,7 @@ class ProfileScreen extends ConsumerWidget {
             onEditPhone: () => _editPhone(context, ref, phone ?? ''),
             onGuestUpgrade: () => _showGuestUpgrade(context, ref),
             onConfirmSignOut: (stats, createdAt) =>
-                _confirmSignOut(context, stats, createdAt),
+                _confirmSignOut(context, ref, stats, createdAt),
           ),
         ],
       ),
@@ -79,29 +82,13 @@ class ProfileScreen extends ConsumerWidget {
     final bytes = file.bytes;
     if (bytes == null) return;
 
-    final uid = supabase.auth.currentUser?.id;
+    final uid = ref.read(authRepositoryProvider).currentUserId;
     if (uid == null) return;
 
     final ext = (file.extension ?? 'jpg').toLowerCase();
-    final storagePath = '$uid/avatar.$ext';
 
     try {
-      await supabase.storage.from('avatars').uploadBinary(
-            storagePath,
-            bytes,
-            fileOptions: FileOptions(
-              contentType: 'image/$ext',
-              upsert: true,
-            ),
-          );
-
-      final publicUrl =
-          supabase.storage.from('avatars').getPublicUrl(storagePath);
-
-      await supabase
-          .from('profiles')
-          .update({'avatar_url': publicUrl}).eq('id', uid);
-
+      await ref.read(profileRepositoryProvider).uploadAvatar(uid, bytes, ext);
       ref.invalidate(profileDataProvider);
 
       if (context.mounted) {
@@ -123,6 +110,7 @@ class ProfileScreen extends ConsumerWidget {
 
   Future<void> _confirmSignOut(
       BuildContext context,
+      WidgetRef ref,
       Map<String, num>? stats,
       String? createdAt) async {
     final totalRentals = (stats?['total'] ?? 0).toInt();
@@ -203,7 +191,7 @@ class ProfileScreen extends ConsumerWidget {
     );
 
     if (confirmed == true) {
-      await supabase.auth.signOut();
+      await ref.read(profileRepositoryProvider).signOut();
       if (context.mounted) context.go(AppRoutes.home);
     }
   }
@@ -241,11 +229,10 @@ class ProfileScreen extends ConsumerWidget {
     );
     controller.dispose();
     if (newName == null || newName.isEmpty) return;
-    final uid = supabase.auth.currentUser?.id;
+    final uid = ref.read(authRepositoryProvider).currentUserId;
     if (uid == null) return;
-    await supabase
-        .from('profiles')
-        .update({'full_name': newName}).eq('id', uid);
+    await ref.read(profileRepositoryProvider).updateProfile(
+        uid, {'full_name': newName});
     ref.invalidate(profileDataProvider);
   }
 
@@ -283,12 +270,10 @@ class ProfileScreen extends ConsumerWidget {
     );
     controller.dispose();
     if (newPhone == null) return;
-    final uid = supabase.auth.currentUser?.id;
+    final uid = ref.read(authRepositoryProvider).currentUserId;
     if (uid == null) return;
-    await supabase
-        .from('profiles')
-        .update({'phone': newPhone.isEmpty ? null : newPhone})
-        .eq('id', uid);
+    await ref.read(profileRepositoryProvider).updateProfile(
+        uid, {'phone': newPhone.isEmpty ? null : newPhone});
     ref.invalidate(profileDataProvider);
   }
 }
@@ -319,8 +304,8 @@ Future<void> _showGuestUpgrade(BuildContext context, WidgetRef ref) async {
         }
         setSheet(() => loading = true);
         try {
-          await supabase.auth.updateUser(
-              UserAttributes(email: email, password: pass));
+          await ref.read(profileRepositoryProvider).upgradeAnonymousAccount(
+              email, pass);
           ref.invalidate(profileDataProvider);
           if (sheetCtx.mounted) Navigator.pop(sheetCtx);
           if (context.mounted) {

@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/localization/locale_provider.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
-import '../../../../core/config/supabase.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../owner_dashboard/providers/owner_providers.dart' show myCompanyProvider;
 import '../providers/profile_screen_providers.dart';
 import 'profile_referral_card.dart';
@@ -30,15 +30,15 @@ class ProfileBodySliver extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context)!;
-    final user = supabase.auth.currentUser;
+    final authRepo = ref.read(authRepositoryProvider);
     final cs = Theme.of(context).colorScheme;
     final profileAsync = ref.watch(profileDataProvider);
     final statsAsync = ref.watch(rentalStatsProvider);
     final themeMode = ref.watch(themeModeProvider);
 
-    final email = user?.email;
-    final phone = user?.phone;
-    final isAnon = user?.isAnonymous ?? false;
+    final isAnon = authRepo.isCurrentUserAnonymous;
+    final email = profileAsync.valueOrNull?['email']?.toString();
+    final phone = profileAsync.valueOrNull?['phone']?.toString();
 
     return SliverToBoxAdapter(
       child: Padding(
@@ -128,7 +128,7 @@ class ProfileBodySliver extends ConsumerWidget {
                     cs: cs,
                   ),
                   Builder(builder: (_) {
-                    final createdAt = user?.createdAt;
+                    final createdAt = authRepo.currentUserCreatedAt;
                     if (createdAt == null) return const SizedBox.shrink();
                     final dt = DateTime.tryParse(createdAt);
                     if (dt == null) return const SizedBox.shrink();
@@ -139,7 +139,7 @@ class ProfileBodySliver extends ConsumerWidget {
                         value: label);
                   }),
                   Builder(builder: (_) {
-                    final lastSignIn = user?.lastSignInAt;
+                    final lastSignIn = authRepo.currentUserLastSignInAt;
                     if (lastSignIn == null) return const SizedBox.shrink();
                     final dt = DateTime.tryParse(lastSignIn);
                     if (dt == null) return const SizedBox.shrink();
@@ -401,9 +401,9 @@ class ProfileBodySliver extends ConsumerWidget {
             ),
 
             // Referral code
-            if (!isAnon && user != null) ...[
+            if (!isAnon) ...[
               ProfileSectionLabel('Refer a friend'),
-              ProfileReferralCard(userId: user.id, cs: cs),
+              ProfileReferralCard(userId: authRepo.currentUserId!, cs: cs),
               const SizedBox(height: 20),
             ],
 
@@ -710,7 +710,7 @@ class ProfileBodySliver extends ConsumerWidget {
                       color: cs.onSurfaceVariant),
                   onTap: () => onConfirmSignOut(
                     statsAsync.valueOrNull,
-                    supabase.auth.currentUser?.createdAt,
+                    authRepo.currentUserCreatedAt,
                   ),
                 ),
               ],
