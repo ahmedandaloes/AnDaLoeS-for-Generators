@@ -398,6 +398,55 @@ class _Body extends ConsumerWidget {
                     ),
                   );
                 }),
+                // Hire type / fuel policy / accessories
+                Builder(builder: (_) {
+                  final l = AppLocalizations.of(context)!;
+                  final hireType = gen['hire_type']?.toString();
+                  final fuelPolicy = gen['fuel_policy']?.toString();
+                  final accessories =
+                      (gen['accessories'] as List?)?.cast<String>() ??
+                          const [];
+                  final chips = <Widget>[];
+                  if (hireType == 'operated') {
+                    chips.add(_detailChip(
+                        Icons.person_outline,
+                        l.hireTypeOperated,
+                        cs.secondary,
+                        cs));
+                  } else if (hireType == 'dry_hire') {
+                    chips.add(_detailChip(
+                        Icons.directions_car_outlined,
+                        l.hireTypeDryHire,
+                        cs.onSurfaceVariant,
+                        cs));
+                  }
+                  if (fuelPolicy == 'included') {
+                    chips.add(_detailChip(
+                        Icons.local_gas_station_outlined,
+                        l.fuelPolicyIncluded,
+                        Colors.green.shade700,
+                        cs));
+                  }
+                  final accLabels = {
+                    'cables': l.accessoryCables,
+                    'extension_board': l.accessoryExtensionBoard,
+                    'fuel_tank': l.accessoryFuelTank,
+                    'transfer_switch': l.accessoryTransferSwitch,
+                  };
+                  for (final acc in accessories) {
+                    final label = accLabels[acc];
+                    if (label != null) {
+                      chips.add(_detailChip(
+                          Icons.extension_outlined, label, cs.tertiary, cs));
+                    }
+                  }
+                  if (chips.isEmpty) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child:
+                        Wrap(spacing: 8, runSpacing: 6, children: chips),
+                  );
+                }),
                 // Contact buttons
                 Builder(builder: (_) {
                   final phone = company?['contact_phone']?.toString();
@@ -746,6 +795,10 @@ Widget _trustChip(
                 fontSize: 11, fontWeight: FontWeight.w600, color: color)),
       ]),
     );
+
+Widget _detailChip(
+    IconData icon, String label, Color color, ColorScheme cs) =>
+    _trustChip(icon, label, color, cs);
 
 // ── Detail skeleton shown while data loads ────────────────────────────────────
 class _DetailSkeleton extends StatefulWidget {

@@ -20,8 +20,13 @@ const _governorates = [
 ];
 
 class AddGeneratorScreen extends StatefulWidget {
-  const AddGeneratorScreen({super.key, required this.companyId});
+  const AddGeneratorScreen({
+    super.key,
+    required this.companyId,
+    this.prefill,
+  });
   final String companyId;
+  final Map<String, dynamic>? prefill;
 
   @override
   State<AddGeneratorScreen> createState() => _AddGeneratorScreenState();
@@ -38,12 +43,40 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
   final _cityController = TextEditingController();
   String? _governorate;
   String _fuelType = 'diesel';
+  String _hireType = 'dry_hire';
+  String _fuelPolicy = 'customer_provides';
+  final Set<String> _accessories = {};
   final Set<String> _useCases = {};
   bool _submitting = false;
 
   // Photos
   final List<File> _photos = [];
   static const _maxPhotos = 5;
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.prefill;
+    if (p != null) {
+      _titleController.text = p['title']?.toString() ?? '';
+      _capacityController.text = p['capacity_kva']?.toString() ?? '';
+      _descController.text = p['description']?.toString() ?? '';
+      _pricePerDayController.text = p['price_per_day']?.toString() ?? '';
+      _pricePerWeekController.text = p['price_per_week']?.toString() ?? '';
+      _pricePerMonthController.text = p['price_per_month']?.toString() ?? '';
+      final dep = (p['deposit_amount'] as num?)?.toDouble() ?? 0;
+      _depositController.text = dep > 0 ? dep.toStringAsFixed(0) : '';
+      _cityController.text = p['city']?.toString() ?? '';
+      _governorate = p['governorate']?.toString();
+      _fuelType = p['fuel_type']?.toString() ?? 'diesel';
+      _hireType = p['hire_type']?.toString() ?? 'dry_hire';
+      _fuelPolicy = p['fuel_policy']?.toString() ?? 'customer_provides';
+      _useCases.addAll(
+          (p['use_cases'] as List?)?.cast<String>() ?? const []);
+      _accessories.addAll(
+          (p['accessories'] as List?)?.cast<String>() ?? const []);
+    }
+  }
 
   @override
   void dispose() {
@@ -113,6 +146,9 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
           'city': _cityController.text.trim(),
         'governorate': _governorate,
         'fuel_type': _fuelType,
+        'hire_type': _hireType,
+        'fuel_policy': _fuelPolicy,
+        'accessories': _accessories.toList(),
         'use_cases': _useCases.toList(),
         'status': 'available',
       }).select('id').single();
@@ -152,6 +188,18 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
       if (mounted) setState(() => _submitting = false);
     }
   }
+
+  Widget _accessoryChip(String key, String label) => FilterChip(
+        label: Text(label),
+        selected: _accessories.contains(key),
+        onSelected: (on) => setState(() {
+          if (on) {
+            _accessories.add(key);
+          } else {
+            _accessories.remove(key);
+          }
+        }),
+      );
 
   void _snack(String msg) {
     if (!mounted) return;
@@ -275,6 +323,55 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
               }).toList(),
             ),
             const SizedBox(height: 12),
+
+            // Hire type
+            _Label(l.hireTypeLabel),
+            SegmentedButton<String>(
+              segments: [
+                ButtonSegment(
+                    value: 'dry_hire', label: Text(l.hireTypeDryHire)),
+                ButtonSegment(
+                    value: 'operated', label: Text(l.hireTypeOperated)),
+              ],
+              selected: {_hireType},
+              onSelectionChanged: (s) =>
+                  setState(() => _hireType = s.first),
+            ),
+            const SizedBox(height: 12),
+
+            // Fuel policy
+            _Label(l.fuelPolicyLabel),
+            SegmentedButton<String>(
+              segments: [
+                ButtonSegment(
+                    value: 'customer_provides',
+                    label: Text(l.fuelPolicyCustomerProvides)),
+                ButtonSegment(
+                    value: 'included',
+                    label: Text(l.fuelPolicyIncluded)),
+              ],
+              selected: {_fuelPolicy},
+              onSelectionChanged: (s) =>
+                  setState(() => _fuelPolicy = s.first),
+            ),
+            const SizedBox(height: 12),
+
+            // Accessories
+            _Label(l.accessoriesLabel),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _accessoryChip('cables', l.accessoryCables),
+                _accessoryChip(
+                    'extension_board', l.accessoryExtensionBoard),
+                _accessoryChip('fuel_tank', l.accessoryFuelTank),
+                _accessoryChip(
+                    'transfer_switch', l.accessoryTransferSwitch),
+              ],
+            ),
+            const SizedBox(height: 12),
+
             _Field(l.descriptionCol, l.descriptionHint,
                 _descController,
                 maxLines: 3),

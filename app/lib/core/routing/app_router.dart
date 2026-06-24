@@ -144,6 +144,7 @@ GoRouter buildAppRouter([String initialLocation = '/']) {
       path: AppRoutes.addGeneratorPath,
       builder: (_, state) => AddGeneratorScreen(
         companyId: state.uri.queryParameters['company'] ?? '',
+        prefill: state.extra as Map<String, dynamic>?,
       ),
     ),
     GoRoute(

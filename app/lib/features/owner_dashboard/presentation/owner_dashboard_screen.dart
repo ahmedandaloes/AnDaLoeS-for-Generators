@@ -802,6 +802,14 @@ class _OwnerGeneratorTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
+              icon: const Icon(Icons.copy_all_outlined, size: 20),
+              tooltip: l.cloneListing,
+              onPressed: () => context.push(
+                AppRoutes.addGenerator(companyId),
+                extra: Map<String, dynamic>.from(gen),
+              ),
+            ),
+            IconButton(
               icon: const Icon(Icons.edit_outlined, size: 20),
               tooltip: l.edit,
               onPressed: () =>

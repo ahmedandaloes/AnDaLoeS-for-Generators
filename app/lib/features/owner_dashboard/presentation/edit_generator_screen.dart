@@ -54,7 +54,10 @@ class _EditGeneratorScreenState
 
   String? _governorate;
   String _fuelType = 'diesel';
+  String _hireType = 'dry_hire';
+  String _fuelPolicy = 'customer_provides';
   final Set<String> _useCases = {};
+  final Set<String> _accessories = {};
   bool _available = true;
   bool _initialised = false;
   bool _saving = false;
@@ -95,9 +98,15 @@ class _EditGeneratorScreenState
     _cityController.text = gen['city']?.toString() ?? '';
     _governorate = gen['governorate']?.toString();
     _fuelType = gen['fuel_type']?.toString() ?? 'diesel';
+    _hireType = gen['hire_type']?.toString() ?? 'dry_hire';
+    _fuelPolicy = gen['fuel_policy']?.toString() ?? 'customer_provides';
     _useCases
       ..clear()
       ..addAll((gen['use_cases'] as List?)?.cast<String>() ?? const []);
+    _accessories
+      ..clear()
+      ..addAll(
+          (gen['accessories'] as List?)?.cast<String>() ?? const []);
     _available = gen['status']?.toString() == 'available';
     _existingPhotos =
         (gen['photos'] as List?)?.cast<String>().toList() ?? [];
@@ -186,6 +195,9 @@ class _EditGeneratorScreenState
             : null,
         'governorate': _governorate,
         'fuel_type': _fuelType,
+        'hire_type': _hireType,
+        'fuel_policy': _fuelPolicy,
+        'accessories': _accessories.toList(),
         'use_cases': _useCases.toList(),
         'status': _available ? 'available' : 'unavailable',
         'photos': finalPhotos,
@@ -201,6 +213,18 @@ class _EditGeneratorScreenState
       if (mounted) setState(() => _saving = false);
     }
   }
+
+  Widget _accChip(String key, String label) => FilterChip(
+        label: Text(label),
+        selected: _accessories.contains(key),
+        onSelected: (on) => setState(() {
+          if (on) {
+            _accessories.add(key);
+          } else {
+            _accessories.remove(key);
+          }
+        }),
+      );
 
   void _snack(String msg) {
     if (!mounted) return;
@@ -375,6 +399,48 @@ class _EditGeneratorScreenState
                       }),
                     );
                   }).toList(),
+                ),
+                const SizedBox(height: 12),
+                _EditLabel(l.hireTypeLabel),
+                SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(
+                        value: 'dry_hire',
+                        label: Text(l.hireTypeDryHire)),
+                    ButtonSegment(
+                        value: 'operated',
+                        label: Text(l.hireTypeOperated)),
+                  ],
+                  selected: {_hireType},
+                  onSelectionChanged: (s) =>
+                      setState(() => _hireType = s.first),
+                ),
+                const SizedBox(height: 12),
+                _EditLabel(l.fuelPolicyLabel),
+                SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(
+                        value: 'customer_provides',
+                        label: Text(l.fuelPolicyCustomerProvides)),
+                    ButtonSegment(
+                        value: 'included',
+                        label: Text(l.fuelPolicyIncluded)),
+                  ],
+                  selected: {_fuelPolicy},
+                  onSelectionChanged: (s) =>
+                      setState(() => _fuelPolicy = s.first),
+                ),
+                const SizedBox(height: 12),
+                _EditLabel(l.accessoriesLabel),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _accChip('cables', l.accessoryCables),
+                    _accChip('extension_board', l.accessoryExtensionBoard),
+                    _accChip('fuel_tank', l.accessoryFuelTank),
+                    _accChip('transfer_switch', l.accessoryTransferSwitch),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 _EditField(

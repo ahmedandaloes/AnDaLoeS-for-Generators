@@ -7,7 +7,7 @@ final generatorRepositoryProvider =
 
 class GeneratorRepository {
   static const _listSelect =
-      'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, use_cases, created_at, companies(name, verification_status)';
+      'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, use_cases, hire_type, fuel_policy, accessories, created_at, companies(name, verification_status)';
 
   Future<List<Map<String, dynamic>>> fetchAll() async {
     final data = await supabase
