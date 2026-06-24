@@ -317,3 +317,18 @@ Key parity PASS (310 keys, all translated; en/ar count diff is just @-metadata).
 - [ ] RTL hazards remain in 9 files (EdgeInsets.only(left/right), Alignment.centerLeft/Right) — switch to EdgeInsetsDirectional / AlignmentDirectional (verify chat bubbles which mirror by isMe intentionally).
 - [ ] LOW: wording — stay "البقاء"→"ابقَ", skip "تخطٍّ"→"تخطّي"; localize 'Error: $e' snackbars; AR @-metadata absent (OK).
 - [ ] CRITICAL-per-spec (do in FINAL cycle): default locale not Arabic yet (locale_provider state null → device locale). Flip to const Locale('ar') once screens above are localized.
+
+## 🔒 Functional QA findings (qa-expert, 2026-06-24) — security + bugs
+FIXED this cycle:
+- [x] CRITICAL: self-escalation to role='admin' via PostgREST — DB 0032 trigger lock_profile_role (only admin can change role).
+- [x] CRITICAL: owner self-approving own company (verification_status) — DB 0032 trigger lock_company_verification (admin only).
+- [x] CRITICAL/MED: customer could cancel accepted/active via API — DB 0032 tightened rental_requests_update_customer USING to status='pending'.
+- [x] HIGH: HomeScreen price/capacity sort crashed on null fields — null-safe numeric sort.
+TODO (next cycles):
+- [ ] HIGH: "Mark as received" sets status=completed (wrong + RLS-rejected); make it informational or route via owner/Edge Fn + align RLS/copy (my_rentals ~865).
+- [ ] HIGH: role-gate /admin and /owner routes in GoRouter redirect (currently login-gated only; RLS now the real boundary). Consider cached role.
+- [ ] HIGH: guest (anonymous) can reach company onboarding + Rent Now; gate on currentUser.isAnonymous.
+- [ ] HIGH: VAT shown on invoice but not at booking; honor tax_config.applies_when; show VAT consistently.
+- [ ] MED: completion trigger doesn't clamp commission to price_total (negative net possible) — clamp in 0004 trigger.
+- [ ] MED: priced days (exclusive) vs blocked days (inclusive daterange) off-by-one; standardize.
+- [ ] MED: rate screen / receipt screen lack status gate when reached by route.

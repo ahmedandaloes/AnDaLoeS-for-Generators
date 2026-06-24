@@ -109,18 +109,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           }
           return true;
         }).toList()
-          ..sort((a, b) => switch (filter.sort) {
-                GeneratorSortBy.priceLow =>
-                  (a['price_per_day'] as num).compareTo(b['price_per_day'] as num),
-                GeneratorSortBy.priceHigh =>
-                  (b['price_per_day'] as num).compareTo(a['price_per_day'] as num),
-                GeneratorSortBy.ratingTop =>
-                  ((b['avg_score'] as num?)?.toDouble() ?? 0)
-                      .compareTo((a['avg_score'] as num?)?.toDouble() ?? 0),
-                GeneratorSortBy.capacityLow =>
-                  (a['capacity_kva'] as num).compareTo(b['capacity_kva'] as num),
-                GeneratorSortBy.newest => 0,
-              }));
+          ..sort((a, b) {
+            double n(Map<String, dynamic> m, String k) =>
+                (m[k] as num?)?.toDouble() ?? 0;
+            return switch (filter.sort) {
+              GeneratorSortBy.priceLow =>
+                n(a, 'price_per_day').compareTo(n(b, 'price_per_day')),
+              GeneratorSortBy.priceHigh =>
+                n(b, 'price_per_day').compareTo(n(a, 'price_per_day')),
+              GeneratorSortBy.ratingTop =>
+                n(b, 'avg_score').compareTo(n(a, 'avg_score')),
+              GeneratorSortBy.capacityLow =>
+                n(a, 'capacity_kva').compareTo(n(b, 'capacity_kva')),
+              GeneratorSortBy.newest => 0,
+            };
+          }));
 
     final hasFilter = filter.hasActiveFilters || filter.query.isNotEmpty;
 
