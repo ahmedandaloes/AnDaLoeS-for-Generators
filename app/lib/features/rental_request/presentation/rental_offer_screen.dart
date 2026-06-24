@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -32,11 +33,12 @@ class RentalOfferScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dataAsync = ref.watch(_offerDataProvider(rentalId));
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('Rental Offer'),
+        title: Text(l.rentalOffer),
         backgroundColor: Colors.grey.shade100,
         elevation: 0,
         actions: [
@@ -119,6 +121,7 @@ class _OfferDocument extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final gen = data['generators'] as Map<String, dynamic>?;
     final company = data['companies'] as Map<String, dynamic>?;
     final customer = data['profiles'] as Map<String, dynamic>?;
@@ -183,7 +186,7 @@ class _OfferDocument extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text('RENTAL OFFER',
+                        Text(l.rentalOfferHeader,
                             style: TextStyle(
                                 color: cs.onPrimary,
                                 fontSize: 13,
@@ -208,7 +211,7 @@ class _OfferDocument extends StatelessWidget {
                     ),
                   ]),
                   const SizedBox(height: 16),
-                  Text('Date issued: $issueDate',
+                  Text(l.dateIssued(issueDate),
                       style: TextStyle(
                           color: cs.onPrimary.withValues(alpha: 0.8),
                           fontSize: 11)),
@@ -228,7 +231,7 @@ class _OfferDocument extends StatelessWidget {
                 children: [
                   Expanded(
                     child: DocPartyBox(
-                      label: 'FROM (Owner)',
+                      label: l.fromOwner,
                       name: company?['name'] ?? 'Owner',
                       detail: company?['phone']?.toString(),
                       cs: cs,
@@ -238,7 +241,7 @@ class _OfferDocument extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: DocPartyBox(
-                      label: 'TO (Customer)',
+                      label: l.toCustomer,
                       name: customer?['full_name'] ?? 'Customer',
                       detail: customer?['phone']?.toString(),
                       cs: cs,
@@ -255,7 +258,7 @@ class _OfferDocument extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  DocSectionLabel('Generator'),
+                  DocSectionLabel(l.generatorLabel),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(14),
@@ -266,13 +269,13 @@ class _OfferDocument extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        DocRow('Model / Title',
+                        DocRow(l.modelTitle,
                             gen?['title']?.toString() ?? '-'),
-                        DocRow('Capacity',
+                        DocRow(l.capacity,
                             '${gen?['capacity_kva']} KVA'),
-                        DocRow('Fuel Type',
+                        DocRow(l.fuelType,
                             _fuelLabel(gen?['fuel_type']?.toString())),
-                        DocRow('Location',
+                        DocRow(l.location,
                             '${gen?['city'] ?? ''}, ${gen?['governorate'] ?? ''}'),
                       ],
                     ),
@@ -287,7 +290,7 @@ class _OfferDocument extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  DocSectionLabel('Rental Period'),
+                  DocSectionLabel(l.rentalPeriod),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(14),
@@ -298,9 +301,9 @@ class _OfferDocument extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        DocRow('Start Date', _fmt(data['start_date'])),
-                        DocRow('End Date', _fmt(data['end_date'])),
-                        DocRow('Total Days', '$days day${days == 1 ? '' : 's'}'),
+                        DocRow(l.startDate, _fmt(data['start_date'])),
+                        DocRow(l.endDate, _fmt(data['end_date'])),
+                        DocRow(l.totalDays, l.daysCount('$days')),
                       ],
                     ),
                   ),
@@ -314,7 +317,7 @@ class _OfferDocument extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  DocSectionLabel('Pricing'),
+                  DocSectionLabel(l.pricing),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -328,7 +331,7 @@ class _OfferDocument extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Total Amount',
+                          Text(l.totalAmount,
                               style: TextStyle(
                                   fontSize: 11,
                                   color: cs.onSurfaceVariant,
@@ -340,7 +343,7 @@ class _OfferDocument extends StatelessWidget {
                                   fontWeight: FontWeight.w900,
                                   color: cs.primary,
                                   letterSpacing: -1)),
-                          Text('for $days days',
+                          Text(l.forNDays('$days'),
                               style: TextStyle(
                                   fontSize: 11,
                                   color: cs.onSurfaceVariant)),
@@ -356,7 +359,7 @@ class _OfferDocument extends StatelessWidget {
                           border: Border.all(
                               color: Colors.green.withValues(alpha: 0.3)),
                         ),
-                        child: Text('ACCEPTED',
+                        child: Text(l.statusAccepted,
                             style: TextStyle(
                                 color: Colors.green.shade700,
                                 fontSize: 11,
