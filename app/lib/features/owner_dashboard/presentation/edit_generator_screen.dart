@@ -12,6 +12,8 @@ import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 import '../../../core/config/supabase.dart';
 import '../../../core/constants/generator_sizes.dart';
 import '../../../core/constants/generator_use_cases.dart';
+import '../../../core/widgets/app_loading_indicator.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 
 const _editGovernorates = [
   'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',
@@ -228,11 +230,7 @@ class _EditGeneratorScreenState
 
   void _snack(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    ));
+    AppSnackBar.show(context, msg);
   }
 
   @override
@@ -245,7 +243,7 @@ class _EditGeneratorScreenState
     return Scaffold(
       appBar: AppBar(title: Text(l.editGenerator)),
       body: genAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator(),
         error: (e, _) => const AppErrorState(),
         data: (gen) {
           _initFrom(gen);

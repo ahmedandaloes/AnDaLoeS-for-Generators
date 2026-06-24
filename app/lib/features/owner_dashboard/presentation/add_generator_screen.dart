@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 import '../../../core/config/supabase.dart';
 import '../../../core/constants/generator_sizes.dart';
 import '../../../core/constants/generator_use_cases.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 
 const _governorates = [
   'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',
@@ -245,11 +246,7 @@ class _AddGeneratorScreenState extends State<AddGeneratorScreen> {
 
   void _snack(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    ));
+    AppSnackBar.show(context, msg);
   }
 
   @override
