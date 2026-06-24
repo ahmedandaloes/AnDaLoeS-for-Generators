@@ -1,0 +1,164 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/config/supabase.dart';
+import '../../data/repositories/generator_repository.dart';
+
+export '../../data/repositories/generator_repository.dart'
+    show generatorRepositoryProvider;
+
+final generatorsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  return ref.read(generatorRepositoryProvider).fetchAllRaw();
+});
+
+final remoteFavoritesProvider =
+    FutureProvider.autoDispose<Set<String>>((ref) async {
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) return {};
+  return ref.read(generatorRepositoryProvider).fetchFavorites(uid);
+});
+
+final favoritesProvider = StateProvider<Set<String>>((ref) => const {});
+
+final showFavoritesOnlyProvider = StateProvider<bool>((ref) => false);
+
+final recentSearchesProvider =
+    StateProvider<List<String>>((ref) => const []);
+
+final featuredGeneratorsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  return ref.read(generatorRepositoryProvider).fetchFeaturedRaw();
+});
+
+final recentlyViewedProvider =
+    StateProvider<List<Map<String, dynamic>>>((_) => const []);
+
+final newArrivalsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  return ref.read(generatorRepositoryProvider).fetchNewArrivalsRaw();
+});
+
+final autocompleteProvider =
+    FutureProvider.autoDispose.family<List<String>, String>((ref, q) async {
+  return ref.read(generatorRepositoryProvider).searchAutocomplete(q);
+});
+
+// Flash deals: generators whose price_per_day is ≤70% of the average for their
+// KVA tier (grouped into <10, 10-50, 50-200, 200+ KVA buckets).
+final flashDealsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final data = await supabase
+      .from('generators')
+      .select(
+          'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, use_cases, created_at, companies(name)')
+      .eq('status', 'available')
+      .order('price_per_day', ascending: true)
+      .limit(80);
+  final all = (data as List).cast<Map<String, dynamic>>();
+  int bucket(num kva) {
+    if (kva < 10) return 0;
+    if (kva < 50) return 1;
+    if (kva < 200) return 2;
+    return 3;
+  }
+  final bucketTotals = <int, double>{};
+  final bucketCounts = <int, int>{};
+  for (final g in all) {
+    final kva = (g['capacity_kva'] as num?) ?? 0;
+    final price = (g['price_per_day'] as num?)?.toDouble() ?? 0;
+    final b = bucket(kva);
+    bucketTotals[b] = (bucketTotals[b] ?? 0) + price;
+    bucketCounts[b] = (bucketCounts[b] ?? 0) + 1;
+  }
+  final bucketAvg = {
+    for (final k in bucketTotals.keys)
+      k: bucketTotals[k]! / bucketCounts[k]!,
+  };
+  return all.where((g) {
+    final kva = (g['capacity_kva'] as num?) ?? 0;
+    final price = (g['price_per_day'] as num?)?.toDouble() ?? 0;
+    final avg = bucketAvg[bucket(kva)];
+    if (avg == null || avg == 0) return false;
+    return price <= avg * 0.70;
+  }).take(8).toList();
+});
+
+// Fetches generators in the same governorate as the user's most recent rental.
+final nearMeProvider = FutureProvider.autoDispose<
+    ({String? governorate, List<Map<String, dynamic>> generators})>((ref) async {
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) {
+    return (governorate: null, generators: <Map<String, dynamic>>[]);
+  }
+  final recent = await supabase
+      .from('rental_requests')
+      .select('generators(governorate)')
+      .eq('customer_id', uid)
+      .order('created_at', ascending: false)
+      .limit(1);
+  final gov = (recent as List).isNotEmpty
+      ? ((recent.first['generators'] as Map?)?['governorate']?.toString())
+      : null;
+  if (gov == null) {
+    return (governorate: null, generators: <Map<String, dynamic>>[]);
+  }
+  final data = await supabase
+      .from('generators')
+      .select(
+          'id, title, capacity_kva, price_per_day, city, governorate, photos, avg_score, rating_count, fuel_type, use_cases, created_at, companies(name)')
+      .eq('status', 'available')
+      .eq('governorate', gov)
+      .order('avg_score', ascending: false)
+      .limit(6);
+  return (
+    governorate: gov,
+    generators: (data as List).cast<Map<String, dynamic>>()
+  );
+});
+
+// Top rated companies by avg generator rating.
+final topRatedOwnersProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final data = await supabase
+      .from('companies')
+      .select(
+          'id, name, city, verification_status, generators(avg_score, rating_count)')
+      .eq('verification_status', 'approved')
+      .limit(30);
+  final companies = (data as List).cast<Map<String, dynamic>>();
+  final scored = companies.map((c) {
+    final gens = (c['generators'] as List?) ?? [];
+    if (gens.length < 2) return null;
+    double totalScore = 0;
+    int totalRatings = 0;
+    for (final g in gens) {
+      final sc = (g['avg_score'] as num?)?.toDouble() ?? 0;
+      final cnt = (g['rating_count'] as num?)?.toInt() ?? 0;
+      totalScore += sc * cnt;
+      totalRatings += cnt;
+    }
+    if (totalRatings < 3) return null;
+    final avg = totalScore / totalRatings;
+    return {
+      ...c,
+      '_avg': avg,
+      '_ratings': totalRatings,
+      '_gen_count': gens.length
+    };
+  }).whereType<Map<String, dynamic>>().toList()
+    ..sort((a, b) => (b['_avg'] as double).compareTo(a['_avg'] as double));
+  return scored.take(8).toList();
+});
+
+// Shared current user profile — role/name without duplicating the Supabase call.
+final currentProfileProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) return null;
+  final data = await supabase
+      .from('profiles')
+      .select('full_name, role, avatar_url')
+      .eq('id', uid)
+      .maybeSingle();
+  return data;
+});

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/app_localizations.dart';
-import '../../providers/generators_providers.dart' show autocompleteProvider;
+import '../providers/generators_providers.dart' show autocompleteProvider;
 import 'generator_filter.dart' show filterProvider, GeneratorFilter;
 
 class SearchAutocomplete extends ConsumerStatefulWidget {
