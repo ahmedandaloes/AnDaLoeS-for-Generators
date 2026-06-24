@@ -4,17 +4,16 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/app_error_state.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/constants/generator_sizes.dart';
-import '../../../core/constants/generator_use_cases.dart';
 import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import 'providers/owner_providers.dart' show ownerRepositoryProvider;
+import 'widgets/edit_generator_photos_section.dart';
+import 'widgets/edit_generator_specs_section.dart';
 
 const _editGovernorates = [
   'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 'Beheira',
@@ -60,11 +59,8 @@ class _EditGeneratorScreenState
   bool _initialised = false;
   bool _saving = false;
 
-  // Existing remote photo URLs (from DB)
   List<String> _existingPhotos = [];
-  // New local photos to upload
   final List<File> _newPhotos = [];
-  // Which existing photos to remove
   final Set<String> _removedPhotos = {};
 
   static const _maxPhotos = 5;
@@ -90,7 +86,8 @@ class _EditGeneratorScreenState
     _descController.text = gen['description']?.toString() ?? '';
     _pricePerDayController.text = gen['price_per_day']?.toString() ?? '';
     _pricePerWeekController.text = gen['price_per_week']?.toString() ?? '';
-    _pricePerMonthController.text = gen['price_per_month']?.toString() ?? '';
+    _pricePerMonthController.text =
+        gen['price_per_month']?.toString() ?? '';
     final dep = (gen['deposit_amount'] as num?)?.toDouble() ?? 0;
     _depositController.text = dep > 0 ? dep.toStringAsFixed(0) : '';
     _cityController.text = gen['city']?.toString() ?? '';
@@ -114,9 +111,9 @@ class _EditGeneratorScreenState
 
   Future<void> _pickPhoto() async {
     final l = AppLocalizations.of(context)!;
-    final total = (_existingPhotos.length - _removedPhotos.length) +
-        _newPhotos.length;
-    if (total >= _maxPhotos) {
+    final kept =
+        _existingPhotos.length - _removedPhotos.length + _newPhotos.length;
+    if (kept >= _maxPhotos) {
       _snack(l.maxPhotosAllowed(_maxPhotos));
       return;
     }
@@ -148,7 +145,6 @@ class _EditGeneratorScreenState
     setState(() => _saving = true);
     try {
       final repo = ref.read(ownerRepositoryProvider);
-      // 1 — upload new photos
       final ts = DateTime.now().millisecondsSinceEpoch;
       final newUrls = <String>[];
       for (var i = 0; i < _newPhotos.length; i++) {
@@ -164,13 +160,11 @@ class _EditGeneratorScreenState
         newUrls.add(url);
       }
 
-      // 2 — build final photos list
       final finalPhotos = [
         ..._existingPhotos.where((u) => !_removedPhotos.contains(u)),
         ...newUrls,
       ];
 
-      // 3 — update generator
       await repo.updateGenerator(widget.generatorId, {
         'title': title,
         'capacity_kva': double.parse(capacityStr),
@@ -210,18 +204,6 @@ class _EditGeneratorScreenState
     }
   }
 
-  Widget _accChip(String key, String label) => FilterChip(
-        label: Text(label),
-        selected: _accessories.contains(key),
-        onSelected: (on) => setState(() {
-          if (on) {
-            _accessories.add(key);
-          } else {
-            _accessories.remove(key);
-          }
-        }),
-      );
-
   void _snack(String msg) {
     if (!mounted) return;
     AppSnackBar.show(context, msg);
@@ -241,18 +223,13 @@ class _EditGeneratorScreenState
         error: (e, _) => const AppErrorState(),
         data: (gen) {
           _initFrom(gen);
-          final keptExisting = _existingPhotos
-              .where((u) => !_removedPhotos.contains(u))
-              .toList();
-          final totalPhotos =
-              keptExisting.length + _newPhotos.length;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Availability toggle ────────────────────────────────
+                // ── Availability toggle ──────────────────────────────────
                 Card(
                   child: SwitchListTile(
                     value: _available,
@@ -261,7 +238,9 @@ class _EditGeneratorScreenState
                       _available ? 'Available for rent' : 'Unavailable',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: _available ? cs.primary : cs.onSurfaceVariant,
+                        color: _available
+                            ? cs.primary
+                            : cs.onSurfaceVariant,
                       ),
                     ),
                     subtitle: Text(
@@ -274,46 +253,34 @@ class _EditGeneratorScreenState
                       _available
                           ? Icons.bolt
                           : Icons.bolt_outlined,
-                      color: _available ? cs.primary : cs.onSurfaceVariant,
+                      color:
+                          _available ? cs.primary : cs.onSurfaceVariant,
                     ),
                   ),
                 ),
                 const SizedBox(height: 20),
 
-                // ── Photos ─────────────────────────────────────────────
-                _Section(l.photosLabel),
-                SizedBox(
-                  height: 110,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      if (totalPhotos < _maxPhotos)
-                        _EditPhotoAddButton(onTap: _pickPhoto, cs: cs),
-                      // Existing network photos
-                      ...keptExisting.map((url) => _NetworkPhotoThumb(
-                            url: url,
-                            onRemove: () =>
-                                setState(() => _removedPhotos.add(url)),
-                          )),
-                      // New local photos
-                      ..._newPhotos.asMap().entries.map(
-                            (e) => _LocalPhotoThumb(
-                              file: e.value,
-                              onRemove: () =>
-                                  setState(() => _newPhotos.removeAt(e.key)),
-                            ),
-                          ),
-                    ],
-                  ),
+                // ── Photos ───────────────────────────────────────────────
+                EditFormSection(l.photosLabel),
+                EditGeneratorPhotosSection(
+                  existingPhotos: _existingPhotos,
+                  removedPhotos: _removedPhotos,
+                  newPhotos: _newPhotos,
+                  maxPhotos: _maxPhotos,
+                  onPickPhoto: _pickPhoto,
+                  onRemoveExisting: (url) =>
+                      setState(() => _removedPhotos.add(url)),
+                  onRemoveNew: (i) =>
+                      setState(() => _newPhotos.removeAt(i)),
                 ),
                 const SizedBox(height: 20),
 
-                // ── Basic info ─────────────────────────────────────────
-                _Section(l.basicInfo),
-                _EditField('Title *', 'e.g. Cummins 100 KVA Diesel',
+                // ── Basic info ───────────────────────────────────────────
+                EditFormSection(l.basicInfo),
+                EditFormField('Title *', 'e.g. Cummins 100 KVA Diesel',
                     _titleController),
                 const SizedBox(height: 12),
-                _EditLabel('Capacity *'),
+                EditFormLabel('Capacity *'),
                 Builder(builder: (_) {
                   final current =
                       double.tryParse(_capacityController.text)?.round();
@@ -333,7 +300,8 @@ class _EditGeneratorScreenState
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide.none,
                       ),
-                      prefixIcon: const Icon(Icons.electric_bolt_outlined),
+                      prefixIcon:
+                          const Icon(Icons.electric_bolt_outlined),
                     ),
                     hint: Text(l.selectSize),
                     items: [
@@ -343,108 +311,53 @@ class _EditGeneratorScreenState
                             child: Text(generatorSizeLabel(kva))),
                     ],
                     onChanged: (v) => setState(
-                        () => _capacityController.text = v?.toString() ?? ''),
+                        () => _capacityController.text =
+                            v?.toString() ?? ''),
                   );
                 }),
                 const SizedBox(height: 12),
-                _EditLabel(l.fuelTypeRequired),
-                DropdownButtonFormField<String>(
-                  value: _fuelType,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: cs.surfaceContainerLowest,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    prefixIcon: const Icon(Icons.local_gas_station_outlined),
-                  ),
-                  items: [
-                    DropdownMenuItem(value: 'diesel', child: Text(l.fuelDiesel)),
-                    DropdownMenuItem(value: 'petrol', child: Text(l.fuelPetrol)),
-                    DropdownMenuItem(
-                        value: 'gas', child: Text(l.fuelGasLpg)),
-                    DropdownMenuItem(
-                        value: 'natural_gas', child: Text(l.fuelNaturalGas)),
-                    DropdownMenuItem(value: 'solar', child: Text(l.fuelSolar)),
-                  ],
-                  onChanged: (v) =>
-                      setState(() => _fuelType = v ?? 'diesel'),
+
+                // ── Specs section (fuel, hire type, accessories…) ────────
+                EditGeneratorSpecsSection(
+                  fuelType: _fuelType,
+                  hireType: _hireType,
+                  fuelPolicy: _fuelPolicy,
+                  useCases: _useCases,
+                  accessories: _accessories,
+                  onFuelTypeChanged: (v) =>
+                      setState(() => _fuelType = v),
+                  onHireTypeChanged: (v) =>
+                      setState(() => _hireType = v),
+                  onFuelPolicyChanged: (v) =>
+                      setState(() => _fuelPolicy = v),
+                  onUseCaseToggled: (uc, on) => setState(() {
+                    if (on) {
+                      _useCases.add(uc);
+                    } else {
+                      _useCases.remove(uc);
+                    }
+                  }),
+                  onAccessoryToggled: (key, on) => setState(() {
+                    if (on) {
+                      _accessories.add(key);
+                    } else {
+                      _accessories.remove(key);
+                    }
+                  }),
                 ),
                 const SizedBox(height: 12),
-                _EditLabel(l.bestForUseCases),
-                const SizedBox(height: 4),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: kGeneratorUseCases.map((uc) {
-                    final selected = _useCases.contains(uc);
-                    return FilterChip(
-                      label: Text(useCaseLabel(uc)),
-                      selected: selected,
-                      onSelected: (on) => setState(() {
-                        if (on) {
-                          _useCases.add(uc);
-                        } else {
-                          _useCases.remove(uc);
-                        }
-                      }),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 12),
-                _EditLabel(l.hireTypeLabel),
-                SegmentedButton<String>(
-                  segments: [
-                    ButtonSegment(
-                        value: 'dry_hire',
-                        label: Text(l.hireTypeDryHire)),
-                    ButtonSegment(
-                        value: 'operated',
-                        label: Text(l.hireTypeOperated)),
-                  ],
-                  selected: {_hireType},
-                  onSelectionChanged: (s) =>
-                      setState(() => _hireType = s.first),
-                ),
-                const SizedBox(height: 12),
-                _EditLabel(l.fuelPolicyLabel),
-                SegmentedButton<String>(
-                  segments: [
-                    ButtonSegment(
-                        value: 'customer_provides',
-                        label: Text(l.fuelPolicyCustomerProvides)),
-                    ButtonSegment(
-                        value: 'included',
-                        label: Text(l.fuelPolicyIncluded)),
-                  ],
-                  selected: {_fuelPolicy},
-                  onSelectionChanged: (s) =>
-                      setState(() => _fuelPolicy = s.first),
-                ),
-                const SizedBox(height: 12),
-                _EditLabel(l.accessoriesLabel),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _accChip('cables', l.accessoryCables),
-                    _accChip('extension_board', l.accessoryExtensionBoard),
-                    _accChip('fuel_tank', l.accessoryFuelTank),
-                    _accChip('transfer_switch', l.accessoryTransferSwitch),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _EditField(
+
+                EditFormField(
                     'Description', 'Optional details', _descController,
                     maxLines: 3),
                 const SizedBox(height: 20),
 
-                // ── Location ───────────────────────────────────────────
-                _Section(l.location),
-                _EditField('City', 'e.g. Nasr City', _cityController),
+                // ── Location ─────────────────────────────────────────────
+                EditFormSection(l.location),
+                EditFormField(
+                    'City', 'e.g. Nasr City', _cityController),
                 const SizedBox(height: 12),
-                _EditLabel('Governorate'),
+                EditFormLabel('Governorate'),
                 DropdownButtonFormField<String>(
                   value: _governorate,
                   decoration: InputDecoration(
@@ -454,36 +367,37 @@ class _EditGeneratorScreenState
                       borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.location_on_outlined),
+                    prefixIcon:
+                        const Icon(Icons.location_on_outlined),
                   ),
                   hint: Text(l.selectGovernorate),
                   items: _editGovernorates
-                      .map((g) =>
-                          DropdownMenuItem(value: g, child: Text(g)))
+                      .map((g) => DropdownMenuItem(
+                          value: g, child: Text(g)))
                       .toList(),
                   onChanged: (v) => setState(() => _governorate = v),
                 ),
                 const SizedBox(height: 20),
 
-                // ── Pricing ────────────────────────────────────────────
-                _Section(l.pricingEgp),
-                _EditNumField(
-                    'Per day (8 hrs) *', '0', _pricePerDayController),
+                // ── Pricing ──────────────────────────────────────────────
+                EditFormSection(l.pricingEgp),
+                EditNumField('Per day (8 hrs) *', '0',
+                    _pricePerDayController),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
-                        child: _EditNumField(
-                            'Per week', 'optional', _pricePerWeekController)),
+                        child: EditNumField('Per week', 'optional',
+                            _pricePerWeekController)),
                     const SizedBox(width: 12),
                     Expanded(
-                        child: _EditNumField('Per month', 'optional',
+                        child: EditNumField('Per month', 'optional',
                             _pricePerMonthController)),
                   ],
                 ),
                 const SizedBox(height: 12),
-                _EditNumField(
-                    'Refundable deposit', 'optional', _depositController),
+                EditNumField('Refundable deposit', 'optional',
+                    _depositController),
                 const SizedBox(height: 28),
 
                 FilledButton(
@@ -529,7 +443,8 @@ class _EditGeneratorScreenState
               child: Text(l.cancel)),
           FilledButton(
               style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.error),
+                  backgroundColor:
+                      Theme.of(context).colorScheme.error),
               onPressed: () => Navigator.pop(context, true),
               child: Text(l.deleteAction)),
         ],
@@ -537,293 +452,12 @@ class _EditGeneratorScreenState
     );
     if (ok != true || !mounted) return;
     try {
-      await ref.read(ownerRepositoryProvider).deleteGenerator(widget.generatorId);
+      await ref
+          .read(ownerRepositoryProvider)
+          .deleteGenerator(widget.generatorId);
       if (mounted) context.pop();
     } catch (e) {
       _snack('Error: $e');
     }
-  }
-}
-
-// ── Photo widgets ─────────────────────────────────────────────────────────────
-
-class _EditPhotoAddButton extends StatelessWidget {
-  const _EditPhotoAddButton({required this.onTap, required this.cs});
-  final VoidCallback onTap;
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 96,
-        height: 96,
-        margin: const EdgeInsetsDirectional.only(end: 10),
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cs.outlineVariant, width: 1.5),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_a_photo_outlined,
-                size: 28, color: cs.onSurfaceVariant),
-            const SizedBox(height: 4),
-            Text(l.addPhoto,
-                style: TextStyle(
-                    fontSize: 10, color: cs.onSurfaceVariant)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NetworkPhotoThumb extends StatelessWidget {
-  const _NetworkPhotoThumb({required this.url, required this.onRemove});
-  final String url;
-  final VoidCallback onRemove;
-
-  void _preview(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black87,
-      builder: (_) => GestureDetector(
-        onTap: () => Navigator.pop(context),
-        child: Stack(children: [
-          Center(
-            child: InteractiveViewer(
-              child: CachedNetworkImage(imageUrl: url, fit: BoxFit.contain),
-            ),
-          ),
-          Positioned(
-            top: 40, right: 16,
-            child: SafeArea(
-              child: GestureDetector(
-                onTap: () { Navigator.pop(context); onRemove(); },
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: Colors.redAccent, shape: BoxShape.circle),
-                  child: const Icon(Icons.delete_outline, size: 18, color: Colors.white),
-                ),
-              ),
-            ),
-          ),
-        ]),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        GestureDetector(
-          onTap: () => _preview(context),
-          child: Container(
-            width: 96,
-            height: 96,
-            margin: const EdgeInsetsDirectional.only(end: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              image: DecorationImage(
-                image: CachedNetworkImageProvider(url),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.15)]),
-              ),
-              alignment: Alignment.bottomCenter,
-              padding: const EdgeInsets.only(bottom: 5),
-              child: const Icon(Icons.zoom_in_rounded, size: 14, color: Colors.white54),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 4,
-          right: 14,
-          child: GestureDetector(
-            onTap: onRemove,
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(
-                color: Colors.black54,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.close, size: 14, color: Colors.white),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _LocalPhotoThumb extends StatelessWidget {
-  const _LocalPhotoThumb({required this.file, required this.onRemove});
-  final File file;
-  final VoidCallback onRemove;
-
-  void _preview(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black87,
-      builder: (_) => GestureDetector(
-        onTap: () => Navigator.pop(context),
-        child: Stack(children: [
-          Center(
-            child: InteractiveViewer(
-              child: Image.file(file, fit: BoxFit.contain),
-            ),
-          ),
-          Positioned(
-            top: 40, right: 16,
-            child: SafeArea(
-              child: GestureDetector(
-                onTap: () { Navigator.pop(context); onRemove(); },
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: Colors.redAccent, shape: BoxShape.circle),
-                  child: const Icon(Icons.delete_outline, size: 18, color: Colors.white),
-                ),
-              ),
-            ),
-          ),
-        ]),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        GestureDetector(
-          onTap: () => _preview(context),
-          child: Container(
-            width: 96,
-            height: 96,
-            margin: const EdgeInsetsDirectional.only(end: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              image: DecorationImage(
-                image: FileImage(file),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.15)]),
-              ),
-              alignment: Alignment.bottomCenter,
-              padding: const EdgeInsets.only(bottom: 5),
-              child: const Icon(Icons.zoom_in_rounded, size: 14, color: Colors.white54),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 4,
-          right: 14,
-          child: GestureDetector(
-            onTap: onRemove,
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(
-                color: Colors.black54,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.close, size: 14, color: Colors.white),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ── Shared form helpers ───────────────────────────────────────────────────────
-
-class _Section extends StatelessWidget {
-  const _Section(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(text,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            letterSpacing: 0.5,
-          )),
-    );
-  }
-}
-
-class _EditLabel extends StatelessWidget {
-  const _EditLabel(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(text,
-          style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurfaceVariant)),
-    );
-  }
-}
-
-class _EditField extends StatelessWidget {
-  const _EditField(this.label, this.hint, this.controller,
-      {this.maxLines = 1});
-  final String label;
-  final String hint;
-  final TextEditingController controller;
-  final int maxLines;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      maxLines: maxLines,
-      decoration: InputDecoration(labelText: label, hintText: hint),
-    );
-  }
-}
-
-class _EditNumField extends StatelessWidget {
-  const _EditNumField(this.label, this.hint, this.controller);
-  final String label;
-  final String hint;
-  final TextEditingController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-      ],
-      decoration: InputDecoration(labelText: label, hintText: hint),
-    );
   }
 }
