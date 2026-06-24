@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/config/supabase.dart';
 import '../../../core/utils/db_error.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../auth/data/repositories/auth_repository.dart';
+import '../data/repositories/ratings_repository.dart';
 
-class RateRentalScreen extends StatefulWidget {
+class RateRentalScreen extends ConsumerStatefulWidget {
   const RateRentalScreen({
     super.key,
     required this.rentalRequestId,
@@ -20,10 +22,10 @@ class RateRentalScreen extends StatefulWidget {
   final bool isOwnerRating;
 
   @override
-  State<RateRentalScreen> createState() => _RateRentalScreenState();
+  ConsumerState<RateRentalScreen> createState() => _RateRentalScreenState();
 }
 
-class _RateRentalScreenState extends State<RateRentalScreen> {
+class _RateRentalScreenState extends ConsumerState<RateRentalScreen> {
   int _score = 0;
   final _commentController = TextEditingController();
   bool _submitting = false;
@@ -40,34 +42,19 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
   // and only once. (RLS 0030 + the unique index are the hard guard; this is UX.)
   Future<void> _checkEligibility() async {
     try {
-      final uid = supabase.auth.currentUser?.id;
-      final rr = await supabase
-          .from('rental_requests')
-          .select('status')
-          .eq('id', widget.rentalRequestId)
-          .maybeSingle();
-      if (rr?['status']?.toString() != 'completed') {
-        if (mounted) setState(() => _eligible = false);
-        return;
+      final uid = ref.read(authRepositoryProvider).currentUserId;
+      final result = await ref
+          .read(ratingsRepositoryProvider)
+          .checkEligibility(
+            rentalRequestId: widget.rentalRequestId,
+            raterId: uid,
+          );
+      if (mounted) {
+        setState(() {
+          _eligible = result.eligible;
+          _alreadyRated = result.alreadyRated;
+        });
       }
-      if (uid != null) {
-        final existing = await supabase
-            .from('ratings')
-            .select('id')
-            .eq('rental_request_id', widget.rentalRequestId)
-            .eq('rater_id', uid)
-            .maybeSingle();
-        if (existing != null) {
-          if (mounted) {
-            setState(() {
-              _eligible = false;
-              _alreadyRated = true;
-            });
-          }
-          return;
-        }
-      }
-      if (mounted) setState(() => _eligible = true);
     } catch (_) {
       // Fail open to the form — RLS + unique index still enforce the rules.
       if (mounted) setState(() => _eligible = true);
@@ -88,14 +75,20 @@ class _RateRentalScreenState extends State<RateRentalScreen> {
     }
     setState(() => _submitting = true);
     try {
-      await supabase.from('ratings').insert({
-        'rental_request_id': widget.rentalRequestId,
-        'rater_id': supabase.auth.currentUser!.id,
-        'ratee_id': widget.rateeId,
-        'score': _score,
-        if (_commentController.text.trim().isNotEmpty)
-          'comment': _commentController.text.trim(),
-      });
+      final uid = ref.read(authRepositoryProvider).currentUserId;
+      if (uid == null) {
+        _snack(l.createAnAccountFirst);
+        return;
+      }
+      await ref.read(ratingsRepositoryProvider).submitRating(
+            rentalRequestId: widget.rentalRequestId,
+            raterId: uid,
+            rateeId: widget.rateeId,
+            score: _score,
+            comment: _commentController.text.trim().isNotEmpty
+                ? _commentController.text.trim()
+                : null,
+          );
       if (mounted) {
         _snack(l.thankYouReview);
         context.pop();
