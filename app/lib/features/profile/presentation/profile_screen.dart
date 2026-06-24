@@ -310,7 +310,7 @@ class ProfileScreen extends ConsumerWidget {
                             Icon(Icons.workspace_premium_outlined,
                                 color: cs.onPrimary, size: 20),
                             const SizedBox(width: 8),
-                            Text('Save your account',
+                            Text(l.createYourAccount,
                                 style: TextStyle(
                                     color: cs.onPrimary,
                                     fontSize: 16,
@@ -332,7 +332,7 @@ class ProfileScreen extends ConsumerWidget {
                               minimumSize: const Size.fromHeight(46),
                             ),
                             onPressed: () => _showGuestUpgrade(context, ref),
-                            child: const Text('Create my account'),
+                            child: Text(l.createAccount),
                           ),
                         ],
                       ),
@@ -344,8 +344,8 @@ class ProfileScreen extends ConsumerWidget {
                     children: [
                       ListTile(
                         leading: const Icon(Icons.apps_rounded),
-                        title: const Text('All pages'),
-                        subtitle: const Text('Open any screen directly'),
+                        title: Text(l.allPages),
+                        subtitle: Text(l.allPagesSubtitle),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push(AppRoutes.pageHub),
                       ),
@@ -494,7 +494,7 @@ class ProfileScreen extends ConsumerWidget {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text('Total spent',
+                                      Text(l.totalSpent,
                                           style: TextStyle(
                                               fontSize: 11,
                                               color: cs.onSurfaceVariant)),
@@ -613,7 +613,7 @@ class ProfileScreen extends ConsumerWidget {
                                               fontWeight: FontWeight.w800,
                                               color: tier.color)),
                                       const SizedBox(width: 6),
-                                      Text('Member',
+                                      Text(l.member,
                                           style: TextStyle(
                                               fontSize: 13,
                                               color: cs.onSurfaceVariant)),
@@ -687,7 +687,7 @@ class ProfileScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            const Text('Appearance',
+                            Text(l.appearance,
                                 style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500)),
@@ -796,7 +796,7 @@ class ProfileScreen extends ConsumerWidget {
                           child: Icon(Icons.receipt_long_outlined,
                               size: 18, color: cs.primary),
                         ),
-                        title: const Text('My Rentals',
+                        title: Text(l.myRentals,
                             style: TextStyle(fontWeight: FontWeight.w500)),
                         trailing: Icon(Icons.chevron_right,
                             color: cs.onSurfaceVariant),
@@ -819,9 +819,9 @@ class ProfileScreen extends ConsumerWidget {
                               child: Icon(Icons.storefront_outlined,
                                   size: 18, color: Colors.orange.shade700),
                             ),
-                            title: const Text('List your generator',
+                            title: Text(l.listYourGenerator,
                                 style: TextStyle(fontWeight: FontWeight.w600)),
-                            subtitle: const Text('Become an owner and earn',
+                            subtitle: Text(l.listYourGeneratorSubtitle,
                                 style: TextStyle(fontSize: 12)),
                             trailing: Container(
                               padding: const EdgeInsets.symmetric(
@@ -830,7 +830,7 @@ class ProfileScreen extends ConsumerWidget {
                                 color: Colors.orange.shade600,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Text('Start',
+                              child: Text(l.start,
                                   style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
@@ -849,9 +849,9 @@ class ProfileScreen extends ConsumerWidget {
                           child: Icon(Icons.dashboard_outlined,
                               size: 18, color: cs.onSecondaryContainer),
                         ),
-                        title: const Text('Owner Dashboard',
+                        title: Text(l.ownerDashboard,
                             style: TextStyle(fontWeight: FontWeight.w500)),
-                        subtitle: const Text('Manage generators & requests',
+                        subtitle: Text(l.ownerDashboardSubtitle,
                             style: TextStyle(fontSize: 12)),
                         trailing: ref
                             .watch(_pendingRequestsCountProvider)
@@ -895,7 +895,7 @@ class ProfileScreen extends ConsumerWidget {
                                   ),
                                   title: Text(company['name']?.toString() ?? 'My Company',
                                       style: const TextStyle(fontWeight: FontWeight.w500)),
-                                  subtitle: const Text('Public company page',
+                                  subtitle: Text(l.publicCompanyPage,
                                       style: TextStyle(fontSize: 12)),
                                   trailing: Icon(Icons.open_in_new_rounded,
                                       size: 16, color: cs.onSurfaceVariant),
@@ -925,9 +925,9 @@ class ProfileScreen extends ConsumerWidget {
                           child: Icon(Icons.admin_panel_settings_outlined,
                               size: 18, color: cs.error),
                         ),
-                        title: const Text('Admin Panel',
+                        title: Text(l.adminPanel,
                             style: TextStyle(fontWeight: FontWeight.w500)),
-                        subtitle: const Text('Companies, stats, approvals',
+                        subtitle: Text(l.adminPanelSubtitle,
                             style: TextStyle(fontSize: 12)),
                         trailing: Icon(Icons.chevron_right,
                             color: cs.onSurfaceVariant),
@@ -951,9 +951,9 @@ class ProfileScreen extends ConsumerWidget {
                           child: Icon(Icons.logout_rounded,
                               size: 18, color: cs.error),
                         ),
-                        title: const Text(
-                          'Sign out',
-                          style: TextStyle(fontWeight: FontWeight.w500),
+                        title: Text(
+                          l.signOut,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
                         trailing: Icon(Icons.chevron_right,
                             color: cs.onSurfaceVariant),
@@ -1419,7 +1419,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      padding: const EdgeInsetsDirectional.only(start: 4, bottom: 8),
       child: Text(
         text.toUpperCase(),
         style: TextStyle(

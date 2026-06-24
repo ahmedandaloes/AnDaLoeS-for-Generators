@@ -304,6 +304,6 @@ listing approval, pricing guardrails, liability). Sequence proposed in GAP_ANALY
 Decision: Arabic default + full RTL. State: RTL infra present (gen-l10n Global delegates, `ar` supported, toggle); only ~14 strings externalized, ~345 hardcoded English Text() across ~28 screens.
 Plan (loop, screen-by-screen): (1) grow app_en.arb + app_ar.arb (real Arabic) with each screen's strings; (2) replace hardcoded Text() with AppLocalizations; (3) RTL audit — EdgeInsets.only(left/right) → start/end, Align/Row directionality; (4) flip locale default to Arabic once the bulk is translated (avoid half-Arabic UI). Shared/common strings first (highest leverage), then high-traffic screens (home, detail, rental request, my rentals, owner dashboard), then the rest.
 - [x] Foundation: common strings (actions/errors) in en+ar; AppErrorState localized (app-wide).
-- [ ] Localize: bottom nav + profile + home → detail → rental request/payment → my rentals → owner dashboard → admin → rest.
+- [~] Localized: Profile screen (menu, totals, CTAs, sign-out) + common strings; RTL padding fixed. No bottom nav (GoRouter). Next: home → detail → booking → my rentals → owner dashboard → admin.
 - [ ] RTL padding/Align audit per screen as localized.
 - [ ] Flip default locale to Arabic when ≥ ~80% strings translated.
