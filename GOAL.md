@@ -133,7 +133,7 @@ buildable in-app now. Definition of done (DoD) per sprint listed.
 
 ### Sprint 5 — Growth: shareable & discoverable (partial)
 - [x] Share URL fixed (/generator → /generators) + bilingual CTA + first photo URL
-- [ ] Deep linking to listings (GoRouter deep links + Android App Links config)
+- [x] Deep linking to listings (iOS universal links: Runner.entitlements + CODE_SIGN_ENTITLEMENTS + AASA in docs/)
 - [x] Saved searches — DB 0039, savedSearchesProvider, home screen bookmark icon + save chip + bottom sheet with apply/delete ✅ (new-match server alerts deferred to Sprint 10 edge fn)
 - DoD: a shared link opens the right listing; saved search fires a notification on match.
 
@@ -168,7 +168,7 @@ buildable in-app now. Definition of done (DoD) per sprint listed.
 - 🔒 [ ] Phone OTP (needs SMS provider — Twilio/Vonage)
 - 🔒 [ ] Digital escrow (Paymob/Kashier) / Fawry pay-against-code (needs merchant acct + CBE review)
 - 🔒 [ ] Tax: confirm VAT treatment + customer % with accountant; ETA e-invoicing onboarding
-- [ ] Auto-expire stale pending requests (edge fn/cron) — buildable once an edge fn is allowed
+- [x] Auto-expire stale pending requests — DB fn expire_stale_pending_requests() (migration 0040) + admin "Run Expiry Now" button in Ops tab
 - DoD: real-time push + collected payments + compliant invoicing (gated on the owner/external items).
 
 ---

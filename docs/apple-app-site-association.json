@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["74W956KFAK.com.andaloes.andaloes"],
+        "components": [
+          { "/": "/generators/*", "comment": "Generator detail deep links" },
+          { "/": "/", "comment": "Home" }
+        ]
+      }
+    ]
+  }
+}
