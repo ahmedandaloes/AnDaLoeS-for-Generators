@@ -357,10 +357,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           if (filter.hasActiveFilters)
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 38,
+                height: 48,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                   children: [
                     if (filter.governorate != null)
                       _filterPill(filter.governorate!, () => ref
@@ -616,7 +616,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: InputChip(
           label: Text(label, style: const TextStyle(fontSize: 12)),
           onDeleted: onDelete,
-          visualDensity: VisualDensity.compact,
         ),
       );
 

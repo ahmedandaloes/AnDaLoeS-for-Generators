@@ -785,7 +785,7 @@ class _RentalCard extends ConsumerWidget {
                 const SizedBox(height: 12),
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40),
+                    minimumSize: const Size.fromHeight(48),
                     foregroundColor: cs.error,
                     side: BorderSide(color: cs.error.withValues(alpha: 0.4)),
                   ),
@@ -846,7 +846,7 @@ class _RentalCard extends ConsumerWidget {
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40),
+                    minimumSize: const Size.fromHeight(48),
                     foregroundColor: cs.primary,
                   ),
                   onPressed: () =>
@@ -999,7 +999,7 @@ class _RentalCard extends ConsumerWidget {
                 else
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(40),
+                      minimumSize: const Size.fromHeight(48),
                     ),
                     onPressed: () {
                       context.push(
@@ -1012,39 +1012,58 @@ class _RentalCard extends ConsumerWidget {
               ],
               if (status == 'completed') ...[
                 const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40),
-                    foregroundColor: Colors.green.shade700,
-                    side: BorderSide(
-                        color: Colors.green.withValues(alpha: 0.4)),
+                // Invoice / Receipt / Report in a single row
+                Row(children: [
+                  Expanded(
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.green.shade700,
+                        minimumSize: const Size.fromHeight(48),
+                        padding: EdgeInsets.zero,
+                      ),
+                      onPressed: () => context
+                          .push(AppRoutes.invoice(rental['id'].toString())),
+                      icon: const Icon(Icons.receipt_long_outlined, size: 15),
+                      label: Text(l.viewInvoice,
+                          style: const TextStyle(fontSize: 12)),
+                    ),
                   ),
-                  onPressed: () =>
-                      context.push(AppRoutes.invoice(rental['id'].toString())),
-                  icon: const Icon(Icons.receipt_long_outlined,
-                      size: 15),
-                  label: Text(l.viewInvoice,
-                      style: TextStyle(fontSize: 13)),
-                ),
-                const SizedBox(height: 4),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(38),
-                    foregroundColor: cs.onSurfaceVariant,
+                  Expanded(
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: cs.onSurfaceVariant,
+                        minimumSize: const Size.fromHeight(48),
+                        padding: EdgeInsets.zero,
+                      ),
+                      onPressed: () => context
+                          .push(AppRoutes.receipt(rental['id'].toString())),
+                      icon: const Icon(Icons.receipt_outlined, size: 15),
+                      label: Text(l.viewReceipt,
+                          style: const TextStyle(fontSize: 12)),
+                    ),
                   ),
-                  onPressed: () =>
-                      context.push(AppRoutes.receipt(rental['id'].toString())),
-                  icon: const Icon(Icons.receipt_outlined, size: 15),
-                  label: Text(l.viewReceipt,
-                      style: TextStyle(fontSize: 13)),
-                ),
+                  Expanded(
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: cs.onSurfaceVariant,
+                        minimumSize: const Size.fromHeight(48),
+                        padding: EdgeInsets.zero,
+                      ),
+                      onPressed: () => context.push(
+                          '/report?type=company&id=${rental['company_id']}&rental=${rental['id']}&name=Owner'),
+                      icon: const Icon(Icons.flag_outlined, size: 15),
+                      label: Text(l.reportAnIssue,
+                          style: const TextStyle(fontSize: 12)),
+                    ),
+                  ),
+                ]),
               ],
-              if (status == 'completed' || status == 'active') ...[
+              if (status == 'active') ...[
                 const SizedBox(height: 4),
                 TextButton.icon(
                   style: TextButton.styleFrom(
                     foregroundColor: cs.onSurfaceVariant,
-                    minimumSize: const Size.fromHeight(36),
+                    minimumSize: const Size.fromHeight(48),
                   ),
                   onPressed: () => context.push(
                     '/report?type=company&id=${rental['company_id']}&rental=${rental['id']}&name=Owner',
@@ -1420,7 +1439,7 @@ class _ChatButton extends StatelessWidget {
       label: Text('$unread'),
       child: OutlinedButton.icon(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(40),
+          minimumSize: const Size.fromHeight(48),
         ),
         onPressed: () => context.push(
             '/chat/$rentalId?name=${Uri.encodeComponent(otherPartyName)}'),
