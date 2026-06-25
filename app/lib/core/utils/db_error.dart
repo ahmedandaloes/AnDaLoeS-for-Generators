@@ -9,6 +9,14 @@ String friendlyDbError(
   String fallback = 'Something went wrong. Please try again.',
 }) {
   final lower = error.toString().toLowerCase();
+  if (lower.contains('socketexception') ||
+      lower.contains('failed host lookup') ||
+      lower.contains('clientexception') ||
+      lower.contains('network is unreachable') ||
+      lower.contains('connection refused') ||
+      lower.contains('errno = 7')) {
+    return 'No internet connection. Check your connection and try again.';
+  }
   if (lower.contains('rental_requests_no_overlap') ||
       lower.contains('exclusion constraint') ||
       lower.contains('23p01')) {
