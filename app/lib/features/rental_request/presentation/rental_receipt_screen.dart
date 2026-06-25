@@ -261,7 +261,7 @@ class _RentalReceiptScreenState extends ConsumerState<RentalReceiptScreen> {
     final l = AppLocalizations.of(context)!;
     final gen = r['generators'] as Map<String, dynamic>?;
     final buffer = StringBuffer()
-      ..writeln('AnDaLoeS for Generators — Rental Receipt')
+      ..writeln('Thabit Power — Rental Receipt')
       ..writeln('Receipt #${widget.rentalId.substring(0, 8).toUpperCase()}')
       ..writeln()
       ..writeln('Generator: ${gen?['title']} (${gen?['capacity_kva']} KVA)')

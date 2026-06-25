@@ -30,7 +30,7 @@ String buildRentalIcs({
       'DTSTART;VALUE=DATE:${d(start)}\n'
       'DTEND;VALUE=DATE:${d(dtEnd)}\n'
       'SUMMARY:Generator rental: $title$loc\n'
-      'DESCRIPTION:Booked on AnDaLoeS for Generators.\n'
+      'DESCRIPTION:Booked on Thabit Power.\n'
       'END:VEVENT\n'
       'END:VCALENDAR\n';
 }

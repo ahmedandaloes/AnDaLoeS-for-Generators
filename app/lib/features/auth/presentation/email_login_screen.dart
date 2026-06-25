@@ -49,8 +49,17 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
     try {
       await ref.read(authRepositoryProvider).signInAnonymously();
       if (mounted) context.go(AppRoutes.home);
-    } on AuthException catch (e) {
-      _show(e.message);
+    } catch (e) {
+      final s = e.toString().toLowerCase();
+      _show(s.contains('socketexception') ||
+              s.contains('failed host lookup') ||
+              s.contains('clientexception')
+          ? 'No internet connection. Check your connection and try again.'
+          : e is AuthException && e.message.toLowerCase().contains('anonymous')
+              ? 'Guest login is not available right now. Please sign in with email.'
+              : e is AuthException
+                  ? e.message
+                  : 'Something went wrong. Please try again.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
