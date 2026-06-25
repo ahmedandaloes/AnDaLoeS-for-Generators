@@ -49,6 +49,9 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
       if (m.contains('already registered') || m.contains('already exists')) {
         return 'That email already has an account. Try signing in instead.';
       }
+      if (m.contains('anonymous')) {
+        return 'Guest login is not available right now. Please sign in with email.';
+      }
       return e.message;
     }
     return 'Something went wrong. Please try again.';

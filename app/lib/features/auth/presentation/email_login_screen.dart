@@ -50,7 +50,10 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
       await ref.read(authRepositoryProvider).signInAnonymously();
       if (mounted) context.go(AppRoutes.home);
     } on AuthException catch (e) {
-      _show(e.message);
+      final m = e.message.toLowerCase();
+      _show(m.contains('anonymous')
+          ? 'Guest login is not available right now. Please sign in with email.'
+          : e.message);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
