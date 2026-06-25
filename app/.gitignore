@@ -18,6 +18,7 @@ lib/l10n/app_localizations*.dart
 android/
 !android/app/src/main/AndroidManifest.xml
 ios/
+!ios/Runner/Info.plist
 web/
 macos/
 linux/
