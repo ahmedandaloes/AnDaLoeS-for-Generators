@@ -1,6 +1,6 @@
 {
   "@@locale": "ar",
-  "appTitle": "ثابت باور",
+  "appTitle": "ثابت للطاقة",
   "navHome": "الرئيسية",
   "navProfile": "حسابي",
   "welcomeTitle": "استأجر مولّد كهرباء في أي مكان في مصر",
@@ -331,7 +331,7 @@
   "previewLabel": "معاينة",
   "liveLabel": "مباشر",
   "companyName": "اسم الشركة",
-  "companyNameHint": "مثال: Thabit Power",
+  "companyNameHint": "مثال: ثابت للطاقة",
   "contactPhone": "هاتف التواصل",
   "phoneHintNumber": "01XXXXXXXXX",
   "descriptionOptionalLabel": "الوصف (اختياري)",
