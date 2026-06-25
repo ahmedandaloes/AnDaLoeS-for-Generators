@@ -257,11 +257,11 @@ class AdminRevenueTab extends ConsumerWidget {
     final now = DateTime.now();
     final label =
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    final file = File('${Directory.systemTemp.path}/andaloes_commission_vat_$label.csv');
+    final file = File('${Directory.systemTemp.path}/thabitpower_commission_vat_$label.csv');
     await file.writeAsString(buf.toString());
     await Share.shareXFiles(
       [XFile(file.path, mimeType: 'text/csv')],
-      subject: 'AnDaLoeS commission + VAT — $label',
+      subject: 'Thabit Power commission + VAT — $label',
     );
   }
 

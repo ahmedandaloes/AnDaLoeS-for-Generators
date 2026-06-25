@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Andaloes</string>
+	<string>Thabit Power</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>andaloes</string>
+	<string>thabitpower</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -61,12 +61,12 @@
 	</array>
 	<!-- file_picker: photo library access -->
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>AnDaLoeS needs access to your photo library to upload generator photos.</string>
+	<string>Thabit Power needs access to your photo library to upload generator photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>AnDaLoeS needs access to save photos to your library.</string>
+	<string>Thabit Power needs access to save photos to your library.</string>
 	<!-- file_picker: camera access -->
 	<key>NSCameraUsageDescription</key>
-	<string>AnDaLoeS needs camera access to take photos of generators.</string>
+	<string>Thabit Power needs camera access to take photos of generators.</string>
 	<!-- url_launcher: phone calls -->
 	<key>LSApplicationQueriesSchemes</key>
 	<array>

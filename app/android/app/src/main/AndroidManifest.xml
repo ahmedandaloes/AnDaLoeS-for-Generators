@@ -10,7 +10,7 @@
     <!-- share_plus: share files -->
     <uses-permission android:name="android.permission.VIBRATE"/>
     <application
-        android:label="andaloes"
+        android:label="Thabit Power"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

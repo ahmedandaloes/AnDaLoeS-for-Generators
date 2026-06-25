@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:andaloes/features/chat/domain/entities/message.dart';
+import 'package:thabit_power/features/chat/domain/entities/message.dart';
 
 // ── Fixture ───────────────────────────────────────────────────────────────────
 

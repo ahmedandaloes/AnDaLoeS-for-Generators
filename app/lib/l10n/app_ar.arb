@@ -1,6 +1,6 @@
 {
   "@@locale": "ar",
-  "appTitle": "أندلس للمولدات",
+  "appTitle": "ثابت باور",
   "navHome": "الرئيسية",
   "navProfile": "حسابي",
   "welcomeTitle": "استأجر مولّد كهرباء في أي مكان في مصر",
@@ -331,7 +331,7 @@
   "previewLabel": "معاينة",
   "liveLabel": "مباشر",
   "companyName": "اسم الشركة",
-  "companyNameHint": "مثال: AnDaLoeS for Generators",
+  "companyNameHint": "مثال: Thabit Power",
   "contactPhone": "هاتف التواصل",
   "phoneHintNumber": "01XXXXXXXXX",
   "descriptionOptionalLabel": "الوصف (اختياري)",

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:andaloes/features/company/domain/entities/company.dart';
-import 'package:andaloes/features/company/data/models/company_model.dart';
+import 'package:thabit_power/features/company/domain/entities/company.dart';
+import 'package:thabit_power/features/company/data/models/company_model.dart';
 
 // ── Fixture ───────────────────────────────────────────────────────────────────
 

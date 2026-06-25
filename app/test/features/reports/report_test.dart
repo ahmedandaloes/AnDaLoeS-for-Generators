@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:andaloes/features/reports/domain/entities/report.dart';
+import 'package:thabit_power/features/reports/domain/entities/report.dart';
 
 // ── Fixture ───────────────────────────────────────────────────────────────────
 

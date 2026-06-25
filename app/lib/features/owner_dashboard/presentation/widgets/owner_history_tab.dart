@@ -274,11 +274,11 @@ class _OwnerHistoryTabState extends State<OwnerHistoryTab> {
           (r['price_total'] as num?)?.toStringAsFixed(0) ?? '0';
       stmt.writeln('$gen  |  $cust  |  EGP $total');
     }
-    stmt..writeln(sep)..writeln('AnDaLoeS Generator Rental Platform');
+    stmt..writeln(sep)..writeln('Thabit Power');
     final csvFile =
-        File('${Directory.systemTemp.path}/andaloes_earnings.csv');
+        File('${Directory.systemTemp.path}/thabitpower_earnings.csv');
     final txtFile =
-        File('${Directory.systemTemp.path}/andaloes_statement.txt');
+        File('${Directory.systemTemp.path}/thabitpower_statement.txt');
     await Future.wait([
       csvFile.writeAsString(csv.toString()),
       txtFile.writeAsString(stmt.toString()),
@@ -288,7 +288,7 @@ class _OwnerHistoryTabState extends State<OwnerHistoryTab> {
         XFile(csvFile.path, mimeType: 'text/csv'),
         XFile(txtFile.path, mimeType: 'text/plain'),
       ],
-      subject: 'AnDaLoeS Earnings Export — $dateLabel',
+      subject: 'Thabit Power Earnings Export — $dateLabel',
       text:
           '${completed.length} completed rentals · EGP ${totalEarnings.toStringAsFixed(0)} total',
     );

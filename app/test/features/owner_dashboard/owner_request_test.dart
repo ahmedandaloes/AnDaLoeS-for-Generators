@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:andaloes/features/owner_dashboard/domain/entities/owner_request.dart';
-import 'package:andaloes/features/owner_dashboard/data/models/owner_request_model.dart';
+import 'package:thabit_power/features/owner_dashboard/domain/entities/owner_request.dart';
+import 'package:thabit_power/features/owner_dashboard/data/models/owner_request_model.dart';
 
 // ── Fixture ───────────────────────────────────────────────────────────────────
 

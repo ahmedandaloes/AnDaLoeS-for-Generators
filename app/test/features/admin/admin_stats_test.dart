@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:andaloes/features/admin/domain/entities/admin_stats.dart';
+import 'package:thabit_power/features/admin/domain/entities/admin_stats.dart';
 
 void main() {
   group('AdminStats.empty()', () {

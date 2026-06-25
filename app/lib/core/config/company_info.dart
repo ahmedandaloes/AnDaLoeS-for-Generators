@@ -3,7 +3,7 @@
 /// registered values before issuing invoices in production — and confirm VAT
 /// treatment with an accountant.
 class CompanyInfo {
-  static const String legalName = 'AnDaLoeS for Generators';
+  static const String legalName = 'Thabit Power';
   static const String taxRegistrationNumber = '___-___-___'; // set real ETA tax #
   static const String commercialRegister = '________'; // set real CR number
 

@@ -3,11 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:andaloes/core/utils/commission.dart';
-import 'package:andaloes/core/utils/pricing.dart';
-import 'package:andaloes/core/utils/tax.dart';
-import 'package:andaloes/core/utils/db_error.dart';
-import 'package:andaloes/core/theme/status_colors.dart';
+import 'package:thabit_power/core/utils/commission.dart';
+import 'package:thabit_power/core/utils/pricing.dart';
+import 'package:thabit_power/core/utils/tax.dart';
+import 'package:thabit_power/core/utils/db_error.dart';
+import 'package:thabit_power/core/theme/status_colors.dart';
 
 /// Minimal stub [ColorScheme] so we can call status-color functions
 /// without a real Flutter widget tree.

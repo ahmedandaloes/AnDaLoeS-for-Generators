@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:andaloes/features/generators/domain/entities/generator.dart';
-import 'package:andaloes/features/generators/data/models/generator_model.dart';
-import 'package:andaloes/features/generators/presentation/widgets/generator_filter.dart';
+import 'package:thabit_power/features/generators/domain/entities/generator.dart';
+import 'package:thabit_power/features/generators/data/models/generator_model.dart';
+import 'package:thabit_power/features/generators/presentation/widgets/generator_filter.dart';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 

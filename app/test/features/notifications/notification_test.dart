@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:andaloes/features/notifications/domain/entities/notification.dart';
-import 'package:andaloes/features/notifications/data/models/notification_model.dart';
+import 'package:thabit_power/features/notifications/domain/entities/notification.dart';
+import 'package:thabit_power/features/notifications/data/models/notification_model.dart';
 
 // ── Fixture ───────────────────────────────────────────────────────────────────
 

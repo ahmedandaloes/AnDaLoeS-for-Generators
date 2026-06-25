@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:andaloes/features/rental_request/data/models/rental_model.dart';
-import 'package:andaloes/features/rental_request/data/models/rental_request_model.dart';
-import 'package:andaloes/features/rental_request/domain/entities/rental_request.dart';
+import 'package:thabit_power/features/rental_request/data/models/rental_model.dart';
+import 'package:thabit_power/features/rental_request/data/models/rental_request_model.dart';
+import 'package:thabit_power/features/rental_request/domain/entities/rental_request.dart';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
