@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:andaloes/core/utils/commission.dart';
-import 'package:andaloes/core/utils/pricing.dart';
-import 'package:andaloes/core/utils/tax.dart';
-import 'package:andaloes/core/utils/db_error.dart';
-import 'package:andaloes/core/utils/ics.dart';
-import 'package:andaloes/core/constants/generator_sizes.dart';
-import 'package:andaloes/core/constants/generator_use_cases.dart';
-import 'package:andaloes/features/generators/presentation/widgets/generator_filter.dart';
+import 'package:thabit_power/core/utils/commission.dart';
+import 'package:thabit_power/core/utils/pricing.dart';
+import 'package:thabit_power/core/utils/tax.dart';
+import 'package:thabit_power/core/utils/db_error.dart';
+import 'package:thabit_power/core/utils/ics.dart';
+import 'package:thabit_power/core/constants/generator_sizes.dart';
+import 'package:thabit_power/core/constants/generator_use_cases.dart';
+import 'package:thabit_power/features/generators/presentation/widgets/generator_filter.dart';
 
 void main() {
   group('projectCommission', () {

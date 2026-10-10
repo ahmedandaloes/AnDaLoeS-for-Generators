@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "AnDaLoeS for Generators",
+  "appTitle": "Thabit Power",
   "navHome": "Home",
   "navProfile": "Profile",
   "welcomeTitle": "Rent a generator, anywhere in Egypt",
@@ -351,7 +351,7 @@
   "previewLabel": "Preview",
   "liveLabel": "LIVE",
   "companyName": "Company name",
-  "companyNameHint": "e.g. AnDaLoeS for Generators",
+  "companyNameHint": "e.g. Thabit Power",
   "contactPhone": "Contact phone",
   "phoneHintNumber": "01XXXXXXXXX",
   "descriptionOptionalLabel": "Description (optional)",

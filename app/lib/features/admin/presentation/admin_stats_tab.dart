@@ -47,12 +47,12 @@ class AdminStatsTab extends StatelessWidget {
 
     final csv = rows.map((r) => r.join(',')).join('\n');
     final dir = Directory.systemTemp;
-    final file = File('${dir.path}/andaloes_stats_$label.csv');
+    final file = File('${dir.path}/thabitpower_stats_$label.csv');
     await file.writeAsString(csv);
 
     await Share.shareXFiles(
       [XFile(file.path, mimeType: 'text/csv')],
-      subject: 'AnDaLoeS Platform Stats — $label',
+      subject: 'Thabit Power Stats — $label',
     );
   }
 

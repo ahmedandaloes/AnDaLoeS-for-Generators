@@ -38,6 +38,13 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
   }
 
   String _friendlyAuthError(Object e) {
+    final s = e.toString().toLowerCase();
+    if (s.contains('socketexception') ||
+        s.contains('failed host lookup') ||
+        s.contains('clientexception') ||
+        s.contains('errno = 7')) {
+      return 'No internet connection. Check your connection and try again.';
+    }
     if (e is AuthException) {
       final m = e.message.toLowerCase();
       if (m.contains('not confirmed')) {
@@ -48,6 +55,9 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
       }
       if (m.contains('already registered') || m.contains('already exists')) {
         return 'That email already has an account. Try signing in instead.';
+      }
+      if (m.contains('anonymous')) {
+        return 'Guest login is not available right now. Please sign in with email.';
       }
       return e.message;
     }

@@ -90,9 +90,9 @@ class ProfileReferralCard extends StatelessWidget {
             ),
             IconButton.filled(
               onPressed: () => Share.share(
-                'Join AnDaLoeS for Generators — Egypt\'s generator rental marketplace.'
+                'Join Thabit Power — Egypt\'s generator rental marketplace.'
                 '\n\nUse my referral code $code when you sign up!',
-                subject: 'AnDaLoeS Referral',
+                subject: 'Thabit Power Referral',
               ),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFF25D366),

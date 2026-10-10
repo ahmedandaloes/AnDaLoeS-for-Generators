@@ -614,7 +614,7 @@ Future<void> _shareGenerator(WidgetRef ref, String id) async {
     if (companyName != null) '🏢 $companyName',
     if (ratingStr != null) ratingStr,
     '',
-    'احجز الآن على AnDaLoeS | Book now on AnDaLoeS for Generators',
+    'احجز الآن على AnDaLoeS | Book now on Thabit Power',
     listingUrl,
     if (photoUrl != null) photoUrl,
   ];

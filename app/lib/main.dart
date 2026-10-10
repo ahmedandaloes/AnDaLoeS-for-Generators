@@ -29,19 +29,19 @@ Future<void> main() async {
 
   runApp(UncontrolledProviderScope(
     container: container,
-    child: AndaloesApp(initialLocation: seenOnboarding ? '/' : '/onboarding'),
+    child: ThabitPowerApp(initialLocation: seenOnboarding ? '/' : '/onboarding'),
   ));
 }
 
-class AndaloesApp extends ConsumerStatefulWidget {
-  const AndaloesApp({super.key, this.initialLocation = '/'});
+class ThabitPowerApp extends ConsumerStatefulWidget {
+  const ThabitPowerApp({super.key, this.initialLocation = '/'});
   final String initialLocation;
 
   @override
-  ConsumerState<AndaloesApp> createState() => _AndaloesAppState();
+  ConsumerState<ThabitPowerApp> createState() => _ThabitPowerAppState();
 }
 
-class _AndaloesAppState extends ConsumerState<AndaloesApp> {
+class _ThabitPowerAppState extends ConsumerState<ThabitPowerApp> {
   late final GoRouter _router;
 
   @override

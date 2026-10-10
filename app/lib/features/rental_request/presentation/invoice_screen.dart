@@ -91,7 +91,7 @@ Payment: Cash on delivery
 Status: PAID ✓
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-AnDaLoeS for Generators''';
+Thabit Power''';
     Share.share(text, subject: 'Invoice $invId');
   }
 
@@ -521,7 +521,7 @@ class _InvoiceDocument extends StatelessWidget {
                     ),
                   const SizedBox(height: 6),
                   Text(
-                    'Thank you for using AnDaLoeS for Generators.\n'
+                    'Thank you for using Thabit Power.\n'
                     'This is an official tax invoice for services rendered.',
                     style: TextStyle(
                         fontSize: 10,
